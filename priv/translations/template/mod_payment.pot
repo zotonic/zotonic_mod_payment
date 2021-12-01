@@ -1,0 +1,134 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+# NB: Consider using poEdit <http://poedit.sourceforge.net>
+#
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ./user/sites/muziekschatten/modules/mod_payment/templates/admin_payments.tpl:25 
+msgid ""
+"Amount"
+msgstr ""
+
+#: ./user/sites/muziekschatten/modules/mod_payment/templates/payment_redirect_psp.tpl:12 
+msgid ""
+"Close Window"
+msgstr ""
+
+#: ./user/sites/muziekschatten/modules/mod_payment/mod_payment.erl:67 
+msgid ""
+"Could not handle the payment request, please try again later."
+msgstr ""
+
+#: ./user/sites/muziekschatten/modules/mod_payment/templates/admin_payments.tpl:16 
+msgid ""
+"Date"
+msgstr ""
+
+#: ./user/sites/muziekschatten/modules/mod_payment/templates/admin_payments.tpl:22 
+msgid ""
+"Description"
+msgstr ""
+
+#: ./user/sites/muziekschatten/modules/mod_payment/templates/admin_payments.tpl:31 
+msgid ""
+"Email"
+msgstr ""
+
+#: ./user/sites/muziekschatten/modules/mod_payment/templates/admin_payments.tpl:28 
+msgid ""
+"Name"
+msgstr ""
+
+#: ./user/sites/muziekschatten/modules/mod_payment/templates/admin_payments.tpl:76 
+msgid ""
+"No PSP"
+msgstr ""
+
+#: ./user/sites/muziekschatten/modules/mod_payment/templates/admin_payments.tpl:84 
+msgid ""
+"No payments found."
+msgstr ""
+
+#: ./user/sites/muziekschatten/modules/mod_payment/templates/admin_payments.tpl:95 
+msgid ""
+"Only administrators are allowed to see payments"
+msgstr ""
+
+#: ./user/sites/muziekschatten/modules/mod_payment/templates/admin_payments.tpl:3 ./user/sites/muziekschatten/modules/mod_payment/templates/admin_payments.tpl:7 ./user/sites/muziekschatten/modules/mod_payment/mod_payment.erl:81 
+msgid ""
+"Payments"
+msgstr ""
+
+#: ./user/sites/muziekschatten/modules/mod_payment/templates/admin_payments.tpl:34 
+msgid ""
+"Phone"
+msgstr ""
+
+#: ./user/sites/muziekschatten/modules/mod_payment/templates/payment_redirect_psp.tpl:17 
+msgid ""
+"Redirecting to payment service provider..."
+msgstr ""
+
+#: ./user/sites/muziekschatten/modules/mod_payment/mod_payment.erl:66 
+msgid ""
+"Sorry"
+msgstr ""
+
+#: ./user/sites/muziekschatten/modules/mod_payment/templates/payment_psp_done.tpl:42 
+msgid ""
+"Sorry, you are not allowed to view this payment."
+msgstr ""
+
+#: ./user/sites/muziekschatten/modules/mod_payment/templates/admin_payments.tpl:19 
+msgid ""
+"Status"
+msgstr ""
+
+#: ./user/sites/muziekschatten/modules/mod_payment/templates/payment_psp_done.tpl:25 
+msgid ""
+"Thank you for your payment!"
+msgstr ""
+
+#: ./user/sites/muziekschatten/modules/mod_payment/templates/payment_psp_done.tpl:19 
+msgid ""
+"Unknown payment"
+msgstr ""
+
+#: ./user/sites/muziekschatten/modules/mod_payment/templates/payment_redirect_psp.tpl:8 
+msgid ""
+"Unknown payment or no detail page available."
+msgstr ""
+
+#: ./user/sites/muziekschatten/modules/mod_payment/templates/admin_payments.tpl:45 
+msgid ""
+"Y-m-d H:i"
+msgstr ""
+
+#: ./user/sites/muziekschatten/modules/mod_payment/templates/payment_psp_done.tpl:37 
+msgid ""
+"Your payment is pending."
+msgstr ""
+
+#: ./user/sites/muziekschatten/modules/mod_payment/templates/payment_psp_done.tpl:31 
+msgid ""
+"Your payment was not handled."
+msgstr ""
+
+#: ./user/sites/muziekschatten/modules/mod_payment/templates/admin_payments.tpl:72 
+msgid ""
+"view"
+msgstr ""
