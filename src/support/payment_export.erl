@@ -46,24 +46,24 @@ headers() ->
     ].
 
 data(Context) ->
-    #search_result{result = Result} = z_search:search(payments, {1, undefined}, Context),
+    #search_result{result = Result} = z_search:search(payments, {1, 100000}, Context),
     {ok, Result}.
 
 values(Item, Context) ->
     [ z_datetime:format(proplists:get_value(created, Item), "c", Context)
-    , proplists:get_value(status, Item)
-    , proplists:get_value(description, Item)
-    , proplists:get_value(currency, Item)
-    , proplists:get_value(amount, Item)
-    , proplists:get_value(name_first, Item)
-    , proplists:get_value(name_surname, Item)
-    , proplists:get_value(email, Item)
-    , proplists:get_value(phone, Item)
-    , proplists:get_value(address_street_1, Item)
-    , proplists:get_value(address_city, Item)
-    , proplists:get_value(address_postcode, Item)
-    , proplists:get_value(address_state, Item)
-    , country( proplists:get_value(address_country, Item), Context )
+    , maps:get(<<"status">>, Item)
+    , maps:get(<<"description">>, Item)
+    , maps:get(<<"currency">>, Item)
+    , maps:get(<<"amount">>, Item)
+    , maps:get(<<"name_first">>, Item)
+    , maps:get(<<"name_surname">>, Item)
+    , maps:get(<<"email">>, Item)
+    , maps:get(<<"phone">>, Item)
+    , maps:get(<<"address_street_1">>, Item)
+    , maps:get(<<"address_city">>, Item)
+    , maps:get(<<"address_postcode">>, Item)
+    , maps:get(<<"address_state">>, Item)
+    , country( maps:get(<<"address_country">>, Item), Context )
     ].
 
 country(undefined, _Context) ->

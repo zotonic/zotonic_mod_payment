@@ -22,11 +22,16 @@
     install/1
     ]).
 
+-include_lib("zotonic_core/include/zotonic.hrl").
+
 -spec log(PaymentId, Event, Props, Context) -> {ok, integer()}
     when PaymentId :: integer(),
          Event :: binary() | atom() | string(),
-         Props :: map(),
+         Props :: map() | proplists:proplist(),
          Context :: z:context().
+log(PaymentId, Event, Props, Context) when is_list(Props) ->
+    Ps1 = [ {z_convert:to_binary(K), V} || {K, V} <- Props ],
+    log(PaymentId, Event, maps:from_list(Ps1), Context);
 log(PaymentId, Event, Props, Context) ->
     InsertProps = Props#{
         <<"payment_id">> => PaymentId,
@@ -51,9 +56,9 @@ install(Context) ->
                     event character varying(32) not null,
 
                     psp_module character varying(64) not null,
-                    psp_external_log_id character varying(64),
+                    psp_external_log_id character varying(128),
 
-                    description character varying(120),
+                    description character varying(256),
                     props bytea,
 
                     actor character varying(128),
@@ -85,6 +90,26 @@ install(Context) ->
                 Context),
             ok;
         true ->
+            case z_db:column(payment_log, description, Context) of
+                {ok, #column_def{ length = L }} when L < 256 ->
+                    [] = z_db:q("
+                        alter table payment_log
+                        alter column description type character varying(256)
+                        ", Context),
+                    z_db:flush(Context);
+                {ok, _} ->
+                    ok
+            end,
+            case z_db:column(payment_log, psp_external_log_id, Context) of
+                {ok, #column_def{ length = L1 }} when L1 < 128 ->
+                    [] = z_db:q("
+                        alter table payment_log
+                        alter column psp_external_log_id type character varying(128)
+                        ", Context),
+                    z_db:flush(Context);
+                {ok, _} ->
+                    ok
+            end,
             ok
     end.
 

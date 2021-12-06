@@ -58,21 +58,25 @@
                 <a href="mailto:{{ p.email|escape }}">{{ p.email|escape }}</a>
             </td>
         </tr>
+        {% if p.phone %}
+            <tr>
+                <th>{_ Phone _}</th>
+                <td>
+                    {{ p.phone|escape }}
+                </td>
+            </tr>
+        {% endif %}
         <tr>
-            <th>{_ Phone _}</th>
-            <td>
-                {{ p.phone|escape }}
-            </td>
-        </tr>
-        <tr>
-            <th>{_ PSP _}</th>
+            <th>{_ Payment Service Provider _}</th>
             <td>
                 {% if p.psp_module and p.psp_external_id %}
                     <a href="{% url payment_psp_detail payment_nr=p.payment_nr %}"
                        class="btn btn-primary btn-xs" target="payment-psp">
-                        <span class="glyphicon glyphicon-new-window"></span> {_ view at PSP _}
+                        <span class="glyphicon glyphicon-new-window"></span>
+                        {% trans "view at {psp}"
+                                psp= p.psp_module|to_binary|replace:"mod_payment_":""|replace:"_":" "|capfirst
+                        %}
                     </a>
-                    &nbsp; <span class="text-muted">{{ p.psp_module }}</span>
                 {% else %}
                     <span class="text-muted">
                         {_ No PSP _}
@@ -83,7 +87,7 @@
         {% for k,v in p.props %}
             <tr>
                 <th>
-                    {{ k }}
+                    {{ k|replace:"_":" "|capfirst }}
                 </th>
                 <td>
                     {{ v|escape }}
@@ -118,11 +122,9 @@
                 {% endfor %}
             </select>
             <p class="help-block">
-                {_ Changing the status can make the system inconsistent as the external PSP will not be in sync anymore. _}
+                {_ Changing the status can make the system inconsistent as the Payment Service Provider will not be in sync anymore. _}
             </p>
         </div>
-
-        {% comment %}{% print p %}{% endcomment %}
 
         <div class="modal-footer">
             {% button class="btn btn-default" action={dialog_close} text=_"Close" tag="a" %}

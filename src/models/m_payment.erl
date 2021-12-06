@@ -20,6 +20,10 @@
 -export([
     m_get/3,
 
+    default_description/1,
+    default_currency/1,
+    default_amount/1,
+
     list_user/2,
 
     insert/2,
@@ -44,8 +48,14 @@
 -include_lib("zotonic_core/include/zotonic.hrl").
 -include("../../include/payment.hrl").
 
+m_get([ <<"default">>, <<"currency">> | Rest ], _Msg, Context) ->
+    {ok, {default_currency(Context), Rest}};
+m_get([ <<"default">>, <<"amount">> | Rest ], _Msg, Context) ->
+    {ok, {default_amount(Context), Rest}};
+m_get([ <<"default">>, <<"description">> | Rest ], _Msg, Context) ->
+    {ok, {default_description(Context), Rest}};
 m_get([ <<"redirect_psp">>, PaymentNr | Rest ], _Msg, Context) when is_binary(PaymentNr) ->
-    case payment_psp_view_url(z_convert:to_integer(PaymentNr), Context) of
+    case payment_psp_view_url(PaymentNr, Context) of
         {ok, Url} ->
             {ok, {Url, Rest}};
         {error, _} = Error ->
@@ -76,6 +86,26 @@ m_get([ PaymentNr | Rest ], _Msg, Context) when is_binary(PaymentNr) ->
             end;
         {error, _} = Error ->
             Error
+    end.
+
+-spec default_description( z:context() ) -> binary().
+default_description(Context) ->
+    z_convert:to_binary( m_config:get_value(mod_payment, description, Context) ).
+
+-spec default_currency( z:context() ) -> binary().
+default_currency(Context) ->
+    case m_config:get_value(mod_payment, currency, Context) of
+        undefined -> ?PAYMENT_CURRENCY_DEFAULT;
+        <<>> -> ?PAYMENT_CURRENCY_DEFAULT;
+        Currency -> Currency
+    end.
+
+-spec default_amount( z:context() ) -> integer() | undefined.
+default_amount(Context) ->
+    case m_config:get_value(mod_payment, default_amount, Context) of
+        undefined -> undefined;
+        <<>> -> undefined;
+        Amount -> z_convert:to_integer(Amount)
     end.
 
 
@@ -130,9 +160,10 @@ insert(PaymentReq, Context) ->
     },
     Payment1 = maps:merge(Payment, naw_props(UserId, PaymentReq#payment_request.is_qargs, Context)),
     Payment2 = maps:merge(Payment1, extra_props(PaymentReq#payment_request.extra_props, PaymentReq#payment_request.is_qargs, Context)),
-    case validate_payment(Payment2) of
+    Payment3 = maps:merge(qargs_props(PaymentReq#payment_request.is_qargs, Context), Payment2),
+    case validate_payment(Payment3) of
         ok ->
-            z_db:insert(payment, Payment2, Context);
+            z_db:insert(payment, Payment3, Context);
         {error, _} = Error ->
             Error
     end.
@@ -218,14 +249,14 @@ insert_recurring_payment(RecurringPaymentId, Created, Currency, Amount, Context)
 extra_props(Props, false, _Context) ->
     Props1 = lists:filtermap(
         fun
-            ({_, <<>>}) -> false;
             ({_, undefined}) -> false;
+            ({_, <<>>}) -> false;
             ({_, ""}) -> false;
-            ({K, V}) -> {z_convert:to_binary(K), V};
+            ({K, V}) -> {z_string:to_name(K), V};
             (_) -> false
         end,
         Props),
-    z_sanitize:escape_props_check(maps:from_list(Props1));
+    maps:from_list(Props1);
 extra_props(Props, true, Context) ->
     Props1 = lists:map(
         fun
@@ -235,11 +266,27 @@ extra_props(Props, true, Context) ->
                     V -> {K, V}
                 end;
             (K) when is_atom(K); is_binary(K) ->
-                K1 = z_convert:to_binary(K),
+                K1 = z_string:to_name(K),
                 {K1, z_context:get_q(K1, Context)}
         end,
         Props),
     extra_props(Props1, false, Context).
+
+% Properties from the posted form
+-spec qargs_props(boolean(), z:context()) -> map().
+qargs_props(false, _Context) ->
+    #{};
+qargs_props(true, Context) ->
+    lists:foldl(
+        fun
+            ({K, V}, Acc) when is_binary(K), is_binary(V) ->
+                Acc#{ z_string:to_name(K) => V };
+            (_, Acc) ->
+                Acc
+        end,
+        #{},
+        z_context:get_q_all_noz(Context)).
+
 
 % We should have an email address, or an user-id, and name + phone no.
 validate_payment(Payment) ->
@@ -307,7 +354,7 @@ p(Id, Prop, false, Context) ->
 language(undefined, Context) ->
     z_context:language(Context);
 language(UserId, Context) ->
-    case m_rsc:p(UserId, pref_language, Context) of
+    case m_rsc:p(UserId, <<"pref_language">>, Context) of
         undefined -> z_context:language(Context);
         Lang -> Lang
     end.
@@ -319,8 +366,8 @@ get(PaymentId, Context) when is_integer(PaymentId) ->
         [PaymentId],
         Context)
     of
-        undefined -> {error, notfound};
-        Props -> {ok, add_status_flags(Props)}
+        {ok, Props} -> {ok, add_status_flags(Props)};
+        {error, _} = Error -> Error
     end;
 get(PaymentNr, Context) when is_binary(PaymentNr); is_list(PaymentNr) ->
     case z_db:qmap_row(
@@ -328,8 +375,8 @@ get(PaymentNr, Context) when is_binary(PaymentNr); is_list(PaymentNr) ->
         [PaymentNr],
         Context)
     of
-        undefined -> {error, notfound};
-        Props -> {ok, add_status_flags(Props)}
+        {ok, Props} -> {ok, add_status_flags(Props)};
+        {error, _} = Error -> Error
     end.
 
 -spec get_by_psp(atom(), binary()|string(), z:context()) -> {ok, map()} | {error, term()}.
@@ -345,8 +392,8 @@ get_by_psp(PspModule, PspExternalId, Context) ->
         [PspModule, PspExternalId],
         Context)
     of
-        undefined -> {error, notfound};
-        Props -> {ok, add_status_flags(Props)}
+        {ok, Props} -> {ok, add_status_flags(Props)};
+        {error, _} = Error -> Error
     end.
 
 add_status_flags(#{ <<"status">> := StatusBin, <<"psp_module">> := Psp } = Payment) ->
@@ -436,7 +483,7 @@ set_payment_status(PaymentId, Status, StatusDate, Context) ->
         Context).
 
 search_query({Offset, Limit}, Context) ->
-    Rows = z_db:qmap("
+    {ok, Rows} = z_db:qmap("
         select *
         from payment
         order by created desc
@@ -455,7 +502,7 @@ total(Context) ->
 
 %% @doc Return a list of all payments that are in a temporary status for longer
 %%      than an hour.
--spec list_status_check( z:context() ) -> list( map() ).
+-spec list_status_check( z:context() ) -> {ok, list( map() )} | {error, term()}.
 list_status_check(Context) ->
     LastHour = z_datetime:prev_hour( calendar:universal_time() ),
     z_db:qmap("
@@ -508,7 +555,7 @@ install(Context) ->
                     recurring_payment_id int,
 
                     psp_module character varying(64),
-                    psp_external_id character varying(64),
+                    psp_external_id character varying(128),
                     psp_payment_description text,
                     psp_data bytea,
 
@@ -583,6 +630,16 @@ install(Context) ->
                         create index payment_created_key
                         on payment (created)",
                         Context)
+            end,
+            case z_db:column(payment, psp_external_id, Context) of
+                {ok, #column_def{ length = L }} when L < 128 ->
+                    [] = z_db:q("
+                        alter table payment
+                        alter column psp_external_id type character varying(128)
+                        ", Context),
+                    z_db:flush(Context);
+                {ok, _} ->
+                    ok
             end,
             ok
     end.

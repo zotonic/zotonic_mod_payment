@@ -65,40 +65,32 @@
                                 {{ payment.status }}
                             </td>
                             <td class="clickable">
-                                {{ payment.description }}
+                                {{ payment.description|escape }}
                             </td>
                             <td style="text-align: right;" class="clickable">
                                 {{ payment.currency|replace:"EUR":"€" }}&nbsp;{{ payment.amount|format_price }}
                             </td>
                             <td class="clickable">
-                                <a href="{% url admin_edit_rsc id=payment.user_id %}">
-                                    {{ payment.name_first }} {{ payment.name_surname_prefix }} {{ payment.name_surname }}
-                                </a>
-                            </td>
-                            <td class="clickable">
-                                <a href="{% url admin_edit_rsc id=payment.user_id %}">
-                                    {{ payment.email }}
-                                </a>
-                            </td>
-                            <td class="clickable">
-                                {{ payment.phone }}
-                            </td>
-                            {#
-                            <td>
-                                <span class="pull-right buttons">
-                                    <a href="#" class="btn btn-default btn-xs" target="payment-psp">{_ view at PSP _}</a>
-
-                                    {% if payment.psp_module and payment.psp_external_id %}
-
-                                            <a href="{% url payment_psp_detail payment_nr=payment.payment_nr %}" class="btn btn-default btn-xs" target="payment-psp">{_ view at PSP _}</a>
-                                        </span>
-                                    {% else %}
-                                    <small class="pull-right text-muted">
-                                        {_ No PSP _}
-                                    </small>
+                                {% if payment.user_id %}
+                                    <a href="{% url admin_edit_rsc id=payment.user_id %}">
+                                        {{ payment.name_first|escape }} {{ payment.name_surname_prefix|escape }} {{ payment.name_surname|escape }}
+                                    </a>
+                                {% else %}
+                                    {{ payment.name_first|escape }} {{ payment.name_surname_prefix|escape }} {{ payment.name_surname|escape }}
                                 {% endif %}
                             </td>
-                            #}
+                            <td class="clickable">
+                                {% if payment.user_id %}
+                                    <a href="{% url admin_edit_rsc id=payment.user_id %}">
+                                        {{ payment.email|escape }}
+                                    </a>
+                                {% else %}
+                                    {{ payment.email|escape }}
+                                {% endif %}
+                            </td>
+                            <td class="clickable">
+                                {{ payment.phone|escape }}
+                            </td>
                         {% endblock %}
                     </tr>
                 {% empty %}

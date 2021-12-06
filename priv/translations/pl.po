@@ -6,169 +6,193 @@
 # NB: Consider using poEdit <http://poedit.sourceforge.net>
 #
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "POT-Creation-Date: 2021-12-06 12:54+0100\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"PO-Revision-Date: 2021-12-06 12:57+0100\n"
+"Language-Team: \n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 3.0\n"
+"Last-Translator: Marc Worrell <marc@worrell.nl>\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n"
+"%100<12 || n%100>14) ? 1 : 2);\n"
+"Language: pl\n"
 
 #: _build/default/lib/zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:47
 msgid "Address"
-msgstr ""
+msgstr "Adres"
 
 #: _build/default/lib/zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:11./_build/default/lib/zotonic_mod_payment/priv/templates/admin_payments.tpl:42
 msgid "Amount"
-msgstr ""
+msgstr "Kwota"
 
 #: _build/default/lib/zotonic_mod_payment/src/mod_payment.erl:133
-msgid ""
-"At the moment we cannot handle payments, please try again later."
+#, fuzzy
+msgid "At the moment we cannot handle payments, please try again later."
 msgstr ""
+"W tej chwili nie możemy obsługiwać płatności, proszę spróbować ponownie "
+"później."
 
 #: _build/default/lib/zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:109
 msgid "Change status"
-msgstr ""
+msgstr "Zmień status"
 
 #: _build/default/lib/zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:125
+#, fuzzy
 msgid ""
-"Changing the status can make the system inconsistent as the Payment "
-"Service Provider will not be in sync anymore."
+"Changing the status can make the system inconsistent as the Payment Service "
+"Provider will not be in sync anymore."
 msgstr ""
+"Zmiana statusu może spowodować, że system będzie niespójny, ponieważ "
+"dostawca usług płatniczych nie będzie już zsynchronizowany."
 
 #: _build/default/lib/zotonic_mod_payment/src/mod_payment.erl:179
-msgid ""
-"Checking status for pending and new transactions, come back later."
+#, fuzzy
+msgid "Checking status for pending and new transactions, come back later."
 msgstr ""
+"Sprawdzanie statusu dla oczekujących i nowych transakcji, wróć później."
 
 #: _build/default/lib/zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:130
 msgid "Close"
-msgstr ""
+msgstr "Zamknij"
 
 #: _build/default/lib/zotonic_mod_payment/priv/templates/payment_redirect_psp.tpl:12
 msgid "Close Window"
-msgstr ""
+msgstr "Zamknij okno"
 
 #: _build/default/lib/zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:31./_build/default/lib/zotonic_mod_payment/priv/templates/admin_payments.tpl:33
 msgid "Date"
-msgstr ""
+msgstr "Data"
 
 #: _build/default/lib/zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:21./_build/default/lib/zotonic_mod_payment/priv/templates/admin_payments.tpl:39
 msgid "Description"
-msgstr ""
+msgstr "Opis"
 
 #: _build/default/lib/zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:56./_build/default/lib/zotonic_mod_payment/priv/templates/admin_payments.tpl:48
 msgid "Email"
-msgstr ""
+msgstr "e-mail"
 
 #: _build/default/lib/zotonic_mod_payment/priv/templates/admin_payments.tpl:15
 msgid "Export"
-msgstr ""
+msgstr "Eksport"
 
 #: _build/default/lib/zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:37./_build/default/lib/zotonic_mod_payment/priv/templates/admin_payments.tpl:45
 msgid "Name"
-msgstr ""
+msgstr "Nazwa"
 
 #: _build/default/lib/zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:82
+#, fuzzy
 msgid "No PSP"
-msgstr ""
+msgstr "Brak PSP"
 
 #: _build/default/lib/zotonic_mod_payment/priv/templates/admin_payments.tpl:99
 msgid "No payments found."
-msgstr ""
+msgstr "Nie znaleziono płatności."
 
 #: _build/default/lib/zotonic_mod_payment/priv/templates/admin_payments.tpl:120
+#, fuzzy
 msgid "Only administrators are allowed to see payments"
-msgstr ""
+msgstr "Tylko administratorzy mogą widzieć płatności"
 
 #: _build/default/lib/zotonic_mod_payment/priv/templates/admin_payments.tpl:110
 msgid "Payment"
-msgstr ""
+msgstr "Płatność"
 
 #: _build/default/lib/zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:70
+#, fuzzy
 msgid "Payment Service Provider"
-msgstr ""
+msgstr "Dostawca usług płatniczych"
 
 #: _build/default/lib/zotonic_mod_payment/priv/templates/admin_payments.tpl:3./_build/default/lib/zotonic_mod_payment/priv/templates/admin_payments.tpl:7./_build/default/lib/zotonic_mod_payment/src/mod_payment.erl:204
 msgid "Payments"
-msgstr ""
+msgstr "Płatności"
 
 #: _build/default/lib/zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:63./_build/default/lib/zotonic_mod_payment/priv/templates/admin_payments.tpl:51
 msgid "Phone"
-msgstr ""
+msgstr "Telefon"
 
 #: _build/default/lib/zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:16
 msgid "Recurring"
-msgstr ""
+msgstr "Cykliczny"
 
 #: _build/default/lib/zotonic_mod_payment/priv/templates/payment_redirect_psp.tpl:17
+#, fuzzy
 msgid "Redirecting to payment service provider..."
-msgstr ""
+msgstr "Przekierowanie do dostawcy usług płatniczych..."
 
 #: _build/default/lib/zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:131
 msgid "Save"
-msgstr ""
+msgstr "Zapisz"
 
 #: _build/default/lib/zotonic_mod_payment/src/mod_payment.erl:126
+#, fuzzy
 msgid ""
-"Something went wrong whilst handling the payment request, please try "
-"again later."
+"Something went wrong whilst handling the payment request, please try again "
+"later."
 msgstr ""
+"Coś poszło nie tak podczas obsługi żądania zapłaty, proszę spróbować "
+"ponownie później."
 
 #: _build/default/lib/zotonic_mod_payment/src/mod_payment.erl:125./_build/default/lib/zotonic_mod_payment/src/mod_payment.erl:132
 msgid "Sorry"
-msgstr ""
+msgstr "Przepraszamy"
 
 #: _build/default/lib/zotonic_mod_payment/src/mod_payment.erl:138./_build/default/lib/zotonic_mod_payment/src/mod_payment.erl:150./_build/default/lib/zotonic_mod_payment/src/mod_payment.erl:162
+#, fuzzy
 msgid "Sorry, you are not allowed to do this."
-msgstr ""
+msgstr "Niestety, nie wolno ci tego robić."
 
 #: _build/default/lib/zotonic_mod_payment/priv/templates/payment_psp_done.tpl:42
+#, fuzzy
 msgid "Sorry, you are not allowed to view this payment."
-msgstr ""
+msgstr "Przepraszamy, nie masz uprawnień do oglądania tej płatności."
 
 #: _build/default/lib/zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:4./_build/default/lib/zotonic_mod_payment/priv/templates/admin_payments.tpl:36
 msgid "Status"
-msgstr ""
+msgstr "Status"
 
 #: _build/default/lib/zotonic_mod_payment/priv/templates/admin_payments.tpl:21
+#, fuzzy
 msgid "Sync new &amp; pending"
-msgstr ""
+msgstr "Synchronizacja nowych &amp; w toku"
 
 #: _build/default/lib/zotonic_mod_payment/priv/templates/payment_psp_done.tpl:25
 msgid "Thank you for your payment!"
-msgstr ""
+msgstr "Dziękujemy za zapłatę!"
 
 #: _build/default/lib/zotonic_mod_payment/priv/templates/payment_psp_done.tpl:19
+#, fuzzy
 msgid "Unknown payment"
-msgstr ""
+msgstr "Nieznana płatność"
 
 #: _build/default/lib/zotonic_mod_payment/priv/templates/payment_redirect_psp.tpl:8
+#, fuzzy
 msgid "Unknown payment or no detail page available."
-msgstr ""
+msgstr "Nieznana płatność lub brak strony szczegółów."
 
 #: _build/default/lib/zotonic_mod_payment/priv/templates/admin_payments.tpl:62
 msgid "Y-m-d H:i"
-msgstr ""
+msgstr "Y-m-d H:i"
 
 #: _build/default/lib/zotonic_mod_payment/src/mod_payment.erl:173./_build/default/lib/zotonic_mod_payment/src/mod_payment.erl:181
+#, fuzzy
 msgid "You do not have permission to change the status"
-msgstr ""
+msgstr "Nie masz uprawnień do zmiany statusu"
 
 #: _build/default/lib/zotonic_mod_payment/priv/templates/payment_psp_done.tpl:37
+#, fuzzy
 msgid "Your payment is pending."
-msgstr ""
+msgstr "Twoja płatność jest w trakcie realizacji."
 
 #: _build/default/lib/zotonic_mod_payment/priv/templates/payment_psp_done.tpl:31
+#, fuzzy
 msgid "Your payment was not handled."
-msgstr ""
+msgstr "Twoja płatność nie została zrealizowana."
 
 #: _build/default/lib/zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:76
+#, fuzzy
 msgid "view at {psp}"
-msgstr ""
+msgstr "widok na {psp}"

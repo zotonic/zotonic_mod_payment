@@ -21,7 +21,7 @@
 -mod_title("Payments").
 -mod_description("Payment services using Payment Service Provider modules").
 -mod_author("Driebit").
--mod_schema(5).
+-mod_schema(8).
 
 -author("Driebit <tech@driebit.nl>").
 
@@ -62,22 +62,35 @@ event(#submit{message={payment, Args} }, Context) ->
                 R -> z_convert:to_bool(R)
             end,
             Amount = case proplists:get_value(amount, Args) of
-                undefined -> z_convert:to_float(z_context:get_q_validated(amount, Context));
+                undefined -> z_convert:to_float(z_context:get_q_validated(<<"amount">>, Context));
                 ArgAmount -> ArgAmount
             end,
             Currency = case proplists:get_value(currency, Args) of
-                undefined -> ?PAYMENT_CURRENCY_DEFAULT;
+                undefined -> m_payment:default_currency(Context);
                 ArgCurrency -> ArgCurrency
             end,
+            DefaultDescription = m_payment:default_description(Context),
             Description = case proplists:get_value(description, Args) of
                 undefined ->
-                    case z_html:escape(z_context:get_q(<<"description">>, Context)) of
-                        <<>> -> proplists:get_value(default_description, Args);
-                        undefined -> proplists:get_value(default_description, Args);
-                        Desc -> Desc
+                    case z_context:get_q(<<"description">>, Context) of
+                        <<>> -> proplists:get_value(default_description, Args, DefaultDescription);
+                        undefined -> proplists:get_value(default_description, Args, DefaultDescription);
+                        Desc -> z_convert:to_binary(Desc)
                     end;
                 Desc ->
-                    Desc
+                    z_convert:to_binary(Desc)
+            end,
+            DescriptionRef = case z_context:get_q(<<"reference">>, Context) of
+                undefined -> Description;
+                Ref when is_binary(Ref) ->
+                    case z_string:trim(Ref) of
+                        <<>> ->
+                            Description;
+                        Ref1 when Description =:= <<>> ->
+                            Ref1;
+                        Ref1 ->
+                            <<Description/binary, " (", Ref1/binary, ")">>
+                    end
             end,
             ExtraProps = lists:filter(
                 fun
@@ -97,7 +110,8 @@ event(#submit{message={payment, Args} }, Context) ->
                 amount = Amount,
                 currency = Currency,
                 language = z_context:language(Context),
-                description_html = Description,
+                description_html = z_html:escape(DescriptionRef),
+                description = DescriptionRef,
                 is_qargs = true,
                 is_recurring_start = Recurring,
                 extra_props = ExtraProps
@@ -183,7 +197,7 @@ observe_search_query(#search_query{ search={payments, _Args}, offsetlimit=Offset
 observe_search_query(#search_query{}, _Context) ->
     undefined.
 
-observe_admin_menu(admin_menu, Acc, Context) ->
+observe_admin_menu(#admin_menu{}, Acc, Context) ->
     [
     #menu_item{id=admin_payments_overview,
                parent=admin_modules,
@@ -245,7 +259,7 @@ sync_pending(Context) ->
     ContextAsync = z_context:prune_for_async(Context),
     erlang:spawn(
         fun() ->
-            AllPending = m_payment:list_status_check(ContextAsync),
+            {ok, AllPending} = m_payment:list_status_check(ContextAsync),
             lists:map(
                 fun(#{ <<"id">> := PaymentId } = Payment) ->
                     PspSync = #payment_psp_status_sync{
