@@ -548,8 +548,10 @@ payment_psp_view_url(PaymentId, Context) ->
     when Days :: integer(),
          Context :: z:context().
 delete_old(Days, Context) when is_integer(Days), Days > 1 ->
-    N = z_db:q(
-        "delete from payment where modified < $1",
+    N = z_db:q("
+        delete from payment
+        where modified < $1
+          and (is_recurring_start = false or status <> 'paid')",
         [ z_datetime:to_datetime(z_datetime:timestamp() - 24*3600*Days) ],
         Context),
     {ok, N};
