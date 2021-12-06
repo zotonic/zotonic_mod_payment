@@ -252,9 +252,24 @@ observe_payment_request(#payment_request{} = Req, Context) ->
 
 
 %% @doc Every day all pending and new transactions are checked for external status changes.
+-spec observe_tick_24h(tick_24h, z:context()) -> ok.
 observe_tick_24h(tick_24h, Context) ->
-    sync_pending(Context).
+    delete_old(Context),
+    sync_pending(Context),
+    ok.
 
+%% @doc Delete all payments older than the configured 'delete_after_days' number of days.
+delete_old(Context) ->
+    case m_config:get_value(mod_payment, delete_after_days, Context) of
+        undefined ->
+            ok;
+        <<>> ->
+            ok;
+        Days ->
+            m_payment:delete_old(Days, Context)
+    end.
+
+%% @doc Fetch the PSP payment status for all non finalized payments.
 sync_pending(Context) ->
     ContextAsync = z_context:prune_for_async(Context),
     erlang:spawn(

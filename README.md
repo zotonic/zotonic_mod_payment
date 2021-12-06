@@ -45,6 +45,11 @@ Optional fields for the payment form:
  * `address_postcode` - Postcode of address (defaults to current user's)
  * `address_country` - Country of address, should be two letter ISO code (defaults to current user's)
  * `description` - Description of what has been ordered, could also be a referral identifier
+ * `note` - Optional user defined note
+ * `reference` - Optional user defined reference number, appended to the description.
+
+
+Other form fields will be stored as-is in the props of the payment record.
 
 
 Subscriptions / Recurring Payments
@@ -68,8 +73,8 @@ The subscription can be canceled with the following postback:
     %}
 
 
-PSP Modules
------------
+Payment Service Provider Modules
+--------------------------------
 
 This module provides the central payment administration. Interfacing with Payment Service Providers (PSP)
 is done using PSP specific modules.
@@ -81,3 +86,18 @@ PSP specific modules are being implemented for Stripe, Mollie and Buckaroo:
  * https://github.com/driebit/zotonic_mod_payment_buckaroo
 
 Please check the modules for PSP specific configurations.
+
+
+Configuration
+-------------
+
+There are several configuration keys:
+
+ * `mod_payment.description` default description for the payments. Can be overruled in the payment form or postback.
+ * `mod_payment.amount` default amount for payments, must be an integer value.
+ * `mod_payment.currency` default currency for payments, defaults to `EUR`.
+ * `mod_payment.delete_after_days` if set and greater than 1, then payments not modified for this number of days
+   are deleted. All payment data and payment logs are deleted. This is useful to retain as little personal information
+   for as short as needed (GDPR compliance).
+
+Check also the configuration keys for the PSP specific modules.

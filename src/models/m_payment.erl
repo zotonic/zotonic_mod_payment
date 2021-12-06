@@ -40,6 +40,8 @@
     search_query/2,
     list_status_check/1,
 
+    delete_old/2,
+
     install/1,
 
     indices/2
@@ -102,7 +104,7 @@ default_currency(Context) ->
 
 -spec default_amount( z:context() ) -> integer() | undefined.
 default_amount(Context) ->
-    case m_config:get_value(mod_payment, default_amount, Context) of
+    case m_config:get_value(mod_payment, amount, Context) of
         undefined -> undefined;
         <<>> -> undefined;
         Amount -> z_convert:to_integer(Amount)
@@ -538,6 +540,21 @@ payment_psp_view_url(PaymentId, Context) ->
         {error, _} = Error ->
             Error
     end.
+
+
+%% @doc Delete payments that are unmodified in the last N days. This is useful to prune the
+%% payments tables from personal information.
+-spec delete_old(Days, Context) -> {ok, integer()}
+    when Days :: integer(),
+         Context :: z:context().
+delete_old(Days, Context) when is_integer(Days), Days > 1 ->
+    N = z_db:q(
+        "delete from payment where modified < $1",
+        [ z_datetime:to_datetime(z_datetime:timestamp() - 24*3600*Days) ],
+        Context),
+    {ok, N};
+delete_old(_Days, _Context) ->
+    {ok, 0}.
 
 
 -spec install(z:context()) -> ok.
