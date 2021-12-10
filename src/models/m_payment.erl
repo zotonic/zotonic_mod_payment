@@ -78,7 +78,8 @@ m_get([ PaymentNr | Rest ], _Msg, Context) when is_binary(PaymentNr) ->
     case get(z_convert:to_binary(PaymentNr), Context) of
         {ok, #{ <<"user_id">> := UserId } = Payment} ->
             case z_acl:is_allowed(use, mod_payment, Context)
-                orelse z_acl:is_admin(Context)
+                orelse UserId =:= undefined
+                orelse UserId =:= z_acl:user(Context)
                 orelse z_acl:rsc_editable(UserId, Context)
             of
                 true ->
