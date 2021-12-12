@@ -226,9 +226,9 @@ observe_payment_request(#payment_request{} = Req, Context) ->
                 is_recurring_start = maps:get(<<"is_recurring_start">>, Payment)
             },
             case z_notifier:first(PspReq, Context) of
-                {ok, #payment_psp_handler{} = Handler} ->
+                {ok, #payment_psp_handler{ psp_module = PSPMod } = Handler} ->
                     lager:info("Payment: insert payment #~p, returned PSP handler is ~p",
-                               [ PaymentId, Handler ]),
+                               [ PaymentId, PSPMod ]),
                     ok = m_payment:update_psp_handler(PaymentId, Handler, Context),
                     #payment_request_redirect{
                         payment_id = PaymentId,
@@ -371,6 +371,7 @@ set_payment_status(PaymentId, Status, DT, Context) when is_integer(PaymentId), i
         {ok, changed} ->
             % Status is the new payment status
             {ok, Payment} = m_payment:get(PaymentId, Context),
+            maybe_send_email(Status, Payment, Context),
             z_notifier:notify(
                 #payment_status{
                     key = maps:get(<<"key">>, Payment),
@@ -398,6 +399,23 @@ validate_payment_status(cancelled) -> true;
 validate_payment_status(failed) -> true;
 validate_payment_status(refunded) -> true;
 validate_payment_status(error) -> true.
+
+
+%% @doc Maybe sent a "paid" email.
+maybe_send_email(paid, Payment, Context) ->
+    EmailPaid = z_convert:to_binary(m_config:get_value(mod_payment, email_paid, Context)),
+    Es = z_email_utils:extract_emails(EmailPaid),
+    lists:foreach(
+        fun(E) ->
+            Vs = [
+                {status, paid},
+                {payment, Payment}
+            ],
+            z_email:send_render(E, "_email_payment_paid.tpl", Vs, Context)
+        end,
+        Es);
+maybe_send_email(_Status, _Payment, _Context) ->
+    ok.
 
 
 %% @doc Install the payment and payment log tables.
