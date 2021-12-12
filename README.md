@@ -96,6 +96,7 @@ There are several configuration keys:
  * `mod_payment.description` default description for the payments. Can be overruled in the payment form or postback.
  * `mod_payment.amount` default amount for payments, must be an integer value.
  * `mod_payment.currency` default currency for payments, defaults to `EUR`.
+ * `mod_payment.email_paid` one of more email addresses to send an email for every payment that is set to `paid`.
  * `mod_payment.delete_after_days` if set and greater than 1, then payments not modified for this number of days
    are deleted. All payment data and payment logs are deleted. This is useful to retain as little personal information
    for as short as needed (GDPR compliance).
