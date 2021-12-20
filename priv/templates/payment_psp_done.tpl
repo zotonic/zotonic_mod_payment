@@ -14,31 +14,27 @@ TODO: we need a continuation url, optionally specify this when starting the paym
 #}
 
 {% block content %}
-    {% with m.payment[q.payment_nr] as payment %}
+    {% with m.payment.status[q.payment_nr] as payment %}
         {% if not payment %}
             <p class="alert alert-error">{_ Unknown payment _}</p>
-        {% elseif not payment.user_id or payment.user_id == m.acl.user or payment.user_id.is_editable %}
-            {% if payment.is_paid %}
-                {% block payment_paid %}
-                    <p>
-                        {_ Thank you for your payment! _}
-                    </p>
-                {% endblock %}
-            {% elseif payment.is_failed %}
-                {% block payment_failed %}
-                    <p>
-                        {_ Your payment was not handled. _}
-                    </p>
-                {% endblock %}
-            {% else %}
-                {% block payment_pending %}
-                    <p>
-                        {_ Your payment is pending. _}
-                    </p>
-                {% endblock %}
-            {% endif %}
+        {% elseif payment.is_paid %}
+            {% block payment_paid %}
+                <p>
+                    {_ Thank you for your payment! _}
+                </p>
+            {% endblock %}
+        {% elseif payment.is_failed %}
+            {% block payment_failed %}
+                <p>
+                    {_ Your payment was not handled. _}
+                </p>
+            {% endblock %}
         {% else %}
-            <p class="alert alert-error">{_ Sorry, you are not allowed to view this payment. _}</p>
+            {% block payment_pending %}
+                <p>
+                    {_ Your payment is pending. _}
+                </p>
+            {% endblock %}
         {% endif %}
     {% endwith %}
 {% endblock %}

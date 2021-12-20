@@ -53,7 +53,7 @@
             <th align="left" valign="top">{_ Name _}</th>
             <td valign="top">
                 {% if p.user_id %}
-                    <a href="{% url admin_edit_rsc id=p.user_id %}">{% include "_name.tpl" id=p.user_id %}</a>
+                    <a href="{% url admin_edit_rsc id=p.user_id absolute_url %}">{% include "_name.tpl" id=p.user_id %}</a>
                 {% else %}
                     {{ p.name_first|escape }} {{ p.name_surname_prefix|escape }} {{ p.name_surname|escape }}
                 {% endif %}
@@ -86,7 +86,7 @@
             <th align="left" valign="top">{_ Payment Service Provider _} &nbsp;</th>
             <td valign="top">
                 {% if p.psp_module and p.psp_external_id %}
-                    <a href="{% url payment_psp_detail payment_nr=p.payment_nr %}"
+                    <a href="{% url payment_psp_detail payment_nr=p.payment_nr absolute_url %}"
                        class="btn btn-primary btn-xs" target="payment-psp">
                         <span class="glyphicon glyphicon-new-window"></span>
                         {% trans "view at {psp}"

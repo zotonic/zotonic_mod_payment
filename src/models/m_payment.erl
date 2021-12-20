@@ -74,11 +74,31 @@ m_get([ <<"list_user">>, User | Rest ], _Msg, Context) ->
         false ->
             {error, eacces}
     end;
-m_get([ PaymentNr | Rest ], _Msg, Context) when is_binary(PaymentNr) ->
-    case get(z_convert:to_binary(PaymentNr), Context) of
+m_get([ <<"status">>, PaymentNr | Rest ], _Msg, Context) when is_binary(PaymentNr) ->
+    case get(PaymentNr, Context) of
         {ok, #{ <<"user_id">> := UserId } = Payment} ->
             case z_acl:is_allowed(use, mod_payment, Context)
                 orelse UserId =:= undefined
+                orelse UserId =:= z_acl:user(Context)
+                orelse z_acl:rsc_editable(UserId, Context)
+            of
+                true ->
+                    Status = #{
+                        <<"is_paid">> => maps:get(<<"is_paid">>, Payment),
+                        <<"is_failed">> => maps:get(<<"is_failed">>, Payment),
+                        <<"status">> => maps:get(<<"status">>, Payment)
+                    },
+                    {ok, {Status, Rest}};
+                false ->
+                    {error, eacces}
+            end;
+        {error, _} = Error ->
+            Error
+    end;
+m_get([ PaymentNr | Rest ], _Msg, Context) when is_binary(PaymentNr) ->
+    case get(PaymentNr, Context) of
+        {ok, #{ <<"user_id">> := UserId } = Payment} ->
+            case z_acl:is_allowed(use, mod_payment, Context)
                 orelse UserId =:= z_acl:user(Context)
                 orelse z_acl:rsc_editable(UserId, Context)
             of
