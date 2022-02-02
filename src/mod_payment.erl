@@ -44,6 +44,7 @@
     manage_schema/2
 ]).
 
+-include_lib("kernel/include/logger.hrl").
 -include_lib("zotonic_core/include/zotonic.hrl").
 -include_lib("zotonic_mod_admin/include/admin_menu.hrl").
 -include("../include/payment.hrl").
@@ -227,25 +228,25 @@ observe_payment_request(#payment_request{} = Req, Context) ->
             },
             case z_notifier:first(PspReq, Context) of
                 {ok, #payment_psp_handler{ psp_module = PSPMod } = Handler} ->
-                    lager:info("Payment: insert payment #~p, returned PSP handler is ~p",
-                               [ PaymentId, PSPMod ]),
+                    ?LOG_INFO("Payment: insert payment #~p, returned PSP handler is ~p",
+                              [ PaymentId, PSPMod ]),
                     ok = m_payment:update_psp_handler(PaymentId, Handler, Context),
                     #payment_request_redirect{
                         payment_id = PaymentId,
                         redirect_uri = Handler#payment_psp_handler.redirect_uri
                     };
                 {error, Reason} = Error ->
-                    lager:error("Payment: PSP error return value for payment #~p: ~p", [PaymentId, Reason]),
+                    ?LOG_ERROR("Payment: PSP error return value for payment #~p: ~p", [PaymentId, Reason]),
                     m_payment:set_payment_status(PaymentId, error, Context),
                     Error;
                 undefined ->
                     % Set the payment to 'NOPSP'
-                    lager:error("Payment: no PSP return value for payment #~p", [PaymentId]),
+                    ?LOG_ERROR("Payment: no PSP return value for payment #~p", [PaymentId]),
                     m_payment:set_payment_status(PaymentId, error, Context),
                     {error, no_psp}
             end;
         {error, Reason} = Error ->
-            lager:error("Payment: Could not insert payment, error ~p for payment ~p (qs: ~p)",
+            ?LOG_ERROR("Payment: Could not insert payment, error ~p for payment ~p (qs: ~p)",
                         [ Reason, Req, z_context:get_q_all_noz(Context) ]),
             Error
     end.
@@ -309,7 +310,7 @@ maybe_set_error(Payment, Context) ->
         true ->
             % Too old - set to error.
             PaymentId = maps:get(<<"id">>, Payment),
-            lager:info("Payment: Set payment ~p as error due to timeout.", [ PaymentId ]),
+            ?LOG_INFO("Payment: Set payment ~p as error due to timeout.", [ PaymentId ]),
             set_payment_status(PaymentId, error, Context);
         false ->
             ok
