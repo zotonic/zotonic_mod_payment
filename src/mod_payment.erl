@@ -1,8 +1,9 @@
 %% @author Marc Worrell <marc@worrell.nl>
-%% @copyright 2018-2021 Driebit BV
+%% @copyright 2018-2024 Driebit BV
 %% @doc Payment module. Interfacing to PSP modules.
+%% @end
 
-%% Copyright 2018-2021 Driebit BV
+%% Copyright 2018-2024 Driebit BV
 %%
 %% Licensed under the Apache License, Version 2.0 (the "License");
 %% you may not use this file except in compliance with the License.
@@ -228,26 +229,49 @@ observe_payment_request(#payment_request{} = Req, Context) ->
             },
             case z_notifier:first(PspReq, Context) of
                 {ok, #payment_psp_handler{ psp_module = PSPMod } = Handler} ->
-                    ?LOG_INFO("Payment: insert payment #~p, returned PSP handler is ~p",
-                              [ PaymentId, PSPMod ]),
+                    ?LOG_INFO(#{
+                        in => zotonic_mod_payment,
+                        text => <<"Payment: insert payment">>,
+                        result => ok,
+                        payment_id => PaymentId,
+                        psp => PSPMod
+                    }),
                     ok = m_payment:update_psp_handler(PaymentId, Handler, Context),
                     #payment_request_redirect{
                         payment_id = PaymentId,
                         redirect_uri = Handler#payment_psp_handler.redirect_uri
                     };
                 {error, Reason} = Error ->
-                    ?LOG_ERROR("Payment: PSP error return value for payment #~p: ~p", [PaymentId, Reason]),
+                    ?LOG_ERROR(#{
+                        in => zotonic_mod_payment,
+                        text => <<"Payment: PSP error return value for payment">>,
+                        result => error,
+                        reason => Reason,
+                        payment_id => PaymentId
+                    }),
                     m_payment:set_payment_status(PaymentId, error, Context),
                     Error;
                 undefined ->
                     % Set the payment to 'NOPSP'
-                    ?LOG_ERROR("Payment: no PSP return value for payment #~p", [PaymentId]),
+                    ?LOG_ERROR(#{
+                        in => zotonic_mod_payment,
+                        text => <<"Payment: no PSP return value for payment">>,
+                        result => error,
+                        reason => no_psp,
+                        payment_id => PaymentId
+                    }),
                     m_payment:set_payment_status(PaymentId, error, Context),
                     {error, no_psp}
             end;
         {error, Reason} = Error ->
-            ?LOG_ERROR("Payment: Could not insert payment, error ~p for payment ~p (qs: ~p)",
-                        [ Reason, Req, z_context:get_q_all_noz(Context) ]),
+            ?LOG_ERROR(#{
+                in => zotonic_mod_payment,
+                text => <<"Payment: Could not insert payment">>,
+                result => error,
+                reason => Reason,
+                payment_req => Req,
+                qargs => z_context:get_q_all_noz(Context)
+            }),
             Error
     end.
 
@@ -276,7 +300,12 @@ sync_pending(Context) ->
     erlang:spawn(
         fun() ->
             {ok, AllPending} = m_payment:list_status_check(ContextAsync),
-            lists:map(
+            ?LOG_INFO(#{
+                in => zotonic_mod_payment,
+                text => <<"Payment: checking pending payments - start">>,
+                count => length(AllPending)
+            }),
+            lists:foreach(
                 fun(#{ <<"id">> := PaymentId } = Payment) ->
                     PspSync = #payment_psp_status_sync{
                         payment_id = PaymentId,
@@ -293,7 +322,12 @@ sync_pending(Context) ->
                             maybe_set_error(Payment, ContextAsync)
                     end
                 end,
-                AllPending)
+                AllPending),
+            ?LOG_INFO(#{
+                in => zotonic_mod_payment,
+                text => <<"Payment: checking pending payments - done">>,
+                count => length(AllPending)
+            })
         end).
 
 psp_module(undefined) -> undefined;
@@ -310,7 +344,13 @@ maybe_set_error(Payment, Context) ->
         true ->
             % Too old - set to error.
             PaymentId = maps:get(<<"id">>, Payment),
-            ?LOG_INFO("Payment: Set payment ~p as error due to timeout.", [ PaymentId ]),
+            ?LOG_INFO(#{
+                in => zotonic_mod_payment,
+                text => <<"Payment: Set payment as error due to timeout.">>,
+                result => error,
+                reason => timeout,
+                payment_id => PaymentId
+            }),
             set_payment_status(PaymentId, error, Context);
         false ->
             ok

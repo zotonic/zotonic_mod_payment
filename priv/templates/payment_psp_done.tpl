@@ -16,7 +16,7 @@ TODO: we need a continuation url, optionally specify this when starting the paym
 {% block content %}
     {% with m.payment.status[q.payment_nr] as payment %}
         {% if not payment %}
-            <p class="alert alert-error">{_ Unknown payment _}</p>
+            <p class="alert alert-danger">{_ Unknown payment _}</p>
         {% elseif payment.is_paid %}
             {% block payment_paid %}
                 <p>
