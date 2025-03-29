@@ -10,10 +10,16 @@ Payment form
 
 To add a payment form to your website, make a form with the following postback:
 
-    {% wire id="mypayment" type="submit" postback={payment key="web-donation"} delegate=`mod_payment %}
-    <form id="mypayment" method="post" action="postback">
-        ...
-    </form>
+```django
+{% wire id="mypayment"
+        type="submit"
+        postback={payment key="web-donation"}
+        delegate=`mod_payment
+%}
+<form id="mypayment" method="post" action="postback">
+    ...
+</form>
+```
 
 Optional arguments of the payment postback:
 
