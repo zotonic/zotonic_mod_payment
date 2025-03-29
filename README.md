@@ -74,9 +74,12 @@ Any user can have at most one (1) subscription.
 
 The subscription can be canceled with the following postback:
 
-    {% wire id='cancel-subscription-button'
-            postback={cancel_subscription}
-    %}
+```django
+{% wire id='cancel-subscription-button'
+        postback={cancel_recurring}
+        delegate=`mod_payment`
+%}
+```
 
 
 Payment Service Provider Modules
