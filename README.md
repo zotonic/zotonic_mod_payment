@@ -82,7 +82,7 @@ is done using PSP specific modules.
 PSP specific modules are being implemented for Stripe, Mollie and Buckaroo:
 
  * https://github.com/zotonic/zotonic_mod_payment_stripe
- * https://github.com/driebit/zotonic_mod_payment_mollie
+ * https://github.com/zotonic/zotonic_mod_payment_mollie
  * https://github.com/driebit/zotonic_mod_payment_buckaroo
 
 Please check the modules for PSP specific configurations.
