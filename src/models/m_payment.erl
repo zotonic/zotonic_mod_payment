@@ -142,7 +142,7 @@ default_amount(Context) ->
          Context :: z:context(),
          Payments :: [ map() ].
 list_user(UserId, Context) ->
-    L = z_db:assoc("
+    L = z_db:qmap("
         select *
         from payment
         where user_id = $1
