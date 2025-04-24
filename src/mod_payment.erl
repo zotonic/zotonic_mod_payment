@@ -31,6 +31,8 @@
     observe_search_query/2,
     observe_payment_request/2,
 
+    payment_request_from_query/4,
+
     observe_tick_24h/2,
 
     observe_export_resource_visible/2,
@@ -59,65 +61,7 @@ event(#submit{message={payment, Args} }, Context) ->
     end,
     case is_allowed(UserId, Context) of
         true ->
-            Recurring = case proplists:get_value(is_recurring_start, Args) of
-                undefined -> z_convert:to_bool( z_context:get_q(<<"is_recurring_start">>, Context) );
-                R -> z_convert:to_bool(R)
-            end,
-            Amount = case proplists:get_value(amount, Args) of
-                undefined -> z_convert:to_float(z_context:get_q_validated(<<"amount">>, Context));
-                ArgAmount -> ArgAmount
-            end,
-            Currency = case proplists:get_value(currency, Args) of
-                undefined -> m_payment:default_currency(Context);
-                ArgCurrency -> ArgCurrency
-            end,
-            DefaultDescription = m_payment:default_description(Context),
-            Description = case proplists:get_value(description, Args) of
-                undefined ->
-                    case z_context:get_q(<<"description">>, Context) of
-                        <<>> -> proplists:get_value(default_description, Args, DefaultDescription);
-                        undefined -> proplists:get_value(default_description, Args, DefaultDescription);
-                        Desc -> z_convert:to_binary(Desc)
-                    end;
-                Desc ->
-                    z_convert:to_binary(Desc)
-            end,
-            DescriptionRef = case z_context:get_q(<<"reference">>, Context) of
-                undefined -> Description;
-                Ref when is_binary(Ref) ->
-                    case z_string:trim(Ref) of
-                        <<>> ->
-                            Description;
-                        Ref1 when Description =:= <<>> ->
-                            Ref1;
-                        Ref1 ->
-                            <<Description/binary, " (", Ref1/binary, ")">>
-                    end
-            end,
-            ExtraProps = lists:filter(
-                fun
-                    ({key, _}) -> false;
-                    ({amount, _}) -> false;
-                    ({currency, _}) -> false;
-                    ({user_id, _}) -> false;
-                    ({is_recurring_start, _}) -> false;
-                    ({description, _}) -> false;
-                    ({default_description, _}) -> false;
-                    ({_, _}) -> true
-                end,
-                Args),
-            PaymentRequest = #payment_request{
-                key = z_convert:to_binary(Key),
-                user_id = UserId,
-                amount = Amount,
-                currency = Currency,
-                language = z_context:language(Context),
-                description_html = z_html:escape(DescriptionRef),
-                description = DescriptionRef,
-                is_qargs = true,
-                is_recurring_start = Recurring,
-                extra_props = ExtraProps
-            },
+            PaymentRequest = payment_request_from_query(Key, UserId, Args, Context),
             case z_notifier:first(PaymentRequest, Context) of
                 #payment_request_redirect{ redirect_uri = RedirectUri } ->
                     z_render:wire({redirect, [ {location, RedirectUri} ]}, Context);
@@ -188,6 +132,69 @@ is_allowed(UserId, Context) ->
     orelse z_acl:is_admin(Context)
     orelse z_acl:is_allowed(use, mod_payment, Context).
 
+%% @doc Extract a payment request from the arguments, with a fallback to the query
+%% arguments.
+payment_request_from_query(Key, UserId, Args, Context) ->
+    Recurring = case proplists:get_value(is_recurring_start, Args) of
+        undefined -> z_convert:to_bool( z_context:get_q(<<"is_recurring_start">>, Context) );
+        R -> z_convert:to_bool(R)
+    end,
+    Amount = case proplists:get_value(amount, Args) of
+        undefined -> z_convert:to_float(z_context:get_q(<<"amount">>, Context));
+        ArgAmount -> ArgAmount
+    end,
+    Currency = case proplists:get_value(currency, Args) of
+        undefined -> m_payment:default_currency(Context);
+        ArgCurrency -> ArgCurrency
+    end,
+    DefaultDescription = m_payment:default_description(Context),
+    Description = case proplists:get_value(description, Args) of
+        undefined ->
+            case z_context:get_q(<<"description">>, Context) of
+                <<>> -> proplists:get_value(default_description, Args, DefaultDescription);
+                undefined -> proplists:get_value(default_description, Args, DefaultDescription);
+                Desc -> z_convert:to_binary(Desc)
+            end;
+        Desc ->
+            z_convert:to_binary(Desc)
+    end,
+    DescriptionRef = case z_context:get_q(<<"reference">>, Context) of
+        undefined -> Description;
+        Ref when is_binary(Ref) ->
+            case z_string:trim(Ref) of
+                <<>> ->
+                    Description;
+                Ref1 when Description =:= <<>> ->
+                    Ref1;
+                Ref1 ->
+                    <<Description/binary, " (", Ref1/binary, ")">>
+            end
+    end,
+    ExtraProps = lists:filter(
+        fun
+            ({key, _}) -> false;
+            ({amount, _}) -> false;
+            ({currency, _}) -> false;
+            ({user_id, _}) -> false;
+            ({is_recurring_start, _}) -> false;
+            ({description, _}) -> false;
+            ({default_description, _}) -> false;
+            ({_, _}) -> true
+        end,
+        Args),
+    #payment_request{
+        key = z_convert:to_binary(Key),
+        user_id = UserId,
+        amount = Amount,
+        currency = Currency,
+        language = z_context:language(Context),
+        description_html = z_html:escape(DescriptionRef),
+        description = DescriptionRef,
+        is_qargs = true,
+        is_recurring_start = Recurring,
+        extra_props = ExtraProps
+    }.
+
 
 observe_search_query(#search_query{ search={payments, _Args}, offsetlimit=OffsetLimit }, Context) ->
     case z_acl:is_allowed(use, mod_payment, Context) orelse z_acl:is_admin(Context) of
@@ -208,6 +215,7 @@ observe_admin_menu(#admin_menu{}, Acc, Context) ->
                visiblecheck={acl, use, mod_payment}}
     | Acc
     ].
+
 
 
 %% @doc Payment request - create payment and check if a payment service provider module

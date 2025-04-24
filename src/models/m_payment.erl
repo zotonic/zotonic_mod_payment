@@ -279,7 +279,7 @@ extra_props(Props, false, _Context) ->
             ({_, undefined}) -> false;
             ({_, <<>>}) -> false;
             ({_, ""}) -> false;
-            ({K, V}) -> {z_string:to_name(K), V};
+            ({K, V}) -> {true, {z_string:to_name(K), V}};
             (_) -> false
         end,
         Props),
@@ -317,6 +317,7 @@ qargs_props(true, Context) ->
 
 % We should have an email address, or an user-id, and name + phone no.
 validate_payment(Payment) ->
+    IsPaymentLink = maps:get(<<"is_payment_link">>, Payment, false),
     Validations = [
         {<<"amount">>,  fun() ->
                             is_number(maps:get(<<"amount">>, Payment, undefined))
@@ -328,6 +329,7 @@ validate_payment(Payment) ->
         {<<"contact">>, fun() ->
                             is_integer(maps:get(<<"user_id">>, Payment, undefined))
                             orelse (not z_utils:is_empty(maps:get(<<"name_surname">>, Payment, undefined)))
+                            orelse IsPaymentLink
                         end}
     ],
     check(Validations).
@@ -341,7 +343,7 @@ check([ {Reason, F} | Vs ]) ->
     end.
 
 is_email_address(undefined) ->
-    false;
+    true;
 is_email_address(Email) ->
     z_email_utils:is_email(Email).
 

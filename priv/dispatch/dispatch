@@ -4,5 +4,7 @@
 
     {payments_admin_overview, [ "admin", "payments" ], controller_admin, [ {template, "admin_payments.tpl"} ]},
 
+    {payment_link, [ "payment", "link" ], controller_payment_link, []},
+
     {export_payments_csv, ["payments", "export", "csv"], controller_export, [{content_type, "text/csv"}]}
 ].
