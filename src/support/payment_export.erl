@@ -51,7 +51,7 @@ data(Context) ->
     {ok, Result}.
 
 values(Item, Context) ->
-    [ z_datetime:format(proplists:get_value(created, Item), "c", Context)
+    [ z_datetime:format(maps:get(<<"created">>, Item), "c", Context)
     , maps:get(<<"status">>, Item)
     , maps:get(<<"description">>, Item)
     , maps:get(<<"currency">>, Item)
