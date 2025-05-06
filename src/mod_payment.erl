@@ -144,7 +144,11 @@ payment_request_from_query(Key, UserId, Args, Context) ->
         ArgAmount -> ArgAmount
     end,
     Currency = case proplists:get_value(currency, Args) of
-        undefined -> m_payment:default_currency(Context);
+        undefined ->
+            case currency( z_context:get_q(<<"currency">>, Context) ) of
+                <<>> -> m_payment:default_currency(Context);
+                QCurrency -> QCurrency
+            end;
         ArgCurrency -> ArgCurrency
     end,
     DefaultDescription = m_payment:default_description(Context),
@@ -194,6 +198,20 @@ payment_request_from_query(Key, UserId, Args, Context) ->
         is_recurring_start = Recurring,
         extra_props = ExtraProps
     }.
+
+-define(is_upper(C), (C >= $A andalso C =< $Z)).
+
+currency(undefined) -> <<>>;
+currency(<<>>) -> <<>>;
+currency(<<"EUR">>) -> <<"EUR">>;
+currency(<<"USD">>) -> <<"USD">>;
+currency(<<"CAD">>) -> <<"CAD">>;
+currency(<<"GBP">>) -> <<"GBP">>;
+currency(<<"SEK">>) -> <<"SEK">>;
+currency(<<A, B, C>>) when ?is_upper(A), ?is_upper(B), ?is_upper(C) ->
+    % We might want to replace this with a list of known currencies.
+    <<A, B, C>>;
+currency(_) -> <<>>.
 
 
 observe_search_query(#search_query{ search={payments, _Args}, offsetlimit=OffsetLimit }, Context) ->
