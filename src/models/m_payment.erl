@@ -28,6 +28,7 @@
     default_amount/1,
 
     list_user/2,
+    list_email/2,
 
     insert/2,
     insert_recurring_payment/4,
@@ -75,6 +76,15 @@ m_get([ <<"list_user">>, User | Rest ], _Msg, Context) ->
     of
         true ->
             {ok, {list_user(UserId, Context), Rest}};
+        false ->
+            {error, eacces}
+    end;
+m_get([ <<"list_email">>, Email | Rest ], _Msg, Context) ->
+    case z_acl:is_allowed(use, mod_payment, Context)
+         orelse z_acl:is_admin(Context)
+    of
+        true ->
+            {ok, {list_email(Email, Context), Rest}};
         false ->
             {error, eacces}
     end;
@@ -154,6 +164,26 @@ list_user(UserId, Context) ->
             add_status_flags(P)
         end,
         L).
+
+%% @doc Fetch all payments with a specific email address, newest first
+-spec list_email(Email, Context) -> Payments
+    when Email :: binary(),
+         Context :: z:context(),
+         Payments :: [ map() ].
+list_email(Email, Context) ->
+    {ok, L} = z_db:qmap("
+        select *
+        from payment
+        where lower(email) = lower($1)
+        order by created desc",
+        [Email],
+        Context),
+    lists:map(
+        fun(P) ->
+            add_status_flags(P)
+        end,
+        L).
+
 
 %% @doc Create new payment.
 -spec insert(PaymentReq, Context) -> {ok, PaymentId} | {error, term()}
