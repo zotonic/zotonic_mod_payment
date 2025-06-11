@@ -87,11 +87,10 @@ m_get([ <<"status">>, PaymentNr | Rest ], _Msg, Context) when is_binary(PaymentN
                 orelse z_acl:rsc_editable(UserId, Context)
             of
                 true ->
-                    Status = #{
-                        <<"is_paid">> => maps:get(<<"is_paid">>, Payment),
-                        <<"is_failed">> => maps:get(<<"is_failed">>, Payment),
-                        <<"status">> => maps:get(<<"status">>, Payment)
-                    },
+                    Status = maps:with([ <<"status">>, <<"is_paid">>, <<"is_failed">>,
+                                         <<"is_recurring_start">>,
+                                         <<"currency">>, <<"amount">> ],
+                                        Payment),
                     {ok, {Status, Rest}};
                 false ->
                     {error, eacces}
