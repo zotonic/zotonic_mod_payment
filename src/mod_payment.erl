@@ -214,7 +214,7 @@ currency(<<A, B, C>>) when ?is_upper(A), ?is_upper(B), ?is_upper(C) ->
 currency(_) -> <<>>.
 
 
-observe_search_query(#search_query{ search={payments, _Args}, offsetlimit=OffsetLimit }, Context) ->
+observe_search_query(#search_query{name = <<"payments">>, offsetlimit=OffsetLimit }, Context) ->
     case z_acl:is_allowed(use, mod_payment, Context) orelse z_acl:is_admin(Context) of
         true ->
             m_payment:search_query(OffsetLimit, Context);
@@ -391,14 +391,15 @@ observe_export_resource_visible(#export_resource_visible{dispatch = export_payme
 observe_export_resource_visible(_, _) ->
     undefined.
 
--spec observe_export_resource_filename(#export_resource_filename{}, z:context()) -> {ok, binary()}.
+-spec observe_export_resource_filename(#export_resource_filename{}, z:context()) -> {ok, binary()} | undefined.
 observe_export_resource_filename(#export_resource_filename{dispatch = export_payments_csv}, Context) ->
-    {ok, iolist_to_binary([<<"payments-">>, z_datetime:format(z_utils:now(), "Ymd-His", Context)])};
+    FormattedDate = z_datetime:format(calendar:universal_time(), "Ymd-His", Context),
+    {ok, iolist_to_binary([<<"payments-">>, FormattedDate])};
 observe_export_resource_filename(_, _) ->
     undefined.
 
 %% @doc Add CSV headers
--spec observe_export_resource_header(#export_resource_header{}, z:context()) -> tuple().
+-spec observe_export_resource_header(#export_resource_header{}, z:context()) -> {ok, list()} | undefined.
 observe_export_resource_header(#export_resource_header{dispatch = export_payments_csv}, _Context) ->
     {ok, payment_export:headers()};
 observe_export_resource_header(_, _) ->
@@ -409,15 +410,10 @@ observe_export_resource_data(#export_resource_data{dispatch = export_payments_cs
 observe_export_resource_data(_, _) ->
     undefined.
 
--spec observe_export_resource_encode(#export_resource_encode{}, z:context()) -> {ok, binary()}.
+-spec observe_export_resource_encode(#export_resource_encode{}, z:context()) -> {ok, binary()} | undefined.
 observe_export_resource_encode(#export_resource_encode{dispatch = export_payments_csv, data = Item}, Context) ->
-    case payment_export:values(Item, Context) of
-        undefined ->
-            %% Ignore item
-            {ok, <<>>};
-        Values ->
-            {ok, export_encode_csv:encode(Values, Context)}
-    end;
+    Values = payment_export:values(Item, Context),
+    {ok, export_encode_csv:encode(Values, Context)};
 observe_export_resource_encode(_, _) ->
     undefined.
 

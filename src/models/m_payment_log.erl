@@ -25,11 +25,12 @@
 
 -include_lib("zotonic_core/include/zotonic.hrl").
 
--spec log(PaymentId, Event, Props, Context) -> {ok, integer()}
-    when PaymentId :: integer(),
-         Event :: binary() | atom() | string(),
-         Props :: map() | proplists:proplist(),
-         Context :: z:context().
+-spec log(PaymentId, Event, Props, Context) -> Result when 
+      PaymentId :: integer(),
+      Event :: binary() | atom() | string(),
+      Props :: map() | proplists:proplist(),
+      Context :: z:context(),
+      Result :: {ok, integer() | undefined} | {error, term()}.
 log(PaymentId, Event, Props, Context) when is_list(Props) ->
     Ps1 = [ {z_convert:to_binary(K), V} || {K, V} <- Props ],
     log(PaymentId, Event, maps:from_list(Ps1), Context);
