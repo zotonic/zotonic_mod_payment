@@ -46,8 +46,9 @@ headers() ->
         country
     ].
 
+-spec data(z:context()) -> {ok, list()}.
 data(Context) ->
-    #search_result{result = Result} = z_search:search(payments, {1, 100000}, Context),
+    #search_result{result = Result} = z_search:search({<<"payments">>, #{}}, {1, 100000}, Context),
     {ok, Result}.
 
 values(Item, Context) ->

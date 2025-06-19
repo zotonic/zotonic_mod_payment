@@ -417,15 +417,24 @@ language(UserId, Context) ->
         Lang -> Lang
     end.
 
--spec get(integer()|binary()|string(), z:context()) -> {ok, map()} | {error, term()}.
+-spec get(PaymentId, Context) -> Result when
+      PaymentId :: integer() | binary() | string(),
+      Context :: z:context(),
+      Result :: {ok, map()} | {error, Reason},
+      Reason :: notfound | z_db:query_error().
 get(PaymentId, Context) when is_integer(PaymentId) ->
     case z_db:qmap_row(
         "select * from payment where id = $1",
         [PaymentId],
         Context)
     of
-        {ok, Props} -> {ok, add_status_flags(Props)};
-        {error, _} = Error -> Error
+        {ok, Props} ->
+            {ok, add_status_flags(Props)};
+        {error, enoent} ->
+            % map enoent to notfound, which is used by other modules
+            {error, notfound};
+        {error, _} = Error ->
+            Error
     end;
 get(PaymentNr, Context) when is_binary(PaymentNr); is_list(PaymentNr) ->
     case z_db:qmap_row(
@@ -433,11 +442,21 @@ get(PaymentNr, Context) when is_binary(PaymentNr); is_list(PaymentNr) ->
         [PaymentNr],
         Context)
     of
-        {ok, Props} -> {ok, add_status_flags(Props)};
-        {error, _} = Error -> Error
+        {ok, Props} ->
+            {ok, add_status_flags(Props)};
+        {error, enoent} ->
+            % map enoent to notfound, which is used by other modules
+            {error, notfound};
+        {error, _} = Error ->
+            Error
     end.
 
--spec get_by_psp(atom(), binary()|string(), z:context()) -> {ok, map()} | {error, term()}.
+-spec get_by_psp(PspModule, PspExternalId, Context) -> Result when
+    PspModule :: module(),
+    PspExternalId :: binary() | string(),
+    Context :: z:context(),
+    Result :: {ok, map()} | {error, Reason},
+    Reason :: notfound | z_db:query_error().
 get_by_psp(_Module, <<>>, _Context) ->
     {error, notfound};
 get_by_psp(_Module, "", _Context) ->
@@ -450,8 +469,13 @@ get_by_psp(PspModule, PspExternalId, Context) ->
         [PspModule, PspExternalId],
         Context)
     of
-        {ok, Props} -> {ok, add_status_flags(Props)};
-        {error, _} = Error -> Error
+        {ok, Props} ->
+            {ok, add_status_flags(Props)};
+        {error, enoent} ->
+            % map enoent to notfound, which is used by other modules
+            {error, notfound};
+        {error, _} = Error ->
+            Error
     end.
 
 add_status_flags(#{ <<"status">> := StatusBin, <<"psp_module">> := Psp } = Payment) ->
