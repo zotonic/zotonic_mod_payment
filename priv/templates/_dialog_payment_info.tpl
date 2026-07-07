@@ -38,8 +38,8 @@
             <td>
                 {% if p.user_id %}
                     <a href="{% url admin_edit_rsc id=p.user_id %}">{% include "_name.tpl" id=p.user_id %}</a>
-                    {% if p.name_first|escape != p.user_id.name_first
-                          or p.name_surname|escape != p.user_id.name_surname
+                    {% if    p.name_first|escape|default:'' != p.user_id.name_first|default:''
+                          or p.name_surname|escape|default:'' != p.user_id.name_surname|default:''
                     %}
                         <span class="text-muted">({{ p.name_first|escape }} {{ p.name_surname_prefix|escape }} {{ p.name_surname|escape }})</span>
                     {% endif %}
