@@ -1,4 +1,4 @@
-{% with m.payment[q.payment_nr] as p %}
+{% with m.payment[payment_nr|default:q.payment_nr] as p %}
     <table class="table">
         <tr>
             <th>{_ Status _}</th>
@@ -38,6 +38,11 @@
             <td>
                 {% if p.user_id %}
                     <a href="{% url admin_edit_rsc id=p.user_id %}">{% include "_name.tpl" id=p.user_id %}</a>
+                    {% if p.name_first|escape != p.user_id.name_first
+                          or p.name_surname|escape != p.user_id.name_surname
+                    %}
+                        <span class="text-muted">({{ p.name_first|escape }} {{ p.name_surname_prefix|escape }} {{ p.name_surname|escape }})</span>
+                    {% endif %}
                 {% else %}
                     {{ p.name_first|escape }} {{ p.name_surname_prefix|escape }} {{ p.name_surname|escape }}
                 {% endif %}
@@ -48,7 +53,7 @@
             <td>
                 {% if p.address_street_1 %}{{ p.address_street_1|escape }}<br>{% endif %}
                 {% if p.address_street_2 %}{{ p.address_street_2|escape }}<br>{% endif %}
-                {% if p.address_postcode or p.address_city%}{{ p.address_postcode|escape }}  {{ p.address_city|escape }}<br>{% endif %}
+                {% if p.address_postcode or p.address_city%}{{ p.address_postcode|escape }} {{ p.address_city|escape }}<br>{% endif %}
                 {{ m.l10n.country_name[p.address_country]|escape }}
             </td>
         </tr>

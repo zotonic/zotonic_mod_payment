@@ -35,6 +35,7 @@
     get/2,
     get_by_psp/3,
     update_psp_handler/3,
+    maybe_update_contact/3,
     payment_psp_view_url/2,
     set_payment_status/3,
     set_payment_status/4,
@@ -53,6 +54,20 @@
 
 -include_lib("zotonic_core/include/zotonic.hrl").
 -include("../../include/payment.hrl").
+
+-define(CONTACT_FIELDS, [
+    <<"name_first">>,
+    <<"name_surname_prefix">>,
+    <<"name_surname">>,
+    <<"address_street_1">>,
+    <<"address_street_2">>,
+    <<"address_postcode">>,
+    <<"address_city">>,
+    <<"address_state">>,
+    <<"address_country">>,
+    <<"email">>,
+    <<"phone">>
+]).
 
 m_get([ <<"default">>, <<"currency">> | Rest ], _Msg, Context) ->
     {ok, {default_currency(Context), Rest}};
@@ -470,6 +485,191 @@ update_psp_handler(PaymentId, Handler, Context) ->
         1 -> ok;
         0 -> {error, notfound}
     end.
+
+%% @doc Fill missing contact details for a payment link after the PSP payment
+%%      form has been submitted. This is intentionally gated on status 'new',
+%%      so later PSP status polls or webhook retries don't keep updating the
+%%      local payment details.
+-spec maybe_update_contact(PaymentId, Contact, Context) -> Result
+    when
+        PaymentId :: integer(),
+        Contact :: map(),
+        Context :: z:context(),
+        Result :: ok | {error, need_contact | term()}.
+maybe_update_contact(PaymentId, Contact, Context) when is_integer(PaymentId), is_map(Contact) ->
+    case get_props(PaymentId, Context) of
+        {ok, Payment} ->
+            case should_update_payment_link_contact(Payment) of
+                true ->
+                    update_empty_contact_fields(PaymentId, Payment, Contact, Context);
+                false ->
+                    ok
+            end;
+        {error, _} = Error ->
+            Error
+    end.
+
+get_props(PaymentId, Context) ->
+    case z_db:qmap_props_row(
+        "select * from payment where id = $1",
+        [PaymentId],
+        Context)
+    of
+        {ok, Props} -> {ok, add_status_flags(Props)};
+        {error, _} = Error -> Error
+    end.
+
+should_update_payment_link_contact(Payment) ->
+    maps:get(<<"status">>, Payment, undefined) =:= new
+        andalso is_payment_link(Payment)
+        andalso (is_empty(<<"email">>, Payment)
+            orelse is_name_missing(Payment)
+            orelse is_address_missing(Payment)
+            orelse is_empty(<<"phone">>, Payment)).
+
+is_payment_link(#{ <<"props">> := #{ <<"is_payment_link">> := IsPaymentLink } }) ->
+    z_convert:to_bool(IsPaymentLink);
+is_payment_link(#{ <<"props">> := #{ is_payment_link := IsPaymentLink } }) ->
+    z_convert:to_bool(IsPaymentLink);
+is_payment_link(#{ <<"is_payment_link">> := IsPaymentLink }) ->
+    z_convert:to_bool(IsPaymentLink);
+is_payment_link(_) ->
+    false.
+
+update_empty_contact_fields(PaymentId, Payment, Contact, Context) ->
+    Contact1 = normalize_contact(Contact),
+    case has_contact_value(Contact1) of
+        true ->
+            ok = update_empty_contact_fields_1(PaymentId, Payment, Contact1, Context),
+            maybe_need_contact(Payment, Contact1);
+        false ->
+            maybe_need_contact(Payment, Contact1)
+    end.
+
+normalize_contact(Contact) ->
+    Contact1 = maps:from_list([
+        {Field, normalize_contact_value(maps:get(Field, Contact, undefined))}
+        || Field <- ?CONTACT_FIELDS
+    ]),
+    Contact1#{
+        <<"address_country">> => normalize_country(maps:get(<<"address_country">>, Contact, undefined))
+    }.
+
+normalize_contact_value(undefined) ->
+    <<>>;
+normalize_contact_value(Value) ->
+    z_string:truncate(z_string:trim(z_convert:to_binary(Value)), 200, <<>>).
+
+normalize_country(undefined) ->
+    <<>>;
+normalize_country(Value) ->
+    Value1 = z_string:trim(z_convert:to_binary(Value)),
+    Iso = case catch l10n_country2iso:country2iso(Value1) of
+        IsoCode when is_binary(IsoCode), IsoCode =/= <<>> ->
+            IsoCode;
+        _ ->
+            Value1
+    end,
+    z_string:truncate(z_string:to_lower(Iso), 8, <<>>).
+
+has_contact_value(Contact) ->
+    lists:any(
+        fun(Field) ->
+            not z_utils:is_empty(maps:get(Field, Contact, undefined))
+        end,
+        ?CONTACT_FIELDS).
+
+maybe_need_contact(Payment, Contact) ->
+    case needs_contact_fetch(Payment, Contact) of
+        true -> {error, need_contact};
+        false -> ok
+    end.
+
+needs_contact_fetch(Payment, Contact) ->
+    (is_empty(<<"email">>, Payment) andalso is_empty(<<"email">>, Contact))
+        orelse (is_name_missing(Payment) andalso not has_name(Contact))
+        orelse (is_address_missing(Payment) andalso not has_address(Contact)).
+
+update_empty_contact_fields_1(PaymentId, Payment, Contact, Context) ->
+    IsNameUpdate = is_name_missing(Payment) andalso has_name(Contact),
+    IsAddressUpdate = case is_address_missing(Payment) of
+        true ->
+            has_address(Contact);
+        false ->
+            has_complete_address(Contact)
+    end,
+    case z_db:q("
+        update payment
+        set name_first = case when $13 then $2 else name_first end,
+            name_surname_prefix = case when $13 then $3 else name_surname_prefix end,
+            name_surname = case when $13 then $4 else name_surname end,
+            address_street_1 = case when $14 then $5 else address_street_1 end,
+            address_street_2 = case when $14 then $6 else address_street_2 end,
+            address_postcode = case when $14 then $7 else address_postcode end,
+            address_city = case when $14 then $8 else address_city end,
+            address_state = case when $14 then $9 else address_state end,
+            address_country = case when $14 then $10 else address_country end,
+            email = case when (email is null or email = '') and $11 <> '' then $11 else email end,
+            phone = case when (phone is null or phone = '') and $12 <> '' then $12 else phone end
+        where id = $1
+          and status = 'new'
+        ",
+        [
+            PaymentId,
+            maps:get(<<"name_first">>, Contact),
+            maps:get(<<"name_surname_prefix">>, Contact),
+            maps:get(<<"name_surname">>, Contact),
+            maps:get(<<"address_street_1">>, Contact),
+            maps:get(<<"address_street_2">>, Contact),
+            maps:get(<<"address_postcode">>, Contact),
+            maps:get(<<"address_city">>, Contact),
+            maps:get(<<"address_state">>, Contact),
+            maps:get(<<"address_country">>, Contact),
+            maps:get(<<"email">>, Contact),
+            maps:get(<<"phone">>, Contact),
+            IsNameUpdate,
+            IsAddressUpdate
+        ],
+        Context)
+    of
+        0 -> ok;
+        1 -> ok
+    end.
+
+is_name_missing(Payment) ->
+    lists:all(
+        fun(Field) -> is_empty(Field, Payment) end,
+        [ <<"name_first">>, <<"name_surname_prefix">>, <<"name_surname">> ]).
+
+has_name(Contact) ->
+    lists:any(
+        fun(Field) -> not is_empty(Field, Contact) end,
+        [ <<"name_first">>, <<"name_surname_prefix">>, <<"name_surname">> ]).
+
+is_address_missing(Payment) ->
+    lists:all(
+        fun(Field) -> is_empty(Field, Payment) end,
+        [ <<"address_street_1">>, <<"address_postcode">>, <<"address_city">>, <<"address_country">> ]).
+
+has_complete_address(Contact) ->
+    lists:all(
+        fun(Field) -> not is_empty(Field, Contact) end,
+        [ <<"address_street_1">>, <<"address_postcode">>, <<"address_city">>, <<"address_country">> ]).
+
+has_address(Contact) ->
+    lists:any(
+        fun(Field) -> not is_empty(Field, Contact) end,
+        [
+            <<"address_street_1">>,
+            <<"address_street_2">>,
+            <<"address_postcode">>,
+            <<"address_city">>,
+            <<"address_state">>,
+            <<"address_country">>
+        ]).
+
+is_empty(Field, Map) ->
+    z_utils:is_empty(maps:get(Field, Map, undefined)).
 
 -spec set_payment_status(integer(), atom(), z:context()) -> {ok, changed|unchanged} | {error, term()}.
 set_payment_status(PaymentId, Status, Context) ->

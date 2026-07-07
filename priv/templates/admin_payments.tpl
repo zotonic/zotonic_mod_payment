@@ -10,18 +10,37 @@
         <div class="well z-button-row">
             <a name="content-pager"></a>
 
-            {% button
-                class="btn btn-primary"
-                text=_"Export"
-                action={redirect dispatch="export_payments_csv"}
+            {% wire id="payment-find-form"
+                    type="submit"
+                    postback={find_payment}
+                    delegate=`mod_payment`
             %}
+            <form id="payment-find-form" class="form-inline pull-left" method="post" action="postback">
+                <div class="input-group">
+                    <input type="text"
+                           class="form-control"
+                           name="payment_search"
+                           placeholder="{_ Payment id or number _}">
+                    <span class="input-group-btn">
+                        <button class="btn btn-primary" type="submit">{_ Search _}</button>
+                    </span>
+                </div>
+            </form>
 
-            {% button
-                class="btn btn-primary"
-                text=_"Sync new &amp; pending"
-                postback={sync_pending}
-                delegate=`mod_payment`
-            %}
+            <div class="pull-right">
+                {% button
+                    class="btn btn-primary"
+                    text=_"Export"
+                    action={redirect dispatch="export_payments_csv"}
+                %}
+
+                {% button
+                    class="btn btn-primary"
+                    text=_"Sync new &amp; pending"
+                    postback={sync_pending}
+                    delegate=`mod_payment`
+                %}
+            </div>
         </div>
 
         {% with m.search.paged[{payments page=q.page pagelen=20}] as result %}
