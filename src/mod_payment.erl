@@ -118,6 +118,23 @@ event(#submit{ message={update_status, Args} }, Context) ->
         false ->
             z_render:growl_error(?__("You do not have permission to change the status", Context), Context)
     end;
+event(#submit{ message={find_payment, _Args} }, Context) ->
+    case z_acl:is_allowed(use, mod_payment, Context) orelse z_acl:is_admin(Context) of
+        true ->
+            Query = z_string:trim(z_convert:to_binary(z_context:get_q(<<"payment_search">>, Context))),
+            case find_payment(Query, Context) of
+                {ok, #{ <<"payment_nr">> := PaymentNr }} ->
+                    z_render:dialog(
+                        ?__("Payment", Context),
+                        "_dialog_payment_info.tpl",
+                        [ {payment_nr, PaymentNr} ],
+                        Context);
+                {error, _} ->
+                    z_render:growl_error(?__("No payment found.", Context), Context)
+            end;
+        false ->
+            z_render:growl_error(?__("You do not have permission to view payments.", Context), Context)
+    end;
 event(#postback{ message={sync_pending, _} }, Context) ->
     case z_acl:is_allowed(use, mod_payment, Context) orelse z_acl:is_admin(Context) of
         true ->
@@ -131,6 +148,26 @@ is_allowed(UserId, Context) ->
     UserId =:= z_acl:user(Context)
     orelse z_acl:is_admin(Context)
     orelse z_acl:is_allowed(use, mod_payment, Context).
+
+-spec find_payment(Query, Context) -> Result
+    when
+        Query :: binary(),
+        Context :: z:context(),
+        Result :: {ok, map()} | {error, term()}.
+find_payment(<<>>, _Context) ->
+    {error, notfound};
+find_payment(Query, Context) ->
+    case z_utils:only_digits(Query) of
+        true ->
+            case m_payment:get(binary_to_integer(Query), Context) of
+                {ok, _Payment} = OK ->
+                    OK;
+                {error, _} ->
+                    m_payment:get(Query, Context)
+            end;
+        false ->
+            m_payment:get(Query, Context)
+    end.
 
 %% @doc Extract a payment request from the arguments, with a fallback to the query
 %% arguments.
@@ -251,9 +288,10 @@ observe_payment_request(#payment_request{} = Req, Context) ->
                 payment_nr = maps:get(<<"payment_nr">>, Payment),
                 currency = maps:get(<<"currency">>, Payment),
                 amount = maps:get(<<"amount">>, Payment),
-                is_recurring_start = maps:get(<<"is_recurring_start">>, Payment)
+                is_recurring_start = maps:get(<<"is_recurring_start">>, Payment),
+                preferred_psp_module = Req#payment_request.preferred_psp_module
             },
-            case z_notifier:first(PspReq, Context) of
+            case psp_request(PspReq, Context) of
                 {ok, #payment_psp_handler{ psp_module = PSPMod } = Handler} ->
                     ?LOG_INFO(#{
                         in => zotonic_mod_payment,
@@ -299,6 +337,19 @@ observe_payment_request(#payment_request{} = Req, Context) ->
                 qargs => z_context:get_q_all_noz(Context)
             }),
             Error
+    end.
+
+psp_request(PsPReq, Context) ->
+    case z_notifier:first(PsPReq, Context) of
+        {ok, #payment_psp_handler{} = Handler} ->
+            {ok, Handler};
+        {error, _Reason} = Error ->
+            Error;
+        undefined when PsPReq#payment_psp_request.preferred_psp_module =/= undefined ->
+            PsPReq1 = PsPReq#payment_psp_request{ preferred_psp_module = undefined },
+            z_notifier:first(PsPReq1, Context);
+        undefined ->
+            undefined
     end.
 
 

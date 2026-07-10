@@ -17,7 +17,8 @@
     description_html = undefined :: binary() | undefined,
     language :: atom(),
     is_recurring_start = false :: boolean(),
-    extra_props = [] :: list( {atom(), binary()} )
+    extra_props = [] :: list( {atom(), binary()} ),
+    preferred_psp_module :: atom() | undefined
 }).
 
 %% @doc On a successful payment initialization, return the uri where
@@ -52,7 +53,8 @@
     payment_nr :: binary(),
     currency :: binary(),
     amount :: float(),
-    is_recurring_start :: boolean()
+    is_recurring_start :: boolean(),
+    preferred_psp_module :: atom() | undefined
 }).
 
 %% Notification for mod_payment, requesting a PSP to cancel a recurring payment.
@@ -88,3 +90,8 @@
     psp_data :: term()
 }).
 
+%% Notification for mod_payment, request to synchronize the user
+%% details to the customer of the psp.
+-record(payment_psp_customer_sync, {
+    user_id :: m_rsc:resource_id()
+}).
