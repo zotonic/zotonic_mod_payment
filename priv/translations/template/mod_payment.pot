@@ -18,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:47
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:52
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:63
 msgid ""
 "Address"
@@ -27,7 +27,7 @@ msgstr ""
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:11
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:27
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:42
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:61
 msgid ""
 "Amount"
 msgstr ""
@@ -39,26 +39,26 @@ msgid ""
 msgstr ""
 ""
 
-#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:109
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:114
 msgid ""
 "Change status"
 msgstr ""
 ""
 
-#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:125
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:130
 msgid ""
 "Changing the status can make the system inconsistent as the Payment "
 "Service Provider will not be in sync anymore."
 msgstr ""
 ""
 
-#: zotonic_mod_payment/src/mod_payment.erl:125
+#: zotonic_mod_payment/src/mod_payment.erl:142
 msgid ""
 "Checking status for pending and new transactions, come back later."
 msgstr ""
 ""
 
-#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:130
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:135
 msgid ""
 "Close"
 msgstr ""
@@ -72,7 +72,7 @@ msgstr ""
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:31
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:47
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:33
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:52
 msgid ""
 "Date"
 msgstr ""
@@ -80,21 +80,21 @@ msgstr ""
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:21
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:37
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:39
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:58
 msgid ""
 "Description"
 msgstr ""
 ""
 
-#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:56
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:61
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:72
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:48
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:67
 msgid ""
 "Email"
 msgstr ""
 ""
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:15
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:33
 msgid ""
 "Export"
 msgstr ""
@@ -108,41 +108,54 @@ msgstr ""
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:37
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:53
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:45
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:64
 msgid ""
 "Name"
 msgstr ""
 ""
 
-#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:82
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:87
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:98
 msgid ""
 "No PSP"
 msgstr ""
 ""
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:99
+#: zotonic_mod_payment/src/mod_payment.erl:133
+msgid ""
+"No payment found."
+msgstr ""
+""
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:118
 msgid ""
 "No payments found."
 msgstr ""
 ""
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:120
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:139
 msgid ""
 "Only administrators are allowed to see payments"
 msgstr ""
 ""
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:110
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:129
+#: zotonic_mod_payment/src/mod_payment.erl:128
 msgid ""
 "Payment"
 msgstr ""
 ""
 
-#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:70
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:75
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:86
 msgid ""
 "Payment Service Provider"
+msgstr ""
+""
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:23
+msgid ""
+"Payment id or number"
 msgstr ""
 ""
 
@@ -154,15 +167,15 @@ msgstr ""
 
 #: zotonic_mod_payment/priv/templates/admin_payments.tpl:3
 #: zotonic_mod_payment/priv/templates/admin_payments.tpl:7
-#: zotonic_mod_payment/src/mod_payment.erl:231
+#: zotonic_mod_payment/src/mod_payment.erl:268
 msgid ""
 "Payments"
 msgstr ""
 ""
 
-#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:63
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:68
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:79
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:51
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:70
 msgid ""
 "Phone"
 msgstr ""
@@ -187,9 +200,15 @@ msgid ""
 msgstr ""
 ""
 
-#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:131
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:136
 msgid ""
 "Save"
+msgstr ""
+""
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:25
+msgid ""
+"Search"
 msgstr ""
 ""
 
@@ -217,13 +236,13 @@ msgstr ""
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:4
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:20
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:36
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:55
 msgid ""
 "Status"
 msgstr ""
 ""
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:21
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:39
 msgid ""
 "Sync new &amp; pending"
 msgstr ""
@@ -247,16 +266,22 @@ msgid ""
 msgstr ""
 ""
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:62
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:81
 msgid ""
 "Y-m-d H:i"
 msgstr ""
 ""
 
 #: zotonic_mod_payment/src/mod_payment.erl:119
-#: zotonic_mod_payment/src/mod_payment.erl:127
+#: zotonic_mod_payment/src/mod_payment.erl:144
 msgid ""
 "You do not have permission to change the status"
+msgstr ""
+""
+
+#: zotonic_mod_payment/src/mod_payment.erl:136
+msgid ""
+"You do not have permission to view payments."
 msgstr ""
 ""
 
@@ -272,7 +297,7 @@ msgid ""
 msgstr ""
 ""
 
-#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:76
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:81
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:92
 msgid ""
 "view at {psp}"
