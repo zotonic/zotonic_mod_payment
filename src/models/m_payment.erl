@@ -132,8 +132,7 @@ m_get([ PaymentNr | Rest ], _Msg, Context) when is_binary(PaymentNr) ->
         {ok, #{ <<"user_id">> := MaybePaymentUserId } = Payment} ->
             BaseFields = [
                 <<"user_id">>, <<"payment_nr">>,
-                <<"status">>, <<"status_date">>,
-                <<"status">>, <<"is_paid">>, <<"is_failed">>,
+                <<"status">>, <<"status_date">>, <<"is_paid">>, <<"is_failed">>,
                 <<"currency">>, <<"amount">>,
                 <<"is_recurring_start">>,
                 <<"language">>,
