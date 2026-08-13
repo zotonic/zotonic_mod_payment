@@ -177,7 +177,7 @@ m_get([ PaymentNr | Rest ], _Msg, Context) when is_binary(PaymentNr) ->
 is_allowed_for_authenticated(MaybePaymentUserId, Context)->
     case z_auth:is_auth(Context) of
         true when MaybePaymentUserId =:= undefined ->
-            z_acl:is_allowed(use, mod_payment, Context);
+            z_acl:is_allowed(use, mod_payment, Context) orelse z_acl:is_admin(Context);
         true when is_integer(MaybePaymentUserId) ->
             CurrentUserId = z_acl:user(Context),
             if
