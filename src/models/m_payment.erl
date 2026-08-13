@@ -110,10 +110,10 @@ m_get([ <<"list_email">>, Email | Rest ], _Msg, Context) ->
     end;
 m_get([ <<"status">>, PaymentNr | Rest ], _Msg, Context) when is_binary(PaymentNr) ->
     case get(PaymentNr, Context) of
-        {ok, #{ <<"user_id">> := UserId } = Payment} ->
+        {ok, #{ <<"user_id">> := MaybePaymentUserId } = Payment} ->
             % Anonymous users must be able to get feedback on their payments.
-            case UserId =:= undefined
-                orelse is_allowed_for_user(UserId, Context)
+            case MaybePaymentUserId =:= undefined
+                orelse is_allowed_for_authenticated(MaybePaymentUserId, Context)
             of
                 true ->
                     Status = maps:with([ <<"status">>, <<"is_paid">>, <<"is_failed">>,
@@ -129,10 +129,38 @@ m_get([ <<"status">>, PaymentNr | Rest ], _Msg, Context) when is_binary(PaymentN
     end;
 m_get([ PaymentNr | Rest ], _Msg, Context) when is_binary(PaymentNr) ->
     case get(PaymentNr, Context) of
-        {ok, #{ <<"user_id">> := UserId } = Payment} ->
-            case is_allowed_for_user(UserId, Context) of
+        {ok, #{ <<"user_id">> := MaybePaymentUserId } = Payment} ->
+            BaseFields = [
+                <<"user_id">>, <<"payment_nr">>,
+                <<"status">>, <<"status_date">>,
+                <<"status">>, <<"is_paid">>, <<"is_failed">>,
+                <<"currency">>, <<"amount">>,
+                <<"is_recurring_start">>,
+                <<"language">>,
+                <<"description">>, <<"description_html">>,
+                <<"psp">>, <<"psp_payment_description">>,
+                <<"created">>, <<"modified">>
+            ],
+            case is_allowed_for_authenticated(MaybePaymentUserId, Context) of
                 true ->
-                    {ok, {Payment, Rest}};
+                    IsPaymentAdmin = z_acl:is_allowed(use, mod_payment, Context)
+                        orelse z_acl:is_admin(Context),
+                    if
+                        IsPaymentAdmin ->
+                            % Admin-like users get full information
+                            {ok, {Payment, Rest}};
+                        not IsPaymentAdmin ->
+                            % Users get information about their own payments, but no internals.
+                            Payment1 = maps:with(BaseFields ++ ?CONTACT_FIELDS, Payment),
+                            {ok, {Payment1, Rest}}
+                    end;
+                false when MaybePaymentUserId =:= undefined ->
+                    % For anonymous payments, just return the status.
+                    Status = maps:with([ <<"status">>, <<"is_paid">>, <<"is_failed">>,
+                                         <<"is_recurring_start">>,
+                                         <<"currency">>, <<"amount">> ],
+                                        Payment),
+                    {ok, {Status#{ <<"user_id">> => undefined }, Rest}};
                 false ->
                     {error, eacces}
             end;
@@ -142,22 +170,22 @@ m_get([ PaymentNr | Rest ], _Msg, Context) when is_binary(PaymentNr) ->
 
 %% @doc Check if the current user is allowed to see a payment made for some user
 %% or anonymous visitor.
--spec is_allowed_for_user(MaybeUserId, Context) -> boolean()
+-spec is_allowed_for_authenticated(MaybePaymentUserId, Context) -> boolean()
     when
-        MaybeUserId :: m_rsc:resource_id() | undefined,
+        MaybePaymentUserId :: m_rsc:resource_id() | undefined,
         Context :: z:context().
-is_allowed_for_user(MaybeUserId, Context)->
+is_allowed_for_authenticated(MaybePaymentUserId, Context)->
     case z_auth:is_auth(Context) of
-        true when MaybeUserId =:= undefined ->
+        true when MaybePaymentUserId =:= undefined ->
             z_acl:is_allowed(use, mod_payment, Context);
-        true when is_integer(MaybeUserId) ->
+        true when is_integer(MaybePaymentUserId) ->
             CurrentUserId = z_acl:user(Context),
             if
-                is_integer(CurrentUserId) andalso CurrentUserId =:= MaybeUserId ->
+                is_integer(CurrentUserId) andalso CurrentUserId =:= MaybePaymentUserId ->
                     true;
                 true ->
                     z_acl:is_allowed(use, mod_payment, Context)
-                    orelse z_acl:rsc_editable(MaybeUserId, Context)
+                    orelse z_acl:rsc_editable(MaybePaymentUserId, Context)
             end;
         false ->
             false
