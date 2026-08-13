@@ -1,10 +1,10 @@
-%% @copyright 2018-2024 Driebit BV
+%% @copyright 2018-2026 Driebit BV
 %% @doc Main payment model and SQL definitions. Maintains a single table of all
 %% payments. All PSP modules store their payments in this table, including extra
 %% PSP specific properties.
 %% @end
 
-%% Copyright 2018-2024 Driebit BV
+%% Copyright 2018-2026 Driebit BV
 %%
 %% Licensed under the Apache License, Version 2.0 (the "License");
 %% you may not use this file except in compliance with the License.
@@ -77,11 +77,16 @@ m_get([ <<"default">>, <<"amount">> | Rest ], _Msg, Context) ->
 m_get([ <<"default">>, <<"description">> | Rest ], _Msg, Context) ->
     {ok, {default_description(Context), Rest}};
 m_get([ <<"redirect_psp">>, PaymentNr | Rest ], _Msg, Context) when is_binary(PaymentNr) ->
-    case payment_psp_view_url(PaymentNr, Context) of
-        {ok, Url} ->
-            {ok, {Url, Rest}};
-        {error, _} = Error ->
-            Error
+    case z_acl:is_allowed(use, mod_payment, Context) of
+        true ->
+            case payment_psp_view_url(PaymentNr, Context) of
+                {ok, Url} ->
+                    {ok, {Url, Rest}};
+                {error, _} = Error ->
+                    Error
+            end;
+        false ->
+            {error, eacces}
     end;
 m_get([ <<"list_user">>, User | Rest ], _Msg, Context) ->
     UserId = m_rsc:rid(User, Context),
@@ -106,10 +111,9 @@ m_get([ <<"list_email">>, Email | Rest ], _Msg, Context) ->
 m_get([ <<"status">>, PaymentNr | Rest ], _Msg, Context) when is_binary(PaymentNr) ->
     case get(PaymentNr, Context) of
         {ok, #{ <<"user_id">> := UserId } = Payment} ->
-            case z_acl:is_allowed(use, mod_payment, Context)
-                orelse UserId =:= undefined
-                orelse UserId =:= z_acl:user(Context)
-                orelse z_acl:rsc_editable(UserId, Context)
+            % Anonymous users must be able to get feedback on their payments.
+            case UserId =:= undefined
+                orelse is_allowed_for_user(UserId, Context)
             of
                 true ->
                     Status = maps:with([ <<"status">>, <<"is_paid">>, <<"is_failed">>,
@@ -126,10 +130,7 @@ m_get([ <<"status">>, PaymentNr | Rest ], _Msg, Context) when is_binary(PaymentN
 m_get([ PaymentNr | Rest ], _Msg, Context) when is_binary(PaymentNr) ->
     case get(PaymentNr, Context) of
         {ok, #{ <<"user_id">> := UserId } = Payment} ->
-            case z_acl:is_allowed(use, mod_payment, Context)
-                orelse UserId =:= z_acl:user(Context)
-                orelse z_acl:rsc_editable(UserId, Context)
-            of
+            case is_allowed_for_user(UserId, Context) of
                 true ->
                     {ok, {Payment, Rest}};
                 false ->
@@ -138,6 +139,30 @@ m_get([ PaymentNr | Rest ], _Msg, Context) when is_binary(PaymentNr) ->
         {error, _} = Error ->
             Error
     end.
+
+%% @doc Check if the current user is allowed to see a payment made for some user
+%% or anonymous visitor.
+-spec is_allowed_for_user(MaybeUserId, Context) -> boolean()
+    when
+        MaybeUserId :: m_rsc:resource_id() | undefined,
+        Context :: z:context().
+is_allowed_for_user(MaybeUserId, Context)->
+    case z_auth:is_auth(Context) of
+        true when MaybeUserId =:= undefined ->
+            z_acl:is_allowed(use, mod_payment, Context);
+        true when is_integer(MaybeUserId) ->
+            CurrentUserId = z_acl:user(Context),
+            if
+                is_integer(CurrentUserId) andalso CurrentUserId =:= MaybeUserId ->
+                    true;
+                true ->
+                    z_acl:is_allowed(use, mod_payment, Context)
+                    orelse z_acl:rsc_editable(MaybeUserId, Context)
+            end;
+        false ->
+            false
+    end.
+
 
 -spec default_description( z:context() ) -> binary().
 default_description(Context) ->
