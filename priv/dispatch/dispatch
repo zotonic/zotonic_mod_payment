@@ -3,7 +3,7 @@
     {payment_psp_detail, [ "payment", "redirect-psp", payment_nr ], controller_template,
             [
                 {template, "payment_redirect_psp.tpl"},
-                {acl, [{use, mod_payment}]
+                {acl, [{use, mod_payment}]}
             ]},
 
     {payments_admin_overview, [ "admin", "payments" ], controller_admin, [ {template, "admin_payments.tpl"} ]},
