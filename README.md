@@ -88,11 +88,12 @@ Payment Service Provider Modules
 This module provides the central payment administration. Interfacing with Payment Service Providers (PSP)
 is done using PSP specific modules.
 
-PSP specific modules are being implemented for Stripe, Mollie and Buckaroo:
+PSP specific modules are being implemented for Stripe, Mollie, Buckaroo and PayPal:
 
  * https://github.com/zotonic/zotonic_mod_payment_stripe
  * https://github.com/zotonic/zotonic_mod_payment_mollie
  * https://github.com/driebit/zotonic_mod_payment_buckaroo
+ * https://github.com/driebit/zotonic_mod_payment_paypal
 
 Please check the modules for PSP specific configurations.
 
