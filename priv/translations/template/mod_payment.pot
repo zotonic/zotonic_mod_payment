@@ -285,13 +285,19 @@ msgid ""
 msgstr ""
 ""
 
-#: zotonic_mod_payment/priv/templates/payment_psp_done.tpl:35
+#: zotonic_mod_payment/priv/templates/payment_psp_done.tpl:39
 msgid ""
 "Your payment is pending."
 msgstr ""
 ""
 
-#: zotonic_mod_payment/priv/templates/payment_psp_done.tpl:29
+#: zotonic_mod_payment/priv/templates/payment_psp_done.tpl:30
+msgid ""
+"Your payment was cancelled."
+msgstr ""
+""
+
+#: zotonic_mod_payment/priv/templates/payment_psp_done.tpl:32
 msgid ""
 "Your payment was not handled."
 msgstr ""

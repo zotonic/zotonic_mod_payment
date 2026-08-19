@@ -214,11 +214,15 @@ msgstr "Nie masz uprawnień do zmiany statusu"
 msgid "You do not have permission to view payments."
 msgstr "Nie masz uprawnień do przeglądania płatności."
 
-#: zotonic_mod_payment/priv/templates/payment_psp_done.tpl:35
+#: zotonic_mod_payment/priv/templates/payment_psp_done.tpl:39
 msgid "Your payment is pending."
 msgstr "Twoja płatność jest w trakcie realizacji."
 
-#: zotonic_mod_payment/priv/templates/payment_psp_done.tpl:29
+#: zotonic_mod_payment/priv/templates/payment_psp_done.tpl:30
+msgid "Your payment was cancelled."
+msgstr "Twoja płatność została anulowana."
+
+#: zotonic_mod_payment/priv/templates/payment_psp_done.tpl:32
 msgid "Your payment was not handled."
 msgstr "Twoja płatność nie została zrealizowana."
 

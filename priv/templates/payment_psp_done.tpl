@@ -26,7 +26,11 @@ TODO: we need a continuation url, optionally specify this when starting the paym
         {% elseif payment.is_failed %}
             {% block payment_failed %}
                 <p>
-                    {_ Your payment was not handled. _}
+                    {% if payment.status == 'cancelled' %}
+                        {_ Your payment was cancelled. _}
+                    {% else %}
+                        {_ Your payment was not handled. _}
+                    {% endif %}
                 </p>
             {% endblock %}
         {% else %}
