@@ -215,11 +215,15 @@ msgstr "No tiene permiso para cambiar el estado"
 msgid "You do not have permission to view payments."
 msgstr "No tiene permiso para ver los pagos."
 
-#: zotonic_mod_payment/priv/templates/payment_psp_done.tpl:35
+#: zotonic_mod_payment/priv/templates/payment_psp_done.tpl:39
 msgid "Your payment is pending."
 msgstr "Su pago está pendiente."
 
-#: zotonic_mod_payment/priv/templates/payment_psp_done.tpl:29
+#: zotonic_mod_payment/priv/templates/payment_psp_done.tpl:30
+msgid "Your payment was cancelled."
+msgstr "Su pago ha sido cancelado."
+
+#: zotonic_mod_payment/priv/templates/payment_psp_done.tpl:32
 msgid "Your payment was not handled."
 msgstr "Su pago no fue gestionado."
 
