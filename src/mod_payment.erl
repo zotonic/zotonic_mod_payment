@@ -1,9 +1,9 @@
 %% @author Marc Worrell <marc@worrell.nl>
-%% @copyright 2018-2024 Driebit BV
+%% @copyright 2018-2026 Driebit BV
 %% @doc Payment module. Interfacing to PSP modules.
 %% @end
 
-%% Copyright 2018-2024 Driebit BV
+%% Copyright 2018-2026 Driebit BV
 %%
 %% Licensed under the Apache License, Version 2.0 (the "License");
 %% you may not use this file except in compliance with the License.
@@ -51,6 +51,9 @@
 -include_lib("zotonic_core/include/zotonic.hrl").
 -include_lib("zotonic_mod_admin/include/admin_menu.hrl").
 -include("../include/payment.hrl").
+
+-define(MAX_REFERENCE_LENGTH, 100).
+-define(MAX_DESCRIPTION_LENGTH, 200).
 
 %% @doc Submit a form post here to start payments.
 event(#submit{message={payment, Args} }, Context) ->
@@ -199,18 +202,19 @@ payment_request_from_query(Key, UserId, Args, Context) ->
         Desc ->
             z_convert:to_binary(Desc)
     end,
+    Description1 = sanitize_description(Description),
     DescriptionRef = case z_context:get_q(<<"reference">>, Context) of
-        undefined -> Description;
+        undefined ->
+            Description1;
         Ref when is_binary(Ref) ->
-            case z_string:trim(Ref) of
-                <<>> ->
-                    Description;
-                Ref1 when Description =:= <<>> ->
-                    Ref1;
-                Ref1 ->
-                    <<Description/binary, " (", Ref1/binary, ")">>
+            case valid_reference(Ref) of
+                {true, <<>>} -> Description1;
+                {true, Ref1} when Description1 =:= <<>> -> Ref1;
+                {true, Ref1} -> <<Description1/binary, " (", Ref1/binary, ")">>;
+                false -> Description1
             end
     end,
+    Cols = z_db:column_names(payment, Context),
     ExtraProps = lists:filter(
         fun
             ({key, _}) -> false;
@@ -220,7 +224,11 @@ payment_request_from_query(Key, UserId, Args, Context) ->
             ({is_recurring_start, _}) -> false;
             ({description, _}) -> false;
             ({default_description, _}) -> false;
-            ({_, _}) -> true
+            ({is_paid, _}) -> false;
+            ({is_failed, _}) -> false;
+            ({is_payment_link, true}) -> true;
+            ({is_payment_link, _}) -> false;
+            ({K, _}) -> is_allowed_arg(K, Cols)
         end,
         Args),
     #payment_request{
@@ -235,6 +243,36 @@ payment_request_from_query(Key, UserId, Args, Context) ->
         is_recurring_start = Recurring,
         extra_props = ExtraProps
     }.
+
+valid_reference(Ref) when is_binary(Ref) ->
+    Ref1 = z_string:trim(Ref),
+    Ref2 = z_string:sanitize_utf8(Ref1),
+    case Ref2 of
+        <<>> -> {true, <<>>};
+        R when size(R) > ?MAX_REFERENCE_LENGTH -> false;
+        R -> {true, R}
+    end.
+
+sanitize_description(Description) ->
+    Desc1 = z_string:trim(Description),
+    Desc2 = z_string:sanitize_utf8(Desc1),
+    Desc3 = z_string:trim(Desc2),
+    z_string:truncate(Desc3, ?MAX_DESCRIPTION_LENGTH).
+
+%% @doc Only allow non-payment columns or name/address like extra props.
+is_allowed_arg(K, Cols) when is_atom(K) ->
+    case lists:member(K, Cols) of
+        true ->
+            case z_convert:to_binary(K) of
+                <<"name_", _/binary>> -> true;
+                <<"address_", _/binary>> -> true;
+                <<"email">> -> true;
+                <<"phone">> -> true;
+                _ -> false
+            end;
+        false ->
+            true
+    end.
 
 -define(is_upper(C), (C >= $A andalso C =< $Z)).
 
