@@ -92,8 +92,8 @@ PSP specific modules are being implemented for Stripe, Mollie, Buckaroo and PayP
 
  * https://github.com/zotonic/zotonic_mod_payment_stripe
  * https://github.com/zotonic/zotonic_mod_payment_mollie
- * https://github.com/driebit/zotonic_mod_payment_buckaroo
- * https://github.com/driebit/zotonic_mod_payment_paypal
+ * https://github.com/zotonic/zotonic_mod_payment_buckaroo
+ * https://github.com/zotonic/zotonic_mod_payment_paypal
 
 Please check the modules for PSP specific configurations.
 
