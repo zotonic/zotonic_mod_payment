@@ -281,12 +281,20 @@ insert(PaymentReq, Context) ->
         <<"description_html">> => DescrHTML,
         <<"language">> => language(UserId, Context)
     },
-    Payment1 = maps:merge(Payment, naw_props(UserId, PaymentReq#payment_request.is_qargs, Context)),
-    Payment2 = maps:merge(Payment1, extra_props(PaymentReq#payment_request.extra_props, PaymentReq#payment_request.is_qargs, Context)),
+    Payment1 = maps:merge(naw_props(UserId, PaymentReq#payment_request.is_qargs, Context), Payment),
+    Payment2 = maps:merge(extra_props(PaymentReq#payment_request.extra_props, PaymentReq#payment_request.is_qargs, Context), Payment1),
     Payment3 = maps:merge(qargs_props(PaymentReq#payment_request.is_qargs, Context), Payment2),
-    case validate_payment(Payment3) of
+    % Remove columns that are automatically filled by the insert
+    Payment4 = maps:without([ <<"id">>, <<"created">>, <<"modified">>, <<"props">> ], Payment3),
+    Payment5 = Payment4#{
+        <<"status">> => <<"new">>,
+        <<"status_date">> => undefined,
+        <<"is_paid">> => false,
+        <<"is_failed">> => false
+    },
+    case validate_payment(Payment5) of
         ok ->
-            z_db:insert(payment, Payment3, Context);
+            z_db:insert(payment, Payment5, Context);
         {error, _} = Error ->
             Error
     end.
@@ -367,43 +375,86 @@ insert_recurring_payment(RecurringPaymentId, Created, Currency, Amount, Context)
             Error
     end.
 
-% Extra properties
--spec extra_props( list(), boolean(), z:context() ) -> map().
+%% @doc Extra properties, defined in the postback. Optionally
+%% fetched from the query arguments.
+-spec extra_props(Props, IsQArgs, Context) -> map() when
+    Props :: list(),
+    IsQArgs :: boolean(),
+    Context :: z:context().
 extra_props(Props, false, _Context) ->
     Props1 = lists:filtermap(
         fun
             ({_, undefined}) -> false;
             ({_, <<>>}) -> false;
             ({_, ""}) -> false;
-            ({K, V}) -> {true, {z_string:to_name(K), V}};
-            (_) -> false
+            ({K, V}) when is_atom(K); is_binary(K) ->
+                K1 = z_string:to_name(K),
+                case is_allowed_extra_prop(K1) of
+                    true -> {true, {K1, V}};
+                    false -> false
+                end;
+            (_) ->
+                false
         end,
         Props),
     maps:from_list(Props1);
 extra_props(Props, true, Context) ->
-    Props1 = lists:map(
+    Props1 = lists:filtermap(
         fun
-            ({K, _} = KV) ->
-                case z_context:get_q(K, Context) of
-                    undefined -> KV;
-                    V -> {K, V}
-                end;
+            ({K, Default}) when is_atom(K); is_binary(K) ->
+                extra_prop_q(K, Default, Context);
             (K) when is_atom(K); is_binary(K) ->
-                K1 = z_string:to_name(K),
-                {K1, z_context:get_q(K1, Context)}
+                extra_prop_q(K, undefined, Context)
         end,
         Props),
     extra_props(Props1, false, Context).
 
-% Properties from the posted form
+extra_prop_q(K, Default, Context) ->
+    K1 = z_string:to_name(K),
+    case is_allowed_extra_prop(K1) of
+        true ->
+            case z_context:get_q(K1, Context) of
+                V1 when is_binary(V1) -> {true, {K1, V1}};
+                _ when Default =/= undefined -> {true, {K1, Default}};
+                _ -> false
+            end;
+        false ->
+            false
+    end.
+
+is_allowed_extra_prop(<<"id">>) -> false;
+is_allowed_extra_prop(<<"payment_nr">>) -> false;
+is_allowed_extra_prop(<<"status">>) -> false;
+is_allowed_extra_prop(<<"status_date">>) -> false;
+is_allowed_extra_prop(<<"is_paid">>) -> false;
+is_allowed_extra_prop(<<"is_failed">>) -> false;
+is_allowed_extra_prop(<<"is_payment_link">>) -> false;
+is_allowed_extra_prop(<<"created">>) -> false;
+is_allowed_extra_prop(<<"modified">>) -> false;
+is_allowed_extra_prop(<<"psp_", _/binary>>) -> false;
+is_allowed_extra_prop(<<"props">>) -> false;
+is_allowed_extra_prop(K) when is_binary(K) -> true.
+
+%% @docs Properties from the posted form, to be stored in the 'props' column.
+%% Only properties with names different than the payment columns are accepted.
 -spec qargs_props(boolean(), z:context()) -> map().
 qargs_props(false, _Context) ->
     #{};
 qargs_props(true, Context) ->
+    Columns = [
+        <<"is_paid">>,
+        <<"is_failed">>,
+        <<"is_payment_link">>
+        | z_db:column_names_bin(payment, Context)
+    ],
     lists:foldl(
         fun
             ({K, V}, Acc) when is_binary(K), is_binary(V) ->
-                Acc#{ z_string:to_name(K) => V };
+                K1 = z_string:to_name(K),
+                case lists:member(K1, Columns) of
+                    true -> Acc;
+                    false -> Acc#{ K1 => V }
+                end;
             (_, Acc) ->
                 Acc
         end,
@@ -446,19 +497,7 @@ is_email_address(Email) ->
 naw_props(UserId, IsQArgs, Context) ->
     Naw = [
         {P, p(UserId, P, IsQArgs, Context)}
-        || P <- [
-            <<"name_first">>,
-            <<"name_surname_prefix">>,
-            <<"name_surname">>,
-            <<"address_street_1">>,
-            <<"address_street_2">>,
-            <<"address_city">>,
-            <<"address_state">>,
-            <<"address_country">>,
-            <<"address_postcode">>,
-            <<"email">>,
-            <<"phone">>
-        ]
+        || P <- ?CONTACT_FIELDS
     ],
     maps:from_list( lists:filter( fun({_,V}) -> V =/= undefined end, Naw ) ).
 

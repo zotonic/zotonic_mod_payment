@@ -1,9 +1,9 @@
 %% @author Marc Worrell <marc@worrell.nl>
-%% @copyright 2025 Marc Worrell
+%% @copyright 2025-2026 Marc Worrell
 %% @doc Redirect to the payment provider. Accept optional description and amount.
 %% @end
 
-%% Copyright 2025 Marc Worrell
+%% Copyright 2025-2026 Marc Worrell
 %%
 %% Licensed under the Apache License, Version 2.0 (the "License");
 %% you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ moved_temporarily(Context) ->
     Key = undefined,
     UserId = z_acl:user(Context2),
     Args = [
-        {amount, z_context:get(description, Context2)},
+        {amount, z_context:get(amount, Context2)},
         {currency, z_context:get(currency, Context2)},
         {is_recurring_start, z_context:get(is_recurring_start, Context2)},
         {description, z_context:get(description, Context2)},
