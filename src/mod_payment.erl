@@ -249,7 +249,7 @@ valid_reference(Ref) when is_binary(Ref) ->
     Ref2 = z_string:sanitize_utf8(Ref1),
     case Ref2 of
         <<>> -> {true, <<>>};
-        R when size(R) > ?MAX_REFERENCE_LENGTH -> {false, <<>>};
+        R when size(R) > ?MAX_REFERENCE_LENGTH -> false;
         R -> {true, R}
     end.
 
