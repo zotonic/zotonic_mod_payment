@@ -435,7 +435,7 @@ is_allowed_extra_prop(<<"psp_", _/binary>>) -> false;
 is_allowed_extra_prop(<<"props">>) -> false;
 is_allowed_extra_prop(K) when is_binary(K) -> true.
 
-%% @docs Properties from the posted form, to be stored in the 'props' column.
+%% @doc Properties from the posted form, to be stored in the 'props' column.
 %% Only properties with names different than the payment columns are accepted.
 -spec qargs_props(boolean(), z:context()) -> map().
 qargs_props(false, _Context) ->
