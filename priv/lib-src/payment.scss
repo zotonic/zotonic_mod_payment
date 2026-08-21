@@ -1,0 +1,31 @@
+$payment-link-max-width: 40rem !default;
+
+.payment-link-page {
+    min-height: min(70vh, 40rem);
+    padding: 2rem 1rem;
+    display: grid;
+    place-items: center;
+}
+
+.payment-link {
+    width: 100%;
+    max-width: $payment-link-max-width;
+    margin: 0;
+    text-align: center;
+}
+
+.payment-link__description,
+.payment-link__reference {
+    overflow-wrap: anywhere;
+}
+
+.payment-link__amount {
+    font-size: 2rem;
+    font-weight: 600;
+}
+
+.payment-link__button {
+    width: 100%;
+    text-align: center;
+    display: block;
+}

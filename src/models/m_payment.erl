@@ -270,7 +270,7 @@ insert(PaymentReq, Context) ->
         undefined -> z_string:trim(z_html:strip(DescrHTML));
         RD -> RD
     end,
-    Payment = #{
+    Payment0 = #{
         <<"user_id">> => UserId,
         <<"payment_nr">> => PaymentNr,
         <<"is_recurring_start">> => PaymentReq#payment_request.is_recurring_start,
@@ -281,6 +281,10 @@ insert(PaymentReq, Context) ->
         <<"description_html">> => DescrHTML,
         <<"language">> => language(UserId, Context)
     },
+    Payment = case PaymentReq#payment_request.is_payment_link of
+        true -> Payment0#{ <<"is_payment_link">> => true };
+        false -> Payment0
+    end,
     Payment1 = maps:merge(naw_props(UserId, PaymentReq#payment_request.is_qargs, Context), Payment),
     Payment2 = maps:merge(extra_props(PaymentReq#payment_request.extra_props, PaymentReq#payment_request.is_qargs, Context), Payment1),
     Payment3 = maps:merge(qargs_props(PaymentReq#payment_request.is_qargs, Context), Payment2),
@@ -465,11 +469,15 @@ qargs_props(true, Context) ->
 % We should have an email address, or an user-id, and name + phone no.
 validate_payment(Payment) ->
     IsPaymentLink = maps:get(<<"is_payment_link">>, Payment, false),
+    Amount = maps:get(<<"amount">>, Payment, undefined),
+    Currency = maps:get(<<"currency">>, Payment, undefined),
     Validations = [
+        {<<"currency">>, fun() ->
+                            mod_payment:is_valid_currency(Currency)
+                        end},
         {<<"amount">>,  fun() ->
-                            is_number(maps:get(<<"amount">>, Payment, undefined))
-                            andalso maps:get(<<"amount">>, Payment) > 0
-                         end},
+                            mod_payment:is_valid_payment_args(Amount, Currency)
+                        end},
         {<<"email">>,   fun() ->
                             is_email_address(maps:get(<<"email">>, Payment, undefined))
                         end},
