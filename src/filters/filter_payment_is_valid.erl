@@ -1,9 +1,9 @@
 %% @author Marc Worrell <marc@worrell.nl>
-%% @copyright 2026 Driebit BV
+%% @copyright 2026 Marc Worrell
 %% @doc Test if an amount and currency can be used for a payment request.
 %% @end
 
-%% Copyright 2026 Driebit BV
+%% Copyright 2026 Marc Worrell
 %%
 %% Licensed under the Apache License, Version 2.0 (the "License");
 %% you may not use this file except in compliance with the License.
