@@ -32,6 +32,8 @@
     observe_payment_request/2,
 
     payment_request_from_query/4,
+    is_valid_currency/1,
+    is_valid_payment_args/2,
 
     observe_tick_24h/2,
 
@@ -55,7 +57,61 @@
 -define(MAX_REFERENCE_LENGTH, 100).
 -define(MAX_DESCRIPTION_LENGTH, 200).
 
+%% Currencies accepted by mod_payment, based on PayPal's supported currency
+%% list. Stripe supports more currencies than this common set.
+-define(SUPPORTED_CURRENCIES, [
+    <<"AUD">>,
+    <<"BRL">>,
+    <<"CAD">>,
+    <<"CNY">>,
+    <<"CZK">>,
+    <<"DKK">>,
+    <<"EUR">>,
+    <<"HKD">>,
+    <<"HUF">>,
+    <<"ILS">>,
+    <<"JPY">>,
+    <<"MYR">>,
+    <<"MXN">>,
+    <<"TWD">>,
+    <<"NZD">>,
+    <<"NOK">>,
+    <<"PHP">>,
+    <<"PLN">>,
+    <<"GBP">>,
+    <<"SGD">>,
+    <<"SEK">>,
+    <<"CHF">>,
+    <<"THB">>,
+    <<"USD">>
+]).
+
+-define(ZERO_DECIMAL_CURRENCIES, [
+    <<"HUF">>,
+    <<"JPY">>,
+    <<"TWD">>
+]).
+
 %% @doc Submit a form post here to start payments.
+event(#submit{message={payment_link, Args}}, Context) ->
+    Amount = proplists:get_value(amount, Args),
+    Currency = proplists:get_value(currency, Args),
+    case is_valid_payment_args(Amount, Currency) of
+        true ->
+            UserId = z_acl:user(Context),
+            PaymentRequest0 = payment_request_from_query(undefined, UserId, Args, Context),
+            PaymentRequest = PaymentRequest0#payment_request{
+                is_qargs = false,
+                is_recurring_start = false,
+                is_payment_link = true,
+                extra_props = []
+            },
+            payment_link_redirect(PaymentRequest, Context);
+        false ->
+            payment_link_error(
+                ?__("The payment amount or currency is not valid.", Context),
+                Context)
+    end;
 event(#submit{message={payment, Args} }, Context) ->
     {key, Key} = proplists:lookup(key, Args),
     UserId = case proplists:get_value(user_id, Args) of
@@ -147,6 +203,46 @@ event(#postback{ message={sync_pending, _} }, Context) ->
             z_render:growl_error(?__("You do not have permission to change the status", Context), Context)
     end.
 
+-spec payment_link_redirect(PaymentRequest, Context) -> Result
+    when
+        PaymentRequest :: #payment_request{},
+        Context :: z:context(),
+        Result :: z:context().
+payment_link_redirect(PaymentRequest, Context) ->
+    case z_notifier:first(PaymentRequest, Context) of
+        #payment_request_redirect{ redirect_uri = RedirectUri } ->
+            z_render:wire({redirect, [ {location, RedirectUri} ]}, Context);
+        {error, Reason} ->
+            ?LOG_ERROR(#{
+                in => zotonic_mod_payment,
+                text => <<"Error creating payment link payment">>,
+                result => error,
+                reason => Reason
+            }),
+            payment_link_error(
+                ?__("Something went wrong whilst handling the payment request, please try again later.", Context),
+                Context);
+        undefined ->
+            ?LOG_ERROR(#{
+                in => zotonic_mod_payment,
+                text => <<"No payment service provider accepted payment link payment">>,
+                result => error,
+                reason => no_handler
+            }),
+            payment_link_error(
+                ?__("At the moment we cannot handle payments, please try again later.", Context),
+                Context)
+    end.
+
+payment_link_error(Text, Context) ->
+    z_render:wire([
+        {alert, [
+            {title, ?__("Sorry", Context)},
+            {text, Text}
+        ]},
+        {unmask, [ {target, <<"payment-link-form">>} ]}
+    ], Context).
+
 is_allowed(UserId, Context) ->
     UserId =:= z_acl:user(Context)
     orelse z_acl:is_admin(Context)
@@ -181,15 +277,17 @@ payment_request_from_query(Key, UserId, Args, Context) ->
     end,
     Amount = case proplists:get_value(amount, Args) of
         undefined -> z_convert:to_float(z_context:get_q(<<"amount">>, Context));
-        ArgAmount -> ArgAmount
+        ArgAmount -> z_convert:to_float(ArgAmount)
     end,
     Currency = case proplists:get_value(currency, Args) of
         undefined ->
-            case currency( z_context:get_q(<<"currency">>, Context) ) of
+            case z_context:get_q(<<"currency">>, Context) of
+                undefined -> m_payment:default_currency(Context);
                 <<>> -> m_payment:default_currency(Context);
-                QCurrency -> QCurrency
+                QCurrency -> currency(z_convert:to_binary(QCurrency))
             end;
-        ArgCurrency -> ArgCurrency
+        ArgCurrency ->
+            currency(z_convert:to_binary(ArgCurrency))
     end,
     DefaultDescription = m_payment:default_description(Context),
     Description = case proplists:get_value(description, Args) of
@@ -203,7 +301,11 @@ payment_request_from_query(Key, UserId, Args, Context) ->
             z_convert:to_binary(Desc)
     end,
     Description1 = sanitize_description(Description),
-    DescriptionRef = case z_context:get_q(<<"reference">>, Context) of
+    Reference = case proplists:get_value(reference, Args) of
+        undefined -> z_context:get_q(<<"reference">>, Context);
+        ArgReference -> z_convert:to_binary(ArgReference)
+    end,
+    DescriptionRef = case Reference of
         undefined ->
             Description1;
         Ref when is_binary(Ref) ->
@@ -226,7 +328,6 @@ payment_request_from_query(Key, UserId, Args, Context) ->
             ({default_description, _}) -> false;
             ({is_paid, _}) -> false;
             ({is_failed, _}) -> false;
-            ({is_payment_link, true}) -> true;
             ({is_payment_link, _}) -> false;
             ({K, _}) -> is_allowed_arg(K, Cols)
         end,
@@ -274,19 +375,49 @@ is_allowed_arg(K, Cols) when is_atom(K) ->
             true
     end.
 
--define(is_upper(C), (C >= $A andalso C =< $Z)).
-
+-spec currency(term()) -> binary().
 currency(undefined) -> <<>>;
 currency(<<>>) -> <<>>;
-currency(<<"EUR">>) -> <<"EUR">>;
-currency(<<"USD">>) -> <<"USD">>;
-currency(<<"CAD">>) -> <<"CAD">>;
-currency(<<"GBP">>) -> <<"GBP">>;
-currency(<<"SEK">>) -> <<"SEK">>;
-currency(<<A, B, C>>) when ?is_upper(A), ?is_upper(B), ?is_upper(C) ->
-    % We might want to replace this with a list of known currencies.
-    <<A, B, C>>;
+currency(Currency) when is_binary(Currency) ->
+    case lists:member(Currency, ?SUPPORTED_CURRENCIES) of
+        true -> Currency;
+        false -> <<>>
+    end;
 currency(_) -> <<>>.
+
+%% @doc Check if a currency is accepted by mod_payment.
+-spec is_valid_currency(term()) -> boolean().
+is_valid_currency(Currency) ->
+    try
+        currency(z_convert:to_binary(Currency)) =/= <<>>
+    catch
+        _:_ -> false
+    end.
+
+%% @doc Check if an amount and currency can be used for a payment request.
+%% Used by both the payment-link template filter and the signed postback.
+-spec is_valid_payment_args(term(), term()) -> boolean().
+is_valid_payment_args(Amount, Currency0) ->
+    try
+        Currency = currency(z_convert:to_binary(Currency0)),
+        Currency =/= <<>>
+        andalso is_valid_payment_amount(z_convert:to_float(Amount), Currency)
+    catch
+        _:_ -> false
+    end.
+
+-spec is_valid_payment_amount(term(), binary()) -> boolean().
+is_valid_payment_amount(Amount, Currency)
+    when (is_integer(Amount) orelse is_float(Amount)) andalso Amount > 0
+->
+    Scale = case lists:member(Currency, ?ZERO_DECIMAL_CURRENCIES) of
+        true -> 1;
+        false -> 100
+    end,
+    ScaledAmount = Amount * Scale,
+    abs(ScaledAmount - round(ScaledAmount)) < 1.0e-7;
+is_valid_payment_amount(_, _) ->
+    false.
 
 
 observe_search_query(#search_query{name = <<"payments">>, offsetlimit=OffsetLimit }, Context) ->

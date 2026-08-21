@@ -58,6 +58,25 @@ Optional fields for the payment form:
 Other form fields will be stored as-is in the props of the payment record.
 
 
+Supported currencies
+--------------------
+
+The module currently accepts these 24 currencies:
+
+* `AUD`, `BRL`, `CAD`, `CNY`, `CZK`, `DKK`, `EUR`, `HKD`
+* `HUF`, `ILS`, `JPY`, `MYR`, `MXN`, `TWD`, `NZD`, `NOK`
+* `PHP`, `PLN`, `GBP`, `SGD`, `SEK`, `CHF`, `THB`, `USD`
+
+This is the set supported by PayPal and is also supported by Stripe. Stripe
+supports additional currencies, but they are not currently accepted by
+`mod_payment`.
+
+Amounts in `HUF`, `JPY`, and `TWD` must be whole numbers. Amounts in the other
+currencies can have at most two decimal places. Availability can be further
+restricted by the payment provider, payment method, merchant country, and
+merchant account configuration.
+
+
 Subscriptions / Recurring Payments
 ----------------------------------
 

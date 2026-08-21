@@ -17,6 +17,7 @@
     description_html = undefined :: binary() | undefined,
     language :: atom(),
     is_recurring_start = false :: boolean(),
+    is_payment_link = false :: boolean(),
     extra_props = [] :: list( {atom(), binary()} ),
     preferred_psp_module :: atom() | undefined
 }).
