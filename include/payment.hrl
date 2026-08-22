@@ -41,7 +41,7 @@
     is_failed :: boolean(),
     is_recurring_payment :: boolean(),
     status :: atom(),
-    previous_status :: atom(),
+    previous_status :: atom() | undefined,
     date :: calendar:datetime()
 }).
 
