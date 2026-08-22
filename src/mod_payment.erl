@@ -650,11 +650,12 @@ set_payment_status(PaymentId, Status, DT, Context) when is_integer(PaymentId), i
     set_payment_status(PaymentId, list_to_existing_atom(Status), DT, Context);
 set_payment_status(PaymentId, Status, DT, Context) when is_integer(PaymentId), is_atom(Status) ->
     validate_payment_status(Status),
+    PreviousStatusBin = z_db:q1("select status from payment where id = $1", [PaymentId], Context),
     case m_payment:set_payment_status(PaymentId, Status, DT, Context) of
         {ok, changed} ->
-            % Status is the new payment status
             {ok, Payment} = m_payment:get(PaymentId, Context),
-            maybe_send_email(Status, Payment, Context),
+            NewStatus = maps:get(<<"status">>, Payment),
+            maybe_send_email(NewStatus, Payment, Context),
             z_notifier:notify(
                 #payment_status{
                     key = maps:get(<<"key">>, Payment),
@@ -663,7 +664,8 @@ set_payment_status(PaymentId, Status, DT, Context) when is_integer(PaymentId), i
                     is_paid = maps:get(<<"is_paid">>, Payment, false),
                     is_failed = maps:get(<<"is_failed">>, Payment, false),
                     is_recurring_payment = is_integer( maps:get(<<"recurring_payment_id">>, Payment) ),
-                    status = maps:get(<<"status">>, Payment),
+                    status = NewStatus,
+                    previous_status = to_atom(PreviousStatusBin),
                     date = maps:get(<<"status_date">>, Payment)
                 },
                 Context),
@@ -683,6 +685,8 @@ validate_payment_status(failed) -> true;
 validate_payment_status(refunded) -> true;
 validate_payment_status(error) -> true.
 
+to_atom(undefined) -> undefined;
+to_atom(Status) -> binary_to_atom(Status).
 
 %% @doc Maybe sent a "paid" email.
 maybe_send_email(paid, Payment, Context) ->

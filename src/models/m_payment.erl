@@ -823,13 +823,21 @@ has_address(Contact) ->
 is_empty(Field, Map) ->
     z_utils:is_empty(maps:get(Field, Map, undefined)).
 
--spec set_payment_status(integer(), atom(), z:context()) -> {ok, changed|unchanged} | {error, term()}.
+-spec set_payment_status(PaymentId, Status, Context) -> {ok, changed|unchanged} | {error, term()}
+    when
+        PaymentId :: integer(),
+        Status :: atom(),
+        Context :: z:context().
 set_payment_status(PaymentId, Status, Context) ->
     Now = calendar:universal_time(),
     set_payment_status(PaymentId, Status, Now, Context).
 
--spec set_payment_status(integer(), atom(), calendar:datetime(), z:context()) ->
-    {ok, changed|unchanged} | {error, term()}.
+-spec set_payment_status(PaymentId, Status, StatusDate, Context) -> {ok, changed|unchanged} | {error, term()}
+    when
+        PaymentId :: integer(),
+        Status :: atom(),
+        StatusDate :: calendar:datetime(),
+        Context :: z:context().
 set_payment_status(PaymentId, Status, StatusDate, Context) ->
     z_db:transaction(
         fun(Ctx) ->
