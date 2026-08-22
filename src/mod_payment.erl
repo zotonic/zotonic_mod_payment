@@ -652,9 +652,9 @@ set_payment_status(PaymentId, Status, DT, Context) when is_integer(PaymentId), i
     validate_payment_status(Status),
     case m_payment:set_payment_status(PaymentId, Status, DT, Context) of
         {ok, changed} ->
-            % Status is the new payment status
             {ok, Payment} = m_payment:get(PaymentId, Context),
-            maybe_send_email(Status, Payment, Context),
+            NewStatus = maps:get(<<"status">>, Payment),
+            maybe_send_email(NewStatus, Payment, Context),
             z_notifier:notify(
                 #payment_status{
                     key = maps:get(<<"key">>, Payment),
@@ -663,7 +663,7 @@ set_payment_status(PaymentId, Status, DT, Context) when is_integer(PaymentId), i
                     is_paid = maps:get(<<"is_paid">>, Payment, false),
                     is_failed = maps:get(<<"is_failed">>, Payment, false),
                     is_recurring_payment = is_integer( maps:get(<<"recurring_payment_id">>, Payment) ),
-                    status = maps:get(<<"status">>, Payment),
+                    status = NewStatus,
                     date = maps:get(<<"status_date">>, Payment)
                 },
                 Context),
