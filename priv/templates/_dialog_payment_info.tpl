@@ -27,6 +27,12 @@
                 {% endif %}
             </td>
         </tr>
+        {% if p.reference %}
+            <tr>
+                <th>{_ Reference _}</th>
+                <td>{{ p.reference|escape }}</td>
+            </tr>
+        {% endif %}
         <tr>
             <th>{_ Date _}</th>
             <td>
