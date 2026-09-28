@@ -10,29 +10,51 @@
         <div class="well z-button-row">
             <a name="content-pager"></a>
 
-            {% wire id="payment-find-form"
-                    type="submit"
-                    postback={find_payment}
-                    delegate=`mod_payment`
-            %}
-            <form id="payment-find-form" class="form-inline pull-left" method="post" action="postback">
-                <div class="input-group">
-                    <input type="text"
+            <form id="payment-filter-form"
+                  class="form-inline pull-left"
+                  method="get"
+                  action="{% url payments_admin_overview %}">
+                <label class="sr-only" for="payment-search">{_ Payment id or number _}</label>
+                <div class="form-group">
+                    <input id="payment-search"
+                           type="text"
                            class="form-control"
-                           name="payment_search"
+                           name="qpayment"
+                           value="{{ q.qpayment|escape }}"
                            placeholder="{_ Payment id or number _}">
-                    <span class="input-group-btn">
-                        <button class="btn btn-primary" type="submit">{_ Search _}</button>
-                    </span>
                 </div>
+                <div class="form-group">
+                    <label class="sr-only" for="payment-reference-filter">{_ Reference prefix _}</label>
+                    <input id="payment-reference-filter"
+                           class="form-control"
+                           type="text"
+                           name="qreference"
+                           value="{{ q.qreference|escape }}"
+                           placeholder="{_ Reference prefix _}">
+                </div>
+                <div class="form-group">
+                    <label class="sr-only" for="payment-year-filter">{_ Year _}</label>
+                    <select id="payment-year-filter" class="form-control" name="qyear">
+                        <option value="">{_ All years _}</option>
+                        {% for year in m.payment.years %}
+                            <option value="{{ year }}"
+                                {% if q.qyear|to_integer == year %}selected{% endif %}>
+                                {{ year }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button class="btn btn-primary" type="submit">{_ Filter _}</button>
+                {% if q.qpayment or q.qreference or q.qyear %}
+                    <a class="btn btn-default" href="{% url payments_admin_overview %}">{_ Clear _}</a>
+                {% endif %}
             </form>
 
             <div class="pull-right">
-                {% button
-                    class="btn btn-primary"
-                    text=_"Export"
-                    action={redirect dispatch="export_payments_csv"}
-                %}
+                <a class="btn btn-primary"
+                   href="{% url export_payments_csv qpayment=q.qpayment qreference=q.qreference qyear=q.qyear %}">
+                    {_ Export selection _}
+                </a>
 
                 {% button
                     class="btn btn-primary"
@@ -43,7 +65,15 @@
             </div>
         </div>
 
-        {% with m.search.paged[{payments page=q.page pagelen=20}] as result %}
+        {% with m.search.paged.payments::%{
+                    payment: q.qpayment,
+                    reference: q.qreference,
+                    year: q.qyear,
+                    page: q.page,
+                    pagelen: 20
+                }
+                as result
+        %}
             <table class="table table-striped do_adminLinkedTable" id="payments">
                 <thead>
                     <tr>
@@ -53,6 +83,9 @@
                             </th>
                             <th width="5%">
                                 {_ Status _}
+                            </th>
+                            <th width="12%">
+                                {_ Reference _}
                             </th>
                             <th width="15%">
                                 {_ Description _}
@@ -82,6 +115,9 @@
                             </td>
                             <td class="clickable">
                                 {{ payment.status }}
+                            </td>
+                            <td class="clickable">
+                                {{ payment.reference|escape }}
                             </td>
                             <td class="clickable">
                                 {{ payment.description|escape }}
@@ -114,7 +150,7 @@
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="5">
+                        <td colspan="8">
                             {_ No payments found. _}
                         </td>
                     </tr>

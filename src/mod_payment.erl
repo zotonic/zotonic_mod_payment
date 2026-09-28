@@ -22,7 +22,7 @@
 -mod_title("Payments").
 -mod_description("Payment services using Payment Service Provider modules").
 -mod_author("Driebit").
--mod_schema(8).
+-mod_schema(9).
 
 -author("Driebit <tech@driebit.nl>").
 
@@ -305,19 +305,24 @@ payment_request_from_query(Key, UserId, Args, Context) ->
         undefined -> z_context:get_q(<<"reference">>, Context);
         ArgReference -> z_convert:to_binary(ArgReference)
     end,
-    DescriptionRef = case Reference of
-        undefined ->
-            Description1;
+    Reference1 = case Reference of
         Ref when is_binary(Ref) ->
             case valid_reference(Ref) of
-                {true, <<>>} -> Description1;
-                {true, Ref1} when Description1 =:= <<>> -> Ref1;
-                {true, Ref1} -> <<Description1/binary, " (", Ref1/binary, ")">>;
-                false -> Description1
-            end
+                {true, CleanReference} -> CleanReference;
+                false -> undefined
+            end;
+        undefined ->
+            undefined
+    end,
+    DescriptionRef = case Reference1 of
+        undefined -> Description1;
+        <<>> -> Description1;
+        DescriptionReference when Description1 =:= <<>> -> DescriptionReference;
+        DescriptionReference ->
+            <<Description1/binary, " (", DescriptionReference/binary, ")">>
     end,
     Cols = z_db:column_names(payment, Context),
-    ExtraProps = lists:filter(
+    ExtraProps0 = lists:filter(
         fun
             ({key, _}) -> false;
             ({amount, _}) -> false;
@@ -326,12 +331,19 @@ payment_request_from_query(Key, UserId, Args, Context) ->
             ({is_recurring_start, _}) -> false;
             ({description, _}) -> false;
             ({default_description, _}) -> false;
+            ({reference, _}) -> false;
             ({is_paid, _}) -> false;
             ({is_failed, _}) -> false;
             ({is_payment_link, _}) -> false;
             ({K, _}) -> is_allowed_arg(K, Cols)
         end,
         Args),
+    ExtraProps = case Reference1 of
+        Ref2 when is_binary(Ref2), Ref2 =/= <<>> ->
+            [{reference, Ref2} | ExtraProps0];
+        _ ->
+            ExtraProps0
+    end,
     #payment_request{
         key = z_convert:to_binary(Key),
         user_id = UserId,
@@ -420,10 +432,14 @@ is_valid_payment_amount(_, _) ->
     false.
 
 
-observe_search_query(#search_query{name = <<"payments">>, offsetlimit=OffsetLimit }, Context) ->
+observe_search_query(#search_query{
+        name = <<"payments">>,
+        args = Args,
+        offsetlimit = OffsetLimit
+    }, Context) ->
     case z_acl:is_allowed(use, mod_payment, Context) orelse z_acl:is_admin(Context) of
         true ->
-            m_payment:search_query(OffsetLimit, Context);
+            m_payment:search_query(Args, OffsetLimit, Context);
         false ->
             []
     end;

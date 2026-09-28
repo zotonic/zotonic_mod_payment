@@ -29,6 +29,8 @@
 
     list_user/2,
     list_email/2,
+    years/1,
+    count_reserved_psp/2,
 
     insert/2,
     insert_recurring_payment/4,
@@ -43,6 +45,7 @@
     cancel_recurring_payment/2,
 
     search_query/2,
+    search_query/3,
     list_status_check/1,
 
     delete_old/2,
@@ -105,6 +108,15 @@ m_get([ <<"list_email">>, Email | Rest ], _Msg, Context) ->
     of
         true ->
             {ok, {list_email(Email, Context), Rest}};
+        false ->
+            {error, eacces}
+    end;
+m_get([ <<"years">> | Rest ], _Msg, Context) ->
+    case z_acl:is_allowed(use, mod_payment, Context)
+         orelse z_acl:is_admin(Context)
+    of
+        true ->
+            {ok, {years(Context), Rest}};
         false ->
             {error, eacces}
     end;
@@ -249,6 +261,29 @@ list_email(Email, Context) ->
             add_status_flags(P)
         end,
         L).
+
+%% @doc Return payment creation years, newest first, for admin filters.
+-spec years(z:context()) -> [integer()].
+years(Context) ->
+    {ok, Rows} = z_db:qmap("
+        select distinct extract(year from created)::integer as year
+        from payment
+        order by year desc",
+        Context),
+    [ maps:get(<<"year">>, Row) || Row <- Rows ].
+
+%% @doc Count payments that succeeded or can still succeed for a payment
+%% service provider. This can be used to reserve capacity before a pending
+%% payment has reached its final state.
+-spec count_reserved_psp(module(), z:context()) -> non_neg_integer().
+count_reserved_psp(PspModule, Context) ->
+    z_db:q1("
+        select count(*)
+        from payment
+        where psp_module = $1
+          and status in ('new', 'pending', 'paid')",
+        [PspModule],
+        Context).
 
 
 %% @doc Create new payment.
@@ -871,22 +906,133 @@ set_payment_status(PaymentId, Status, StatusDate, Context) ->
         end,
         Context).
 
-search_query({Offset, Limit}, Context) ->
-    {ok, Rows} = z_db:qmap("
-        select *
-        from payment
-        order by created desc
-        offset $1
-        limit $2",
-        [Offset-1, Limit],
+search_query(OffsetLimit, Context) ->
+    search_query(#{}, OffsetLimit, Context).
+
+-spec search_query(map() | undefined, {pos_integer(), pos_integer()}, z:context()) -> #search_result{}.
+search_query(undefined, OffsetLimit, Context) ->
+    search_query(#{}, OffsetLimit, Context);
+search_query(Args, {Offset, Limit}, Context) ->
+    {Where, FilterArgs} = search_filter(Args),
+    OffsetArg = length(FilterArgs) + 1,
+    LimitArg = OffsetArg + 1,
+    Sql = iolist_to_binary([
+        "select * from payment",
+        Where,
+        " order by created desc",
+        " offset $", integer_to_binary(OffsetArg),
+        " limit $", integer_to_binary(LimitArg)
+    ]),
+    {ok, Rows} = z_db:qmap_props(
+        Sql,
+        FilterArgs ++ [Offset - 1, Limit],
         Context),
     #search_result{
         result = Rows,
-        total = total(Context)
+        total = total(Where, FilterArgs, Context)
     }.
 
-total(Context) ->
-    z_db:q1("select count(*) from payment", Context).
+search_filter(Args) ->
+    Payment = filter_payment(maps:get(<<"payment">>, Args, undefined)),
+    Reference = filter_reference(maps:get(<<"reference">>, Args, undefined)),
+    YearRange = filter_year(maps:get(<<"year">>, Args, undefined)),
+    {RevConditions, RevArgs, _NextParam} = lists:foldl(
+        fun add_search_filter/2,
+        {[], [], 1},
+        [Payment, Reference, YearRange]),
+    Conditions = lists:reverse(RevConditions),
+    FilterArgs = lists:reverse(RevArgs),
+    case Conditions of
+        [] ->
+            {<<>>, []};
+        _ ->
+            {iolist_to_binary([" where ", lists:join(" and ", Conditions)]), FilterArgs}
+    end.
+
+add_search_filter(undefined, Acc) ->
+    Acc;
+add_search_filter({payment_id_or_number, Id, Number}, {Conditions, Args, Param}) ->
+    Condition = iolist_to_binary([
+        "(id = $", integer_to_binary(Param),
+        " or payment_nr = $", integer_to_binary(Param + 1), ")"
+    ]),
+    {[Condition | Conditions], [Number, Id | Args], Param + 2};
+add_search_filter({payment_number, Number}, {Conditions, Args, Param}) ->
+    Condition = iolist_to_binary(["payment_nr = $", integer_to_binary(Param)]),
+    {[Condition | Conditions], [Number | Args], Param + 1};
+add_search_filter({reference, Reference}, {Conditions, Args, Param}) ->
+    Condition = iolist_to_binary([
+        "reference like $", integer_to_binary(Param), " escape '!'"
+    ]),
+    {[Condition | Conditions], [reference_prefix_pattern(Reference) | Args], Param + 1};
+add_search_filter({year, Start, End}, {Conditions, Args, Param}) ->
+    Condition = iolist_to_binary([
+        "created >= $", integer_to_binary(Param),
+        " and created < $", integer_to_binary(Param + 1)
+    ]),
+    {[Condition | Conditions], [End, Start | Args], Param + 2}.
+
+filter_payment(undefined) ->
+    undefined;
+filter_payment(Payment) ->
+    case z_string:truncatechars(z_string:trim(z_convert:to_binary(Payment)), 64) of
+        <<>> ->
+            undefined;
+        Number ->
+            filter_payment_number(Number)
+    end.
+
+filter_payment_number(Number) ->
+    case z_utils:only_digits(Number) of
+        true ->
+            case binary_to_integer(Number) of
+                Id when Id > 0, Id =< 2147483647 ->
+                    {payment_id_or_number, Id, Number};
+                _ ->
+                    {payment_number, Number}
+            end;
+        false ->
+            {payment_number, Number}
+    end.
+
+filter_reference(undefined) ->
+    undefined;
+filter_reference(Reference) ->
+    case z_string:trim(z_convert:to_binary(Reference)) of
+        <<>> -> undefined;
+        Ref -> {reference, z_string:truncatechars(Ref, 100)}
+    end.
+
+reference_prefix_pattern(Reference) ->
+    Escaped = lists:foldl(
+        fun({Pattern, Replacement}, Value) ->
+            binary:replace(Value, Pattern, Replacement, [global])
+        end,
+        Reference,
+        [
+            {<<"!">>, <<"!!">>},
+            {<<"%">>, <<"!%">>},
+            {<<"_">>, <<"!_">>}
+        ]),
+    <<Escaped/binary, "%">>.
+
+filter_year(undefined) ->
+    undefined;
+filter_year(YearValue) ->
+    try z_convert:to_integer(YearValue) of
+        Year when Year >= 1970, Year < 9999 ->
+            {year,
+             {{Year, 1, 1}, {0, 0, 0}},
+             {{Year + 1, 1, 1}, {0, 0, 0}}};
+        _ ->
+            undefined
+    catch
+        _:_ -> undefined
+    end.
+
+total(Where, FilterArgs, Context) ->
+    Sql = iolist_to_binary(["select count(*) from payment", Where]),
+    z_db:q1(Sql, FilterArgs, Context).
 
 
 %% @doc Return a list of all payments that are in a temporary status for longer
@@ -971,6 +1117,7 @@ install(Context) ->
                     psp_data bytea,
 
                     key character varying(256),
+                    reference character varying(100),
                     language character varying(16) not null default 'en',
                     description character varying(64) not null default '',
                     description_html text not null default '',
@@ -1015,6 +1162,10 @@ install(Context) ->
                 on payment (status)",
                 Context),
             [] = z_db:q("
+                create index payment_reference_key
+                on payment (reference)",
+                Context),
+            [] = z_db:q("
                 create index payment_psp_external_id_key
                 on payment (psp_external_id)",
                 Context),
@@ -1033,6 +1184,7 @@ install(Context) ->
             add_recurring_payment_id_column(Context),
             add_recurring_column(Context),
             add_status_date_column(Context),
+            add_reference_column(Context),
             case lists:member(<<"payment_created_key">>, indices("payment", Context)) of
                 true ->
                     ok;
@@ -1137,5 +1289,93 @@ add_status_date_column(Context) ->
     end.
 
 
+%% @doc Add the reference column and copy references stored in legacy props.
+add_reference_column(Context) ->
+    case lists:member(reference, z_db:column_names(payment, Context)) of
+        true ->
+            ok;
+        false ->
+            [] = z_db:q("
+                alter table payment
+                add column reference character varying(100)",
+                Context),
+            z_db:flush(Context)
+    end,
+    backfill_references(Context),
+    ensure_reference_index(Context).
+
+backfill_references(Context) ->
+    {ok, Payments} = z_db:qmap_props("
+        select id, props
+        from payment
+        where reference is null
+          and props is not null",
+        Context),
+    lists:foreach(
+        fun
+            (#{<<"id">> := Id, <<"reference">> := Reference})
+                when is_binary(Reference); is_list(Reference) ->
+                Reference1 = z_string:truncatechars(
+                    z_string:trim(z_convert:to_binary(Reference)),
+                    100),
+                _ = z_db:q(
+                    "update payment set reference = $2 where id = $1",
+                    [Id, Reference1],
+                    Context),
+                ok;
+            (_) ->
+                ok
+        end,
+        Payments).
+
+ensure_reference_index(Context) ->
+    case lists:member(<<"payment_reference_key">>, indices("payment", Context)) of
+        true ->
+            ok;
+        false ->
+            [] = z_db:q("
+                create index payment_reference_key
+                on payment (reference)",
+                Context),
+            ok
+    end.
+
+
 cancel_recurring_payment(UserId, Context) ->
     z_db:q("update payment set is_recurring_start = false where user_id = $1", [UserId], Context).
+
+
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+
+reference_prefix_filter_test() ->
+    ?assertEqual(
+        {<<" where reference like $1 escape '!'">>, [<<"donation-%">>]},
+        search_filter(#{<<"reference">> => <<"donation-">>})),
+    ?assertEqual(
+        {<<" where reference like $1 escape '!'">>, [<<"campaign!_100!%!!%">>]},
+        search_filter(#{<<"reference">> => <<"campaign_100%!">>})).
+
+payment_filter_test() ->
+    ?assertEqual(
+        {<<" where payment_nr = $1">>, [<<"PAY-123">>]},
+        search_filter(#{<<"payment">> => <<"PAY-123">>})),
+    ?assertEqual(
+        {<<" where (id = $1 or payment_nr = $2)">>, [42, <<"42">>]},
+        search_filter(#{<<"payment">> => <<"42">>})).
+
+combined_filter_test() ->
+    Start = {{2026, 1, 1}, {0, 0, 0}},
+    End = {{2027, 1, 1}, {0, 0, 0}},
+    ?assertEqual(
+        {<<" where (id = $1 or payment_nr = $2)"
+           " and reference like $3 escape '!'"
+           " and created >= $4 and created < $5">>,
+         [42, <<"42">>, <<"donation-%">>, Start, End]},
+        search_filter(#{
+            <<"payment">> => <<"42">>,
+            <<"reference">> => <<"donation-">>,
+            <<"year">> => <<"2026">>
+        })).
+
+-endif.
