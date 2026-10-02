@@ -932,6 +932,15 @@ search_query(Args, {Offset, Limit}, Context) ->
         total = total(Where, FilterArgs, Context)
     }.
 
+%% z_search normalizes named-search arguments into a list of query terms.
+%% Keep accepting flat maps for direct callers of search_query/3.
+search_filter(#{ <<"q">> := Terms }) when is_list(Terms) ->
+    Args = maps:from_list([
+        {Key, Value}
+        || #{ <<"term">> := Key, <<"value">> := Value } <- Terms,
+           Key =:= <<"payment">> orelse Key =:= <<"reference">> orelse Key =:= <<"year">>
+    ]),
+    search_filter(Args);
 search_filter(Args) ->
     Payment = filter_payment(maps:get(<<"payment">>, Args, undefined)),
     Reference = filter_reference(maps:get(<<"reference">>, Args, undefined)),
@@ -1377,5 +1386,27 @@ combined_filter_test() ->
             <<"reference">> => <<"donation-">>,
             <<"year">> => <<"2026">>
         })).
+
+%% Exercise the normalization used by both m.search and payment_export:data/1.
+normalized_search_filter_test_() ->
+    Cases = [
+        {#{<<"reference">> => <<"donation-">>},
+         {<<" where reference like $1 escape '!'">>, [<<"donation-%">>]}},
+        {#{<<"reference">> => <<" campaign_100%! ">>},
+         {<<" where reference like $1 escape '!'">>, [<<"campaign!_100!%!!%">>]}},
+        {#{<<"payment">> => <<"PAY-123">>},
+         {<<" where payment_nr = $1">>, [<<"PAY-123">>]}},
+        {#{<<"payment">> => <<"42">>, <<"reference">> => <<"donation-">>,
+           <<"year">> => <<"2026">>},
+         {<<" where (id = $1 or payment_nr = $2)"
+            " and reference like $3 escape '!'"
+            " and created >= $4 and created < $5">>,
+          [42, <<"42">>, <<"donation-%">>,
+           {{2026, 1, 1}, {0, 0, 0}}, {{2027, 1, 1}, {0, 0, 0}}]}},
+        {#{<<"payment">> => <<>>, <<"reference">> => <<>>, <<"year">> => undefined},
+         {<<>>, []}}
+    ],
+    [?_assertEqual(Expected, search_filter(z_search:props_to_map(Args)))
+        || {Args, Expected} <- Cases].
 
 -endif.
