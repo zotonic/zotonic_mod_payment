@@ -46,18 +46,9 @@ save_editable(Module, Values, Context) ->
     end.
 
 persist(Module, Updates, Context) ->
-    case z_db:transaction(
-        fun(Ctx) ->
-            lists:foreach(
-                fun({K, V}) -> ok = m_config:set_value(Module, K, V, Ctx) end,
-                Updates)
-        end,
-        Context)
-    of
-        ok -> ok;
-        {rollback, Reason} -> {error, Reason};
-        {error, _} = Error -> Error
-    end.
+    lists:foreach(
+        fun({K, V}) -> ok = m_config:set_value(Module, K, V, Context) end,
+        Updates).
 
 authorized_schema(Module, Context) ->
     case z_acl:is_allowed(use, mod_admin_config, Context) of
