@@ -98,3 +98,16 @@
 -record(payment_psp_customer_sync, {
     user_id :: m_rsc:resource_id()
 }).
+
+%% Discovery polling. With psp_module undefined, map observers return their module
+%% atom (or undefined if unsupported). A targeted first call returns
+%% {ok, [normalized receive_payment maps], NextCursor | undefined} or {error, Reason}.
+%% Each normalized map also includes created_at, the original PSP creation UTC
+%% datetime, used by the shared retention filter (not a status observation time).
+%% Since/Until are UTC datetimes; the cursor is opaque and only valid in this window.
+-record(payment_psp_poll, {
+    psp_module :: module() | undefined,
+    since :: calendar:datetime() | undefined,
+    until :: calendar:datetime() | undefined,
+    cursor :: term()
+}).

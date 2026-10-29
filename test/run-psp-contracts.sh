@@ -18,14 +18,14 @@ else
     unset PAYMENT_TEST_PSP
 fi
 sources=()
-for provider in "${providers[@]}"; do
-    if [[ "$provider" == sovergn ]]; then
-        sources+=(apps_user/zotonic_mod_payment_sovergn/src/support/payment_sovergn_api.erl)
-    else
-        sources+=("apps_user/zotonic_mod_payment_${provider}/src/models/m_payment_${provider}_api.erl")
-    fi
+# Compile the ordinary adapters and their discovery helpers together, so the
+# optional offline runner cannot accidentally use stale module observer beams.
+for app in zotonic_mod_payment "${providers[@]/#/zotonic_mod_payment_}"; do
+    while IFS= read -r -d '' source; do sources+=("$source"); done < <(
+        find "apps_user/$app/src" -name '*.erl' -print0
+    )
 done
-erlc +debug_info -I apps_user -o "$build_dir" "${sources[@]}" \
+erlc +debug_info -I apps -I apps_user -o "$build_dir" "${sources[@]}" \
     apps_user/zotonic_mod_payment/test/payment_psp*.erl \
     apps_user/zotonic_mod_payment/test/payment_test_mock.erl
 erl -pa _build/default/lib/*/ebin -pa "$build_dir" -noshell \

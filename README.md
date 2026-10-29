@@ -120,6 +120,12 @@ Please check the modules for PSP specific configurations.
 Configuration
 -------------
 
+The admin page **Modules → Payment configuration** manages general settings and
+all enabled PSPs. Viewing and saving require `use.mod_admin_config`. Each PSP
+contributes `_admin_payment_config_psp.tpl`, included using `{% all include %}`.
+Sections use the shared `-mod_config` schema and save independently. Credentials use password inputs with the standard show-password control.
+Emptying a field clears its value when the section is saved. Internal synchronization state is read-only.
+
 There are several configuration keys:
 
  * `mod_payment.description` default description for the payments. Can be overruled in the payment form or postback.
@@ -202,9 +208,9 @@ Implemented webhook adapters:
   Refund events retrieve their parent capture so refund amounts are never imported
   as new payments. Partial refunds retain the existing `paid` status convention.
 
-Mollie's numbered webhook and recurring-payment path, and Sovergn's restricted
-integration, are unchanged. No payment-list polling or historical backfill is
-performed.
+Mollie's numbered webhook and recurring-payment handling, and Sovergn's restricted
+integration, remain provider-specific. Scheduled discovery is described below;
+it does not perform a full historical backfill.
 
 The pure tests are `payment_receive_tests` and the PSP API test modules. The
 optional `payment_receive_db_tests` runs when `PAYMENT_TEST_PORT` is set. It expects
@@ -221,3 +227,59 @@ used by Mollie, Stripe, PayPal, Buckaroo and Sovergn, using documented PSP
 requests and responses. Run `apps_user/zotonic_mod_payment/test/run-psp-contracts.sh`
 from the compiled Zotonic umbrella checkout. No live PSP credentials or database
 are required.
+
+
+### Discovering missed payments
+
+With `mod_payment.accept_unknown_payments = true`, `mod_payment` starts a unique
+background discovery job on `tick_4h` (requires `mod_cron`). Set
+`mod_payment.disable_unknown_payment_polling = true` to disable discovery while
+continuing to accept verified webhooks. Both settings are checked again between
+pages and before importing; known-payment status synchronization is unchanged.
+
+The first run looks back 24 hours. Subsequent runs resume from a per-PSP checkpoint
+and overlap the previous day to cover reporting delays. If `delete_after_days`
+is configured (at least 2 days), the polling window is clamped to that retention
+period and individual results older than the cutoff are skipped, using the PSP's
+original creation/initiation date rather than a fresh status observation. Mollie's
+legacy recurring-payment poll uses the same policy for unknown payments. This
+prevents polling from recreating expired payments, without changing webhook or
+known-payment updates. With retention unset, there is no extra age restriction. Long outages are caught
+up in seven-day steps on successive ticks. This is ongoing discovery, not a full
+historical account import. Checkpoints live in the properties of
+`mod_payment.payment_poll`; do not change them during a running job. Changing PSP
+accounts or live/test credentials requires resetting that PSP's checkpoint.
+
+Each page is imported through `mod_payment:receive_payment/3`; already-known PSP
+identities are skipped. A failed request, invalid payment, database error or
+pagination loop leaves the checkpoint unchanged for retry on the next tick.
+Successful imports before a failure are safe to encounter again. The 1,000-page
+safety limit also fails without advancing the checkpoint.
+
+Supported discovery APIs:
+
+- **Mollie:** payments in the profile selected by its API key. No local webhook
+  URL or local reference is required. Pages are ordered by creation time.
+- **Stripe:** payment-mode Checkout Sessions, matching this module's payment
+  identity. Direct Charges/PaymentIntents and subscription sessions are outside
+  this adapter's scope.
+- **PayPal:** additionally requires `mod_payment_paypal.enable_reporting_polling = true`
+  (default `false`) and the Transaction Search permission
+  `https://uri.paypal.com/services/reporting/search/read`. Incoming positive
+  payment transactions are selected; fees, withdrawals, currency conversions and
+  refund records are not imported as new payments. Order references resolve to
+  the existing order identity; standalone/legacy payments use capture IDs.
+  Pending legacy imports also use reporting for their existing status sync.
+  Reporting can lag by three hours. Missing permissions or inaccessible order
+  details fail the poll and preserve its checkpoint; they are not silently skipped.
+- **Buckaroo:** the checkout gateway has no documented discovery/list endpoint;
+  it continues to use webhooks and known-transaction status queries.
+- **Sovergn:** discovery is deliberately not enabled.
+
+To add a provider, observe `#payment_psp_poll{}`. An untargeted `map` notification
+asks for supported provider module atoms. A targeted `first` notification supplies
+UTC `since`/`until` boundaries and an opaque page cursor. Include the original PSP
+creation datetime as `created_at` in each payment map for retention checks. Return
+`{ok, NormalizedPayments, NextCursor}` (`undefined` at the end), or `{error, Reason}`.
+The provider retrieves authenticated API data and normalizes it; shared code owns
+configuration gates, pagination, checkpoints, deduplication and imports.

@@ -3,6 +3,7 @@
 -module(payment_psp_contract_tests).
 -include_lib("eunit/include/eunit.hrl").
 -include_lib("zotonic_core/include/zotonic.hrl").
+-include("../include/payment.hrl").
 
 contracts_test_() ->
     {foreach, fun payment_psp_mock:start/0, fun(_) -> payment_psp_mock:stop() end,
@@ -31,10 +32,10 @@ providers() ->
 provider_tests(P) ->
     [{atom_to_list(P) ++ ": " ++ binary_to_list(maps:get(<<"name">>, C)),
         fun() -> contract(P, C) end} || C <- payment_psp_mock:fixtures(P)]
-    ++ workflow_tests(P).
+    ++ workflow_tests(P) ++ polling_tests(P).
 
 workflow_tests(mollie) ->
-    [fun subscriptions/0, fun payments/0, fun cancellation/0, fun() -> errors(mollie) end];
+    [fun subscriptions/0, fun payments/0, fun mollie_retention/0, fun cancellation/0, fun() -> errors(mollie) end];
 workflow_tests(stripe) ->
     [fun stripe_fetch/0, fun reject/0, fun() -> errors(stripe) end];
 workflow_tests(paypal) ->
@@ -230,3 +231,126 @@ oauth_failure() ->
     payment_psp_mock:expect(paypal, [Token]),
     ?assertEqual({error, 401}, call(paypal, C)),
     payment_psp_mock:done().
+
+%% List responses and pagination fields come from the linked PSP docs fixtures.
+%% These calls exercise the real HTTP serialization and response normalization.
+polling_tests(P) when P =:= mollie; P =:= stripe; P =:= paypal ->
+    [{"discovery pages: " ++ atom_to_list(P), fun() -> discovery(P) end}]
+    ++ case P of paypal -> [fun reporting_disabled/0, fun reporting_order/0,
+        fun reporting_permission_error/0, fun reporting_capture/0, fun reporting_pending_sync/0]; _ -> [] end;
+polling_tests(_) -> [].
+
+poll_request() ->
+    #payment_psp_poll{since = {{2026,10,1},{0,0,0}}, until = {{2026,10,2},{0,0,0}}}.
+
+poll(mollie, R) -> mod_payment_mollie:observe_payment_psp_poll(R#payment_psp_poll{psp_module = mod_payment_mollie}, undefined);
+poll(stripe, R) -> mod_payment_stripe:observe_payment_psp_poll(R#payment_psp_poll{psp_module = mod_payment_stripe}, undefined);
+poll(paypal, R) -> mod_payment_paypal:observe_payment_psp_poll(R#payment_psp_poll{psp_module = mod_payment_paypal}, undefined).
+
+discovery(P) ->
+    A = fixture(P, <<"discovery-page">>),
+    B = fixture(P, <<"discovery-next">>),
+    payment_psp_mock:expect(P, with_oauth(P, A) ++ with_oauth(P, B)),
+    {ok, [Data], Next} = poll(P, poll_request()),
+    ?assertEqual(ok, payment_receive:validate(Data)),
+    ?assertEqual({{2026,10,1},{12,0,0}}, maps:get(created_at, Data)),
+    ?assertEqual(paid, maps:get(status, Data)),
+    ?assertEqual(12.34, maps:get(amount, Data)),
+    ?assertEqual(<<"EUR">>, maps:get(currency, Data)),
+    ?assertEqual(undefined, maps:get(payment_nr, Data, undefined)),
+    {ok, Tail, undefined} = poll(P, (poll_request())#payment_psp_poll{cursor = Next}),
+    case P of
+        paypal ->
+            [Pending] = Tail,
+            ?assertEqual(pending, maps:get(status, Pending)),
+            ?assertEqual(<<"capture:9AB12345CD678901E">>, maps:get(psp_external_id, Data));
+        _ -> ?assertEqual([], Tail)
+    end,
+    payment_psp_mock:done().
+
+reporting_disabled() ->
+    payment_test_mock:expect(m_config, get_boolean, psp, fun(_, _, _) -> false end),
+    ?assertEqual(undefined, mod_payment_paypal:observe_payment_psp_poll(#payment_psp_poll{}, undefined)),
+    ?assertEqual({error, reporting_disabled}, poll(paypal, poll_request())),
+    payment_psp_mock:done().
+
+reporting_order() ->
+    C = fixture(paypal, <<"discovery-page">>),
+    #{<<"transaction_details">> := [#{<<"transaction_info">> := Info} | _]} = maps:get(<<"response">>, C),
+    R = (maps:get(<<"response">>, C))#{<<"transaction_details">> => [#{<<"transaction_info">> =>
+        Info#{<<"paypal_reference_id_type">> => <<"ODR">>, <<"paypal_reference_id">> => <<"ORDERMOCK123">>}}],
+        <<"total_pages">> => 1},
+    C1 = C#{<<"response">> => R},
+    Order = fixture(paypal, <<"get">>),
+    payment_psp_mock:expect(paypal, with_oauth(paypal, C1) ++ with_oauth(paypal, Order)),
+    {ok, [Data], undefined} = poll(paypal, poll_request()),
+    ?assertEqual(<<"ORDERMOCK123">>, maps:get(psp_external_id, Data)),
+    ?assertEqual(ok, payment_receive:validate(Data)),
+    payment_psp_mock:done().
+
+
+reporting_permission_error() ->
+    ?LOG_NOTICE(#{in => zotonic_mod_payment,
+        text => <<"Intentional test error follows: mocked PayPal reporting permission denial must be returned for retry.">>}),
+    C = (fixture(paypal, <<"discovery-page">>))#{<<"status">> => 403,
+        <<"response">> => #{<<"name">> => <<"NOT_AUTHORIZED">>,
+            <<"message">> => <<"Authorization failed due to insufficient permissions.">>}},
+    payment_psp_mock:expect(paypal, with_oauth(paypal, C)),
+    ?assertEqual({error, 403}, poll(paypal, poll_request())),
+    payment_psp_mock:done().
+
+reporting_capture() ->
+    C = fixture(paypal, <<"discovery-page">>),
+    #{<<"transaction_details">> := [#{<<"transaction_info">> := Info} | _]} = maps:get(<<"response">>, C),
+    C1 = C#{<<"response">> => #{<<"transaction_details">> => [#{<<"transaction_info">> =>
+        Info#{<<"transaction_event_code">> => <<"T0006">>, <<"transaction_id">> => <<"CAPTUREMOCK123">>}}],
+        <<"total_pages">> => 1}},
+    Capture = fixture(paypal, <<"get-capture">>),
+    Order = fixture(paypal, <<"get">>),
+    payment_psp_mock:expect(paypal, with_oauth(paypal, C1) ++ with_oauth(paypal, Capture)
+        ++ with_oauth(paypal, Order)),
+    {ok, [Data], undefined} = poll(paypal, poll_request()),
+    ?assertEqual(<<"ORDERMOCK123">>, maps:get(psp_external_id, Data)),
+    payment_psp_mock:done().
+
+reporting_pending_sync() ->
+    C = fixture(paypal, <<"discovery-page">>),
+    #{<<"transaction_details">> := [Record | _]} = maps:get(<<"response">>, C),
+    #{<<"transaction_info">> := Info} = Record,
+    C1 = C#{<<"path">> => <<"/v1/reporting/transactions?start_date=2026-10-01T11%3A59%3A59Z&end_date=2026-10-01T12%3A00%3A01Z&fields=transaction_info&balance_affecting_records_only=Y&transaction_id=9AB12345CD678901E">>,
+        <<"response">> => #{<<"transaction_details">> => [Record]}},
+    meck:new(mod_payment, [passthrough, no_link]),
+    try
+        payment_test_mock:expect(mod_payment, receive_payment, psp, fun(mod_payment_paypal, Data, _) ->
+            ?assertEqual(paid, maps:get(status, Data)),
+            ?assertEqual(<<"capture:9AB12345CD678901E">>, maps:get(psp_external_id, Data)),
+            ?assertEqual(ok, payment_receive:validate(Data)),
+            {ok, #{}}
+        end),
+        payment_psp_mock:expect(paypal, with_oauth(paypal, C1)),
+        ?assertEqual(ok, mod_payment_paypal:observe_payment_psp_status_sync(
+            #payment_psp_status_sync{psp_module = mod_payment_paypal,
+                psp_data = #{<<"reporting_transaction">> => Info}}, undefined)),
+        payment_psp_mock:done()
+    after meck:unload(mod_payment) end.
+
+
+mollie_retention() ->
+    payment_test_mock:expect(m_config, get_value, psp, fun
+        (mod_payment, delete_after_days, _) -> <<"2">>;
+        (mod_payment_mollie, sync_periodic, _) -> <<>>;
+        (mod_payment_mollie, api_key, _) -> <<"test_mock">>
+    end),
+    payment_test_mock:expect(m_config, set_value, psp, fun(_, _, _, _) -> ok end),
+    meck:new(m_payment, [passthrough, no_link]),
+    try
+        payment_test_mock:expect(m_payment, get_by_psp, psp, fun(mod_payment_mollie, _, _) -> {error, notfound} end),
+        payment_test_mock:expect(m_payment, get, psp, fun(_, _) -> error(old_payment_imported) end),
+        C = fixture(mollie, <<"list-payments">>),
+        #{<<"_embedded">> := #{<<"payments">> := [Payment | _]}} = maps:get(<<"response">>, C),
+        Old = Payment#{<<"createdAt">> => <<"2000-01-01T00:00:00+00:00">>},
+        Response = #{<<"_embedded">> => #{<<"payments">> => [Old]}, <<"_links">> => #{<<"next">> => null}},
+        payment_psp_mock:expect(mollie, [C#{<<"response">> => Response}]),
+        ?assertEqual(ok, m_payment_mollie_api:payment_sync_periodic(undefined)),
+        payment_psp_mock:done()
+    after meck:unload(m_payment) end.

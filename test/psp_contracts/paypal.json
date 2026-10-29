@@ -197,5 +197,91 @@
     },
     "source": "https://developer.paypal.com/api/webhooks/v1/verify-webhook-signature-post",
     "status": 200
+  },
+  {
+    "name": "discovery-page",
+    "method": "get",
+    "path": "/v1/reporting/transactions?start_date=2026-10-01T00%3A00%3A00Z&end_date=2026-10-02T00%3A00%3A00Z&fields=transaction_info&balance_affecting_records_only=Y&page=1&page_size=500",
+    "request": {},
+    "response": {
+      "transaction_details": [
+        {
+          "transaction_info": {
+            "transaction_id": "9AB12345CD678901E",
+            "transaction_event_code": "T0000",
+            "transaction_initiation_date": "2026-10-01T12:00:00Z",
+            "transaction_updated_date": "2026-10-01T12:05:00Z",
+            "transaction_amount": {
+              "currency_code": "EUR",
+              "value": "12.34"
+            },
+            "transaction_status": "S",
+            "transaction_subject": "External payment"
+          }
+        },
+        {
+          "transaction_info": {
+            "transaction_id": "9AB12345CD678902E",
+            "transaction_event_code": "T0000",
+            "transaction_initiation_date": "2026-10-01T12:00:00Z",
+            "transaction_updated_date": "2026-10-01T12:05:00Z",
+            "transaction_amount": {
+              "currency_code": "EUR",
+              "value": "-20.00"
+            },
+            "transaction_status": "S",
+            "transaction_subject": "External payment"
+          }
+        },
+        {
+          "transaction_info": {
+            "transaction_id": "9AB12345CD678903E",
+            "transaction_event_code": "T0100",
+            "transaction_initiation_date": "2026-10-01T12:00:00Z",
+            "transaction_updated_date": "2026-10-01T12:05:00Z",
+            "transaction_amount": {
+              "currency_code": "EUR",
+              "value": "12.34"
+            },
+            "transaction_status": "S",
+            "transaction_subject": "External payment"
+          }
+        }
+      ],
+      "page": 1,
+      "total_items": 4,
+      "total_pages": 2
+    },
+    "source": "https://developer.paypal.com/api/transaction-search/v1/search-get",
+    "status": 200
+  },
+  {
+    "name": "discovery-next",
+    "method": "get",
+    "path": "/v1/reporting/transactions?start_date=2026-10-01T00%3A00%3A00Z&end_date=2026-10-02T00%3A00%3A00Z&fields=transaction_info&balance_affecting_records_only=Y&page=2&page_size=500",
+    "request": {},
+    "response": {
+      "transaction_details": [
+        {
+          "transaction_info": {
+            "transaction_id": "9AB12345CD678904E",
+            "transaction_event_code": "T0000",
+            "transaction_initiation_date": "2026-10-01T12:00:00Z",
+            "transaction_updated_date": "2026-10-01T12:05:00Z",
+            "transaction_amount": {
+              "currency_code": "EUR",
+              "value": "12.34"
+            },
+            "transaction_status": "P",
+            "transaction_subject": "External payment"
+          }
+        }
+      ],
+      "page": 2,
+      "total_items": 4,
+      "total_pages": 2
+    },
+    "source": "https://developer.paypal.com/api/transaction-search/v1/search-get",
+    "status": 200
   }
 ]

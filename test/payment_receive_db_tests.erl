@@ -34,15 +34,24 @@ setup(Port) ->
     payment_test_mock:expect(z_stats, record_event, payment, fun(_, _, _) -> ok end),
     payment_test_mock:expect(z_stats, record_duration, payment, fun(_, _, _, _) -> ok end),
     meck:new(z_notifier, [passthrough, no_link]),
-    payment_test_mock:expect(z_notifier, first, payment, fun(_, _) -> undefined end),
+    payment_test_mock:expect(z_notifier, first, payment, fun
+        (#payment_psp_poll{}, _) -> {ok, [get(poll_payment)], undefined};
+        (_, _) -> undefined
+    end),
     payment_test_mock:expect(z_notifier, notify_queue, payment, fun(_) -> ok end),
     payment_test_mock:expect(z_notifier, notify_queue_flush, payment, fun(_) -> ok end),
     payment_test_mock:expect(z_notifier, notify, payment, fun(N, Ctx) -> z_context:get(owner, Ctx) ! N, ok end),
     meck:new(m_config, [passthrough, no_link]),
-    payment_test_mock:expect(m_config, get_boolean, payment, fun(mod_payment, accept_unknown_payments, Ctx) ->
-        z_context:get(accept, Ctx)
+    payment_test_mock:expect(m_config, get_boolean, payment, fun
+        (mod_payment, accept_unknown_payments, Ctx) -> z_context:get(accept, Ctx);
+        (mod_payment, disable_unknown_payment_polling, Ctx) -> z_context:get(disable_polling, Ctx) =:= true
     end),
-    payment_test_mock:expect(m_config, get_value, payment, fun(mod_payment, email_paid, _) -> undefined end),
+    payment_test_mock:expect(m_config, get_prop, payment, fun(_, _, _, _) -> get(poll_checkpoint) end),
+    payment_test_mock:expect(m_config, set_prop, payment, fun(_, _, _, T, _) -> put(poll_checkpoint, T), ok end),
+    payment_test_mock:expect(m_config, get_value, payment, fun
+        (mod_payment, email_paid, _) -> undefined;
+        (mod_payment, delete_after_days, Ctx) -> z_context:get(retention_days, Ctx)
+    end),
     logger:set_process_metadata(#{site => payment_receive_test}),
     z_db:q("create schema payment_receive_test", C),
     z_db:q("create table rsc (id serial primary key)", C),
@@ -141,7 +150,8 @@ exercise(C0) ->
     }),
     ?assertMatch({error, _}, z_db:insert(payment, #{<<"payment_nr">> => <<"duplicate">>,
         <<"psp_module">> => mod_payment_stripe, <<"psp_external_id">> => <<"external-1">>,
-        <<"amount">> => 12.34}, C)).
+        <<"amount">> => 12.34}, C)),
+    polling(D, C).
 
 concurrency(D, C) ->
     Parent = self(),
@@ -159,3 +169,29 @@ concurrency(D, C) ->
      || {Pid, Ref} <- Pids],
     receive #payment_status{} -> ok after 1000 -> error(no_concurrent_notification) end,
     receive #payment_status{} -> error(duplicate_concurrent_notification) after 0 -> ok end.
+
+%% Run the shared poller against the real receive transaction and unique index.
+polling(D, C) ->
+    put(poll_payment, D#{psp_external_id => <<"discovered">>, event_id => undefined}),
+    Now = 1793275200,
+    ?assertEqual({error, disabled}, payment_poll:poll_provider(mod_payment_example, Now,
+        z_context:set(disable_polling, true, C))),
+    ?assertEqual({error, notfound}, m_payment:get_by_psp(mod_payment_example, <<"discovered">>, C)),
+    ?assertEqual(ok, payment_poll:poll_provider(mod_payment_example, Now, C)),
+    {ok, #{<<"id">> := Id, <<"is_external">> := true, <<"status">> := paid}} =
+        m_payment:get_by_psp(mod_payment_example, <<"discovered">>, C),
+    receive #payment_status{payment_id = Id, previous_status = undefined} -> ok
+    after 1000 -> error(no_poll_notification) end,
+    ?assertEqual(Now, get(poll_checkpoint)),
+    ?assertEqual(ok, payment_poll:poll_provider(mod_payment_example, Now + 14400, C)),
+    ?assertEqual(1, z_db:q1("select count(*) from payment where psp_external_id = 'discovered'", C)),
+    receive #payment_status{} -> error(duplicate_poll_notification) after 0 -> ok end,
+    % Simulate cleanup, then ensure discovery does not recreate the old identity.
+    z_db:q("delete from payment_log where payment_id = $1", [Id], C),
+    z_db:q("delete from payment where id = $1", [Id], C),
+    put(poll_payment, D#{psp_external_id => <<"discovered">>,
+        created_at => z_datetime:timestamp_to_datetime(Now - 3 * 86400)}),
+    ?assertEqual(ok, payment_poll:poll_provider(mod_payment_example, Now,
+        z_context:set(retention_days, <<"2">>, C))),
+    ?assertEqual({error, notfound}, m_payment:get_by_psp(mod_payment_example, <<"discovered">>, C)),
+    receive #payment_status{} -> error(expired_poll_notification) after 0 -> ok end.

@@ -1,4 +1,9 @@
 [
+    {admin_payment_config, ["admin", "payments", "config"], controller_admin, [
+        {template, "admin_payment_config.tpl"},
+        {selected, admin_payment_config},
+        {acl_module, mod_admin_config}
+    ]},
     {payment_psp_done, [ "payment", "ready", payment_nr ], controller_template, [ {template, "payment_psp_done.tpl"} ]},
     {payment_psp_detail, [ "payment", "redirect-psp", payment_nr ], controller_template, [
         {template, "payment_redirect_psp.tpl"},

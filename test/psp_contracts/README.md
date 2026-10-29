@@ -106,3 +106,23 @@ tests cannot silently skip. Optional `PAYMENT_TEST_HOST`, `PAYMENT_TEST_USER`,
 `PAYMENT_TEST_PASSWORD` and `PAYMENT_TEST_DATABASE` select the disposable test
 database; the suite creates and removes its own `payment_receive_test` schema.
 The sandbox uses Zotonic's usual `ZOTONIC_DBHOST` / `ZOTONIC_DBPORT` configuration.
+
+
+## Discovery API fixtures
+
+The `discovery-page` / `discovery-next` cases are based on these official schemas,
+using synthetic identifiers and amounts (not captured production responses):
+
+- [Mollie list payments](https://docs.mollie.com/reference/list-payments):
+  `_embedded.payments`, HAL `next`, creation ordering and profile scope.
+- [Stripe list Checkout Sessions](https://docs.stripe.com/api/checkout/sessions/list):
+  `created` bounds, `starting_after`, `has_more`, and payment/subscription modes.
+- [PayPal Transaction Search](https://developer.paypal.com/api/transaction-search/v1/search-get)
+  and [event codes](https://developer.paypal.com/reports/reference/t-codes/):
+  page/total_pages, signed gross amounts, T00 payments, T01 fees and S/P statuses.
+
+Workflow tests exercise these responses through the real adapters and HTTP
+boundary, including pagination, Mollie creation cutoff, non-payment exclusion,
+PayPal's opt-in gate and canonical order identity. Core polling tests cover the
+shared gates, failed imports/pages, retry boundaries and cursor loops; the real
+PostgreSQL suite verifies one import/notification across repeated discovery.

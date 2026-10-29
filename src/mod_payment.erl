@@ -24,10 +24,24 @@
 -mod_author("Driebit").
 -mod_schema(10).
 -mod_config([
+    #{key => description, type => binary, default => <<>>, label => "Default description",
+      description => "Default description for new payment requests."},
+    #{key => currency, type => binary, default => <<"EUR">>, label => "Default currency",
+      description => "Three-letter currency code for new payment requests."},
+    #{key => amount, type => integer, default => <<>>, label => "Default amount",
+      description => "Optional default payment amount in major currency units (whole numbers)."},
+    #{key => email_paid, type => binary, default => <<>>, label => "Payment notification recipients",
+      description => "Email addresses receiving a notification when a payment is paid."},
+    #{key => delete_after_days, type => integer, default => <<>>, label => "Payment retention (days)",
+      description => "Delete payments not modified for this many days. Leave empty to retain payments; minimum 2 days."},
     #{key => accept_unknown_payments,
       type => boolean,
       default => false,
-      description => "Import payments received through verified PSP webhooks that were not initiated here"}
+      description => "Import payments received through verified PSP webhooks or polling that were not initiated here."},
+    #{key => disable_unknown_payment_polling,
+      type => boolean,
+      default => false,
+      description => "Disable four-hour discovery polling; verified webhooks can still import unknown payments."}
 ]).
 
 -author("Driebit <tech@driebit.nl>").
@@ -42,6 +56,7 @@
     is_valid_payment_args/2,
 
     observe_tick_24h/2,
+    observe_tick_4h/2,
 
     observe_export_resource_visible/2,
     observe_export_resource_filename/2,
@@ -459,7 +474,12 @@ observe_admin_menu(#admin_menu{}, Acc, Context) ->
                parent=admin_modules,
                label=?__("Payments", Context),
                url={payments_admin_overview, []},
-               visiblecheck={acl, use, mod_payment}}
+               visiblecheck={acl, use, mod_payment}},
+    #menu_item{id=admin_payment_config,
+               parent=admin_modules,
+               label=?__("Payment configuration", Context),
+               url={admin_payment_config, []},
+               visiblecheck={acl, use, mod_admin_config}}
     | Acc
     ].
 
@@ -546,6 +566,10 @@ psp_request(PsPReq, Context) ->
 
 
 %% @doc Every day all pending and new transactions are checked for external status changes.
+%% @doc Discover missed payments using the shared import policy.
+observe_tick_4h(tick_4h, Context) ->
+    payment_poll:start(Context).
+
 -spec observe_tick_24h(tick_24h, z:context()) -> ok.
 observe_tick_24h(tick_24h, Context) ->
     delete_old(Context),

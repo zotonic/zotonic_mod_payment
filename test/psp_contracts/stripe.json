@@ -83,5 +83,53 @@
     },
     "source": "https://docs.stripe.com/api/checkout/sessions/expire",
     "status": 200
+  },
+  {
+    "name": "discovery-page",
+    "method": "get",
+    "path": "/v1/checkout/sessions?limit=100&created%5Bgte%5D=1790812800&created%5Blte%5D=1790899200",
+    "request": {},
+    "response": {
+      "object": "list",
+      "url": "/v1/checkout/sessions",
+      "has_more": true,
+      "data": [
+        {
+          "id": "cs_external",
+          "object": "checkout.session",
+          "mode": "payment",
+          "created": 1790856000,
+          "amount_total": 1234,
+          "currency": "eur",
+          "status": "complete",
+          "payment_status": "paid",
+          "metadata": {},
+          "customer_details": null,
+          "customer_email": null
+        }
+      ]
+    },
+    "source": "https://docs.stripe.com/api/checkout/sessions/list",
+    "status": 200
+  },
+  {
+    "name": "discovery-next",
+    "method": "get",
+    "path": "/v1/checkout/sessions?limit=100&created%5Bgte%5D=1790812800&created%5Blte%5D=1790899200&starting_after=cs_external",
+    "request": {},
+    "response": {
+      "object": "list",
+      "url": "/v1/checkout/sessions",
+      "has_more": false,
+      "data": [
+        {
+          "id": "cs_subscription",
+          "mode": "subscription",
+          "payment_status": "paid"
+        }
+      ]
+    },
+    "source": "https://docs.stripe.com/api/checkout/sessions/list",
+    "status": 200
   }
 ]

@@ -312,5 +312,74 @@
     },
     "source": "https://docs.mollie.com/reference/cancel-subscription",
     "status": 200
+  },
+  {
+    "name": "discovery-page",
+    "method": "get",
+    "path": "payments?limit=250",
+    "request": {},
+    "response": {
+      "count": 1,
+      "_embedded": {
+        "payments": [
+          {
+            "resource": "payment",
+            "id": "tr_external",
+            "mode": "test",
+            "createdAt": "2026-10-01T12:00:00Z",
+            "status": "paid",
+            "paidAt": "2026-10-01T12:05:00Z",
+            "amount": {
+              "value": "12.34",
+              "currency": "EUR"
+            },
+            "description": "External payment",
+            "metadata": null,
+            "webhookUrl": null
+          }
+        ]
+      },
+      "_links": {
+        "next": {
+          "href": "https://api.mollie.com/v2/payments?from=tr_old&limit=250",
+          "type": "application/hal+json"
+        }
+      }
+    },
+    "source": "https://docs.mollie.com/reference/list-payments",
+    "status": 200
+  },
+  {
+    "name": "discovery-next",
+    "method": "get",
+    "path": "payments?limit=250&from=tr_old",
+    "request": {},
+    "response": {
+      "count": 1,
+      "_embedded": {
+        "payments": [
+          {
+            "resource": "payment",
+            "id": "tr_old",
+            "mode": "test",
+            "createdAt": "2026-09-01T12:00:00Z",
+            "status": "paid",
+            "paidAt": "2026-10-01T12:05:00Z",
+            "amount": {
+              "value": "12.34",
+              "currency": "EUR"
+            },
+            "description": "External payment",
+            "metadata": null,
+            "webhookUrl": null
+          }
+        ]
+      },
+      "_links": {
+        "next": null
+      }
+    },
+    "source": "https://docs.mollie.com/reference/list-payments",
+    "status": 200
   }
 ]
