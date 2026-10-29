@@ -409,15 +409,12 @@ is_allowed_arg(K, Cols) when is_atom(K) ->
             true
     end.
 
--spec currency(term()) -> binary().
-currency(undefined) -> <<>>;
-currency(<<>>) -> <<>>;
-currency(Currency) when is_binary(Currency) ->
+-spec currency(binary()) -> binary().
+currency(Currency) ->
     case lists:member(Currency, ?SUPPORTED_CURRENCIES) of
         true -> Currency;
         false -> <<>>
-    end;
-currency(_) -> <<>>.
+    end.
 
 %% @doc Check if a currency is accepted by mod_payment.
 -spec is_valid_currency(term()) -> boolean().

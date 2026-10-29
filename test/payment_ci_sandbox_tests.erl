@@ -54,8 +54,8 @@ psp_module("sovergn") -> mod_payment_sovergn.
 
 %% Module activation finishes before the asynchronous template scan.
 wait_templates(Target, Context, N) when N > 0 ->
-    Page = z_module_indexer:find(template, "admin_payment_config.tpl", Context),
-    Psps = z_module_indexer:find_all(template, "_admin_payment_config_psp.tpl", Context),
+    Page = z_module_indexer:find(template, <<"admin_payment_config.tpl">>, Context),
+    Psps = z_module_indexer:find_all(template, <<"_admin_payment_config_psp.tpl">>, Context),
     case {Page, Target =:= "payment" orelse Psps =/= []} of
         {{ok, _}, true} -> ok;
         _ -> timer:sleep(100), wait_templates(Target, Context, N - 1)

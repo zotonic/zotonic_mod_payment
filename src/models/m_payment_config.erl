@@ -18,8 +18,7 @@ event(#submit{message = {save, Args}}, Context) ->
     case save(Module, z_context:get_q_all_noz(Context), Context) of
         ok -> z_render:wire({reload, []}, z_render:growl(?__("Payment configuration saved.", Context), Context));
         {error, eacces} -> z_render:growl_error(?__("You are not allowed to configure payments.", Context), Context);
-        {error, invalid_config} -> z_render:growl_error(?__("Check the configuration values. No settings were saved.", Context), Context);
-        {error, _} -> z_render:growl_error(?__("Could not save the payment configuration.", Context), Context)
+        {error, invalid_config} -> z_render:growl_error(?__("Check the configuration values. No settings were saved.", Context), Context)
     end.
 
 -spec save(atom() | binary(), list(), z:context()) -> ok | {error, term()}.

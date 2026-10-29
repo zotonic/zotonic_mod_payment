@@ -1,5 +1,6 @@
 -module(payment_config_tests).
 -include_lib("eunit/include/eunit.hrl").
+-include_lib("zotonic_core/include/zotonic.hrl").
 
 config_test_() ->
     {foreach, fun setup/0, fun(_) -> meck:unload([z_acl, z_module_manager, m_config]) end,
@@ -25,29 +26,29 @@ values() -> [{<<"secret">>, <<>>}, {<<"amount">>, <<"10">>}].
 
 denied() ->
     put(denied, true),
-    ?assertEqual({error, eacces}, m_payment_config:m_get([<<"fields">>, <<"mod_payment">>], #{}, undefined)),
-    ?assertEqual({error, eacces}, m_payment_config:save(mod_payment, values(), undefined)),
+    ?assertEqual({error, eacces}, m_payment_config:m_get([<<"fields">>, <<"mod_payment">>], #{}, #context{})),
+    ?assertEqual({error, eacces}, m_payment_config:save(mod_payment, values(), #context{})),
     ?assertEqual(undefined, get(amount)),
     put(denied, false),
     put(readonly, true),
-    ?assertEqual({error, eacces}, m_payment_config:save(mod_payment, values(), undefined)),
+    ?assertEqual({error, eacces}, m_payment_config:save(mod_payment, values(), #context{})),
     put(readonly, false),
-    ?assertEqual({error, eacces}, m_payment_config:save(<<"mod_other">>, values(), undefined)).
+    ?assertEqual({error, eacces}, m_payment_config:save(<<"mod_other">>, values(), #context{})).
 
 secret_read() ->
-    {ok, {[F | _], []}} = m_payment_config:m_get([<<"fields">>, <<"mod_payment">>], #{}, undefined),
+    {ok, {[F | _], []}} = m_payment_config:m_get([<<"fields">>, <<"mod_payment">>], #{}, #context{}),
     ?assertEqual(<<"configured-secret">>, maps:get(value, F)).
 
 save_and_clear() ->
-    ?assertEqual(ok, m_payment_config:save(mod_payment, values(), undefined)),
+    ?assertEqual(ok, m_payment_config:save(mod_payment, values(), #context{})),
     ?assertEqual(<<>>, get(secret)),
     ?assertEqual(false, get(enabled)),
     ?assertEqual(<<"10">>, get(amount)),
-    ?assertEqual(ok, m_payment_config:save(mod_payment, [{<<"enabled">>, <<"1">>} | values()], undefined)),
+    ?assertEqual(ok, m_payment_config:save(mod_payment, [{<<"enabled">>, <<"1">>} | values()], #context{})),
     ?assertEqual(<<>>, get(secret)),
     ?assertEqual(true, get(enabled)),
     ?assertEqual(ok, m_payment_config:save(mod_payment,
-        [{<<"secret">>, <<"replacement">>}, {<<"amount">>, <<>>}], undefined)),
+        [{<<"secret">>, <<"replacement">>}, {<<"amount">>, <<>>}], #context{})),
     ?assertEqual(<<"replacement">>, get(secret)),
     ?assertEqual(false, get(enabled)).
 
@@ -55,17 +56,17 @@ save_and_clear() ->
 boolean_values() ->
     lists:foreach(fun({Submitted, Expected}) ->
         ?assertEqual(ok, m_payment_config:save(mod_payment,
-            [{<<"enabled">>, Submitted} | values()], undefined)),
+            [{<<"enabled">>, Submitted} | values()], #context{})),
         ?assertEqual(Expected, get(enabled))
     end, [{<<>>, false}, {<<"1">>, true}, {<<"0">>, false}, {<<"true">>, true}, {<<"false">>, false}]),
     ?assertEqual({error, invalid_config}, m_payment_config:save(mod_payment,
-        [{<<"enabled">>, true} | values()], undefined)).
+        [{<<"enabled">>, true} | values()], #context{})).
 
 invalid() ->
     ?assertEqual({error, invalid_config}, m_payment_config:save(mod_payment,
-        [{<<"cursor">>, <<"tampered">>} | values()], undefined)),
+        [{<<"cursor">>, <<"tampered">>} | values()], #context{})),
     ?assertEqual({error, invalid_config}, m_payment_config:save(mod_payment,
-        [{<<"secret">>, <<"changed">>}, {<<"amount">>, <<"-1">>}], undefined)),
+        [{<<"secret">>, <<"changed">>}, {<<"amount">>, <<"-1">>}], #context{})),
     ?assertEqual(undefined, get(secret)),
     ?assertEqual(undefined, get(amount)).
 
@@ -116,12 +117,12 @@ select_options() ->
         #{key => interval, type => binary, default => <<"yearly">>,
           options => [<<"monthly">>, <<"yearly">>]}
     ]; (M) -> meck:passthrough([M]) end),
-    {ok, {[Field], []}} = m_payment_config:m_get([<<"fields">>, <<"mod_payment">>], #{}, undefined),
+    {ok, {[Field], []}} = m_payment_config:m_get([<<"fields">>, <<"mod_payment">>], #{}, #context{}),
     ?assertEqual(<<"yearly">>, maps:get(value, Field)),
-    ?assertEqual(ok, m_payment_config:save(mod_payment, [{<<"interval">>, <<"monthly">>}], undefined)),
+    ?assertEqual(ok, m_payment_config:save(mod_payment, [{<<"interval">>, <<"monthly">>}], #context{})),
     ?assertEqual(<<"monthly">>, get(interval)),
-    ?assertEqual(ok, m_payment_config:save(mod_payment, [{<<"interval">>, <<"yearly">>}], undefined)),
-    ?assertEqual({error, invalid_config}, m_payment_config:save(mod_payment, [{<<"interval">>, <<"weekly">>}], undefined)),
+    ?assertEqual(ok, m_payment_config:save(mod_payment, [{<<"interval">>, <<"yearly">>}], #context{})),
+    ?assertEqual({error, invalid_config}, m_payment_config:save(mod_payment, [{<<"interval">>, <<"weekly">>}], #context{})),
     ?assertEqual(<<"yearly">>, get(interval)).
 
 

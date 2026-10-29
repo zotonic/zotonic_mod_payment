@@ -39,19 +39,19 @@ mock(M, F, Fun) -> payment_test_mock:expect(M, F, psp, Fun).
 cleanup() -> meck:unload([m_config, m_payment, mod_payment, z_notifier, z_sidejob]).
 
 page(Fun) -> mock(z_notifier, first, Fun).
-poll() -> payment_poll:poll_provider(mod_payment_example, 2000000, undefined).
+poll() -> payment_poll:poll_provider(mod_payment_example, 2000000, #context{}).
 
 %% EUnit runs each body in a fresh process; state is local to that test.
 gates() ->
     put(accept, false),
-    ?assertEqual(ok, payment_poll:start(undefined)),
+    ?assertEqual(ok, payment_poll:start(#context{})),
     ?assertEqual({error, disabled}, poll()),
     ?assertEqual(undefined, get(started)),
     put(accept, true), put(disable, true),
-    ?assertEqual(ok, payment_poll:start(undefined)),
+    ?assertEqual(ok, payment_poll:start(#context{})),
     ?assertEqual(undefined, get(started)),
     put(disable, false),
-    ?assertEqual(ok, mod_payment:observe_tick_4h(tick_4h, undefined)),
+    ?assertEqual(ok, mod_payment:observe_tick_4h(tick_4h, #context{})),
     ?assertEqual(true, get(started)).
 
 pages_and_known() ->
@@ -75,7 +75,7 @@ failed_page_retries() ->
     ?assertEqual([#{psp_external_id => <<"before-failure">>}], get(imported)),
     Boundary = get(checkpoint),
     ?assertEqual(2000000 - 86400, Boundary),
-    ?assertEqual({error, timeout}, payment_poll:poll_provider(mod_payment_example, 3000000, undefined)),
+    ?assertEqual({error, timeout}, payment_poll:poll_provider(mod_payment_example, 3000000, #context{})),
     ?assertEqual(Boundary, get(checkpoint)).
 
 failed_import_retries() ->

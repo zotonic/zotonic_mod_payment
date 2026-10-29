@@ -56,13 +56,13 @@ call(P, C) ->
     Path = maps:get(<<"path">>, C),
     Req = maps:get(<<"request">>, C),
     case P of
-        mollie -> m_payment_mollie_api:api_call(M, Path, maps:to_list(Req), undefined);
-        stripe -> m_payment_stripe_api:api_call(M, Path, maps:to_list(Req), undefined);
-        paypal -> m_payment_paypal_api:api_call(M, Path, Req, undefined);
-        buckaroo -> m_payment_buckaroo_api:api_call(M, Path, Req, en, undefined);
-        sovergn -> payment_sovergn_api:api_json(M, Path, Req, scope(C),
+        mollie -> psp_call(m_payment_mollie_api, api_call, [M, Path, maps:to_list(Req), #context{}]);
+        stripe -> psp_call(m_payment_stripe_api, api_call, [M, Path, maps:to_list(Req), #context{}]);
+        paypal -> psp_call(m_payment_paypal_api, api_call, [M, Path, Req, #context{}]);
+        buckaroo -> psp_call(m_payment_buckaroo_api, api_call, [M, Path, Req, en, #context{}]);
+        sovergn -> psp_call(payment_sovergn_api, api_json, [M, Path, Req, scope(C),
             [{content_type, <<"application/json">>},
-             {headers, [{<<"Idempotency-Key">>, <<"contract-test-key">>}]}], undefined)
+             {headers, [{<<"Idempotency-Key">>, <<"contract-test-key">>}]}], #context{}])
     end.
 
 with_oauth(P, C) when P =:= paypal; P =:= sovergn -> [oauth(P, C), C];
@@ -92,7 +92,7 @@ subscriptions() ->
     N = fixture(mollie, <<"list-subscriptions-next">>),
     payment_psp_mock:expect(mollie, [C, N]),
     #{<<"_embedded">> := #{<<"subscriptions">> := Subs}} = expected(mollie, C),
-    ?assertEqual({ok, Subs}, m_payment_mollie_api:mollie_list_subscriptions(<<"cst_mock123">>, undefined)),
+    ?assertEqual({ok, Subs}, psp_call(m_payment_mollie_api, mollie_list_subscriptions, [<<"cst_mock123">>, #context{}])),
     payment_psp_mock:done().
 
 payments() ->
@@ -100,36 +100,36 @@ payments() ->
     N = fixture(mollie, <<"list-payments-next">>),
     payment_psp_mock:expect(mollie, [C, N]),
     #{<<"_embedded">> := #{<<"payments">> := Payments}} = expected(mollie, C),
-    ?assertEqual({ok, Payments}, m_payment_mollie_api:fetch_payments_since_loop(
-        <<"2026-09-01T00:00:00+00:00">>, undefined, [], undefined)),
+    ?assertEqual({ok, Payments}, psp_call(m_payment_mollie_api, fetch_payments_since_loop, [
+        <<"2026-09-01T00:00:00+00:00">>, undefined, [], #context{}])),
     payment_psp_mock:done().
 
 cancellation() ->
     payment_psp_mock:expect(mollie, [fixture(mollie, <<"cancel-subscription">>)]),
-    ?assertEqual(ok, m_payment_mollie_api:cancel_subscription(
-        {mollie_subscription, <<"cst_mock123">>, <<"sub_mock123">>}, undefined)),
+    ?assertEqual(ok, psp_call(m_payment_mollie_api, cancel_subscription, [
+        {mollie_subscription, <<"cst_mock123">>, <<"sub_mock123">>}, #context{}])),
     payment_psp_mock:done().
 
 stripe_fetch() ->
     C = fixture(stripe, <<"retrieve">>),
     payment_psp_mock:expect(stripe, [C]),
     ?assertEqual({ok, expected(stripe, C)},
-        m_payment_stripe_api:fetch_session(<<"cs_test_mock123">>, undefined)),
+        psp_call(m_payment_stripe_api, fetch_session, [<<"cs_test_mock123">>, #context{}])),
     payment_psp_mock:done().
 
 paypal_fetch() ->
     C = fixture(paypal, <<"get">>),
     payment_psp_mock:expect(paypal, with_oauth(paypal, C)),
     ?assertEqual({ok, expected(paypal, C)},
-        m_payment_paypal_api:fetch_order(<<"ORDERMOCK123">>, undefined)),
+        psp_call(m_payment_paypal_api, fetch_order, [<<"ORDERMOCK123">>, #context{}])),
     payment_psp_mock:done().
 
 buckaroo_status() ->
     C = fixture(buckaroo, <<"status">>),
     payment_psp_mock:expect(buckaroo, [C]),
     ?assertEqual({ok, {190, {{2026,10,1},{12,0,0}}}},
-        m_payment_buckaroo_api:transaction_status(<<"0123456789abcdef0123456789abcdef">>,
-            #context{language = [en]})),
+        psp_call(m_payment_buckaroo_api, transaction_status, [<<"0123456789abcdef0123456789abcdef">>,
+            #context{language = [en]}])),
     payment_psp_mock:done().
 
 sovergn_retry() ->
@@ -193,7 +193,7 @@ paypal_webhook() ->
         Event = #{<<"id">> => <<"EVENTMOCK">>,
             <<"event_type">> => <<"PAYMENT.CAPTURE.COMPLETED">>,
             <<"resource">> => #{<<"id">> => <<"CAPTUREMOCK123">>}},
-        ?assertEqual(ok, m_payment_paypal_api:webhook_event(Event, #context{})),
+        ?assertEqual(ok, psp_call(m_payment_paypal_api, webhook_event, [Event, #context{}])),
         ?assertEqual(1, meck:num_calls(mod_payment, receive_payment, '_')),
         payment_psp_mock:done()
     after
@@ -213,11 +213,11 @@ paypal_verify() ->
         payment_test_mock:expect(z_context, get_req_header, psp, fun(H, _) -> maps:get(maps:get(H, Headers), Payload) end),
         Body = jsx:encode(maps:get(<<"webhook_event">>, Payload)),
         payment_psp_mock:expect(paypal, with_oauth(paypal, C)),
-        ?assert(m_payment_paypal_api:is_valid_webhook_signature(Body, undefined)),
+        ?assert(psp_call(m_payment_paypal_api, is_valid_webhook_signature, [Body, #context{}])),
         payment_psp_mock:done(),
         Failure = C#{<<"response">> => #{<<"verification_status">> => <<"FAILURE">>}},
         payment_psp_mock:expect(paypal, with_oauth(paypal, Failure)),
-        ?assertNot(m_payment_paypal_api:is_valid_webhook_signature(Body, undefined)),
+        ?assertNot(psp_call(m_payment_paypal_api, is_valid_webhook_signature, [Body, #context{}])),
         payment_psp_mock:done()
     after
         meck:unload(z_context)
@@ -243,9 +243,9 @@ polling_tests(_) -> [].
 poll_request() ->
     #payment_psp_poll{since = {{2026,10,1},{0,0,0}}, until = {{2026,10,2},{0,0,0}}}.
 
-poll(mollie, R) -> mod_payment_mollie:observe_payment_psp_poll(R#payment_psp_poll{psp_module = mod_payment_mollie}, undefined);
-poll(stripe, R) -> mod_payment_stripe:observe_payment_psp_poll(R#payment_psp_poll{psp_module = mod_payment_stripe}, undefined);
-poll(paypal, R) -> mod_payment_paypal:observe_payment_psp_poll(R#payment_psp_poll{psp_module = mod_payment_paypal}, undefined).
+poll(mollie, R) -> psp_call(mod_payment_mollie, observe_payment_psp_poll, [R#payment_psp_poll{psp_module = mod_payment_mollie}, #context{}]);
+poll(stripe, R) -> psp_call(mod_payment_stripe, observe_payment_psp_poll, [R#payment_psp_poll{psp_module = mod_payment_stripe}, #context{}]);
+poll(paypal, R) -> psp_call(mod_payment_paypal, observe_payment_psp_poll, [R#payment_psp_poll{psp_module = mod_payment_paypal}, #context{}]).
 
 discovery(P) ->
     A = fixture(P, <<"discovery-page">>),
@@ -270,7 +270,7 @@ discovery(P) ->
 
 reporting_disabled() ->
     payment_test_mock:expect(m_config, get_boolean, psp, fun(_, _, _) -> false end),
-    ?assertEqual(undefined, mod_payment_paypal:observe_payment_psp_poll(#payment_psp_poll{}, undefined)),
+    ?assertEqual(undefined, psp_call(mod_payment_paypal, observe_payment_psp_poll, [#payment_psp_poll{}, #context{}])),
     ?assertEqual({error, reporting_disabled}, poll(paypal, poll_request())),
     payment_psp_mock:done().
 
@@ -328,9 +328,10 @@ reporting_pending_sync() ->
             {ok, #{}}
         end),
         payment_psp_mock:expect(paypal, with_oauth(paypal, C1)),
-        ?assertEqual(ok, mod_payment_paypal:observe_payment_psp_status_sync(
-            #payment_psp_status_sync{psp_module = mod_payment_paypal,
-                psp_data = #{<<"reporting_transaction">> => Info}}, undefined)),
+        ?assertEqual(ok, psp_call(mod_payment_paypal, observe_payment_psp_status_sync, [
+            #payment_psp_status_sync{payment_id = 1, psp_module = mod_payment_paypal,
+                psp_external_id = <<"capture:9AB12345CD678901E">>,
+                psp_data = #{<<"reporting_transaction">> => Info}}, #context{}])),
         payment_psp_mock:done()
     after meck:unload(mod_payment) end.
 
@@ -351,6 +352,11 @@ mollie_retention() ->
         Old = Payment#{<<"createdAt">> => <<"2000-01-01T00:00:00+00:00">>},
         Response = #{<<"_embedded">> => #{<<"payments">> => [Old]}, <<"_links">> => #{<<"next">> => null}},
         payment_psp_mock:expect(mollie, [C#{<<"response">> => Response}]),
-        ?assertEqual(ok, m_payment_mollie_api:payment_sync_periodic(undefined)),
+        ?assertEqual(ok, psp_call(m_payment_mollie_api, payment_sync_periodic, [#context{}])),
         payment_psp_mock:done()
     after meck:unload(m_payment) end.
+
+%% PSP modules are optional: each CI job installs only its selected provider.
+%% Resolve calls at runtime so standalone mod_payment analysis needs no PSPs.
+psp_call(Module, Function, Args) ->
+    erlang:apply(Module, Function, Args).
