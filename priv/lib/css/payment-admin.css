@@ -1,0 +1,56 @@
+/* Configuration panels: compact controls without hiding their guidance. */
+.payment-config-sections {
+    display: flex;
+    flex-flow: row wrap;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.payment-config-sections > .widget {
+    flex: 1 1 480px;
+    min-width: 0;
+    max-width: 720px;
+    margin-bottom: 0;
+}
+
+.payment-config-sections .form-group:not(.form-actions) {
+    margin-bottom: 12px;
+}
+
+.payment-config-sections label {
+    margin-bottom: 3px;
+}
+
+.payment-config-sections .help-block {
+    margin-top: 4px;
+    margin-bottom: 0;
+}
+
+.payment-config-sections input[type="number"] {
+    max-width: 10em;
+}
+
+.payment-config-sections input[name="currency"] {
+    max-width: 7em;
+}
+
+.payment-config-sections select[name="recurring_payment_interval"],
+.payment-config-sections input[name="invoice_nr_prefix"] {
+    max-width: 14em;
+}
+
+@media (min-width: 600px) {
+    #payment-config-mod_payment fieldset {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+        column-gap: 20px;
+    }
+
+    #payment-config-mod_payment fieldset > .form-group {
+        grid-column: 1 / -1;
+    }
+
+    #payment-config-mod_payment fieldset > .payment-config-default-value {
+        grid-column: auto;
+    }
+}

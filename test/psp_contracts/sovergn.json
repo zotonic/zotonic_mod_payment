@@ -1,0 +1,81 @@
+[
+  {
+    "name": "checkout",
+    "method": "post",
+    "path": "/v2/checkout_sessions",
+    "request": {
+      "merchantToken": "mrc_womens_wallet",
+      "paymentPosture": "non_aop",
+      "amount": 2500,
+      "currency": "USD",
+      "environment": "live",
+      "merchantReference": "donation_opaque_1001",
+      "successDestination": "https://wallet.example/donations/success",
+      "failureDestination": "https://wallet.example/donations/failure",
+      "cancellationDestination": "https://wallet.example/donations/cancelled"
+    },
+    "response": {
+      "surfaceId": "SURF-API-CHECKOUT-SESSIONS",
+      "contractVersion": "current",
+      "checkoutSessionRef": "chk_01JEXAMPLE0000000000000000",
+      "checkoutUrl": "https://checkout.sovergnllc.com/checkout/chk_01JEXAMPLE0000000000000000",
+      "checkoutMode": "hosted",
+      "merchantReference": "donation_opaque_1001",
+      "embed": null,
+      "postMessage": null,
+      "merchantToken": "mrc_womens_wallet",
+      "amount": 2500,
+      "currency": "USD",
+      "paymentIntentRef": "pi_01JEXAMPLE000000000000000000",
+      "policyVersion": "usd_card_non_aop_v1",
+      "decision": "NON_AOP",
+      "outcome": "checkout_ready",
+      "providerBlind": true,
+      "captureMode": "automatic",
+      "environment": "live",
+      "testMode": null,
+      "expiresAt": "2026-09-01T12:30:00.000Z",
+      "idempotencyStatus": "created",
+      "paymentPosture": "non_aop"
+    },
+    "source": "https://beta.sovergnllc.com/api-docs/openapi.json",
+    "status": 200
+  },
+  {
+    "name": "status",
+    "method": "get",
+    "path": "/v2/developer/merchants/mrc_womens_wallet/payment-status/checkout_sessions/chk_mock",
+    "request": {},
+    "response": {
+      "surfaceId": "mock",
+      "contractVersion": "mock",
+      "route": {},
+      "merchantToken": "mrc_womens_wallet",
+      "checkoutSessionRef": "chk_mock",
+      "capsuleId": null,
+      "status": "created",
+      "captureState": "captured",
+      "refundState": "requested",
+      "reversalState": "none",
+      "disputeState": "open",
+      "reportingState": "observed",
+      "amount": 2500,
+      "currency": "USD",
+      "merchantReference": "donation_opaque_1001",
+      "createdAt": "2026-10-01T12:00:00Z",
+      "updatedAt": "2026-10-01T12:00:00Z",
+      "boundary": {
+        "exposesPayorIdentity": false,
+        "exposesMerchantLegalIdentity": false,
+        "exposesStateTags": false,
+        "exposesProviderSelection": false,
+        "exposesProviderAccountIdentity": false,
+        "exposesRawProviderObjects": false,
+        "exposesPayoutFeeAndMultipartyData": false,
+        "refundCreationIncluded": false
+      }
+    },
+    "status": 200,
+    "source": "https://beta.sovergnllc.com/api-docs/openapi.json"
+  }
+]

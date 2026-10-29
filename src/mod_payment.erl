@@ -22,7 +22,27 @@
 -mod_title("Payments").
 -mod_description("Payment services using Payment Service Provider modules").
 -mod_author("Driebit").
--mod_schema(9).
+-mod_schema(10).
+-mod_config([
+    #{key => description, type => binary, default => <<>>, label => "Default description",
+      description => "Default description for new payment requests."},
+    #{key => currency, type => binary, default => <<"EUR">>, label => "Default currency",
+      description => "Three-letter currency code for new payment requests."},
+    #{key => amount, type => integer, default => <<>>, label => "Default amount",
+      description => "Optional default payment amount in major currency units (whole numbers)."},
+    #{key => email_paid, type => binary, default => <<>>, label => "Payment notification recipients",
+      description => "Email addresses receiving a notification when a payment is paid."},
+    #{key => delete_after_days, type => integer, default => <<>>, label => "Payment retention (days)",
+      description => "Delete payments not modified for this many days. Leave empty to retain payments; minimum 2 days."},
+    #{key => accept_unknown_payments,
+      type => boolean,
+      default => false,
+      description => "Import payments received through verified PSP webhooks or polling that were not initiated here."},
+    #{key => disable_unknown_payment_polling,
+      type => boolean,
+      default => false,
+      description => "Disable four-hour discovery polling; verified webhooks can still import unknown payments."}
+]).
 
 -author("Driebit <tech@driebit.nl>").
 
@@ -36,6 +56,7 @@
     is_valid_payment_args/2,
 
     observe_tick_24h/2,
+    observe_tick_4h/2,
 
     observe_export_resource_visible/2,
     observe_export_resource_filename/2,
@@ -44,6 +65,7 @@
     observe_export_resource_data/2,
 
     observe_admin_menu/3,
+    receive_payment/3,
     set_payment_status/3,
     set_payment_status/4,
     manage_schema/2
@@ -387,15 +409,12 @@ is_allowed_arg(K, Cols) when is_atom(K) ->
             true
     end.
 
--spec currency(term()) -> binary().
-currency(undefined) -> <<>>;
-currency(<<>>) -> <<>>;
-currency(Currency) when is_binary(Currency) ->
+-spec currency(binary()) -> binary().
+currency(Currency) ->
     case lists:member(Currency, ?SUPPORTED_CURRENCIES) of
         true -> Currency;
         false -> <<>>
-    end;
-currency(_) -> <<>>.
+    end.
 
 %% @doc Check if a currency is accepted by mod_payment.
 -spec is_valid_currency(term()) -> boolean().
@@ -452,7 +471,12 @@ observe_admin_menu(#admin_menu{}, Acc, Context) ->
                parent=admin_modules,
                label=?__("Payments", Context),
                url={payments_admin_overview, []},
-               visiblecheck={acl, use, mod_payment}}
+               visiblecheck={acl, use, mod_payment}},
+    #menu_item{id=admin_payment_config,
+               parent=admin_system,
+               label=?__("Payment configuration", Context),
+               url={admin_payment_config, []},
+               visiblecheck={acl, use, mod_admin_config}}
     | Acc
     ].
 
@@ -539,6 +563,10 @@ psp_request(PsPReq, Context) ->
 
 
 %% @doc Every day all pending and new transactions are checked for external status changes.
+%% @doc Discover missed payments using the shared import policy.
+observe_tick_4h(tick_4h, Context) ->
+    payment_poll:start(Context).
+
 -spec observe_tick_24h(tick_24h, z:context()) -> ok.
 observe_tick_24h(tick_24h, Context) ->
     delete_old(Context),
@@ -654,6 +682,26 @@ observe_export_resource_encode(_, _) ->
     undefined.
 
 
+%% @doc Receive a normalized payment from a verified PSP webhook. Never call
+%% this from an unverified request or a browser redirect. See README for fields.
+%% Unknown payments are rejected unless accept_unknown_payments is enabled.
+-spec receive_payment(PspModule, Data, Context) -> Result
+    when
+        PspModule :: module(),
+        Data :: map(),
+        Context :: z:context(),
+        Result :: {ok, map()} | {error, term()}.
+receive_payment(PspModule, Data, Context) ->
+    case m_payment:receive_payment(PspModule, Data, Context) of
+        {ok, Payment, PreviousStatus, changed} ->
+            notify_payment_status(Payment, PreviousStatus, Context),
+            {ok, Payment};
+        {ok, Payment, _PreviousStatus, unchanged} ->
+            {ok, Payment};
+        {error, _} = Error ->
+            Error
+    end.
+
 %% @doc Called by a PSP, set the status of a payment. This also broadcasts success or failure for the payment.
 -spec set_payment_status(integer(), atom()|binary()|list(), z:context()) -> ok | {error, term()}.
 set_payment_status(PaymentId, Status, Context) ->
@@ -670,27 +718,31 @@ set_payment_status(PaymentId, Status, DT, Context) when is_integer(PaymentId), i
     case m_payment:set_payment_status(PaymentId, Status, DT, Context) of
         {ok, changed} ->
             {ok, Payment} = m_payment:get(PaymentId, Context),
-            NewStatus = maps:get(<<"status">>, Payment),
-            maybe_send_email(NewStatus, Payment, Context),
-            z_notifier:notify(
-                #payment_status{
-                    key = maps:get(<<"key">>, Payment),
-                    payment_id = PaymentId,
-                    user_id = maps:get(<<"user_id">>, Payment),
-                    is_paid = maps:get(<<"is_paid">>, Payment, false),
-                    is_failed = maps:get(<<"is_failed">>, Payment, false),
-                    is_recurring_payment = is_integer( maps:get(<<"recurring_payment_id">>, Payment) ),
-                    status = NewStatus,
-                    previous_status = to_atom(PreviousStatusBin),
-                    date = maps:get(<<"status_date">>, Payment)
-                },
-                Context),
+            notify_payment_status(Payment, to_atom(PreviousStatusBin), Context),
             ok;
         {ok, unchanged} ->
             ok;
         {error, _} = Error ->
             Error
     end.
+
+notify_payment_status(Payment, PreviousStatus, Context) ->
+    Status = maps:get(<<"status">>, Payment),
+    maybe_send_email(Status, Payment, Context),
+    z_notifier:notify(
+        #payment_status{
+            key = maps:get(<<"key">>, Payment),
+            payment_id = maps:get(<<"id">>, Payment),
+            user_id = maps:get(<<"user_id">>, Payment),
+            is_paid = maps:get(<<"is_paid">>, Payment, false),
+            is_failed = maps:get(<<"is_failed">>, Payment, false),
+            is_external = maps:get(<<"is_external">>, Payment, false),
+            is_recurring_payment = is_integer(maps:get(<<"recurring_payment_id">>, Payment)),
+            status = Status,
+            previous_status = PreviousStatus,
+            date = maps:get(<<"status_date">>, Payment)
+        },
+        Context).
 
 %% @doc Crash if not valid payment status.
 validate_payment_status(new) -> true;

@@ -4,6 +4,7 @@ EUnit tests for payment currency and amount validation.
 ").
 
 -include_lib("eunit/include/eunit.hrl").
+-include_lib("zotonic_core/include/zotonic.hrl").
 
 supported_currencies_test() ->
     Currencies = [
@@ -79,9 +80,9 @@ payment_currency_symbol_test() ->
         fun({Currency, Symbol}) ->
             ?assertEqual(
                 Symbol,
-                filter_payment_currency_symbol:payment_currency_symbol(Currency, undefined))
+                filter_payment_currency_symbol:payment_currency_symbol(Currency, #context{}))
         end,
         Symbols),
     ?assertEqual(
         <<"XXX">>,
-        filter_payment_currency_symbol:payment_currency_symbol(<<"XXX">>, undefined)).
+        filter_payment_currency_symbol:payment_currency_symbol(<<"XXX">>, #context{})).

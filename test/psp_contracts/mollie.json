@@ -1,0 +1,385 @@
+[
+  {
+    "name": "create-payment",
+    "method": "post",
+    "path": "payments",
+    "request": {
+      "amount[currency]": "EUR",
+      "amount[value]": "10.00",
+      "description": "Contract test & donation",
+      "redirectUrl": "https://merchant.example/return"
+    },
+    "response": {
+      "resource": "payment",
+      "id": "tr_mock123",
+      "mode": "test",
+      "createdAt": "2026-10-01T12:00:00+00:00",
+      "status": "open",
+      "isCancelable": true,
+      "amount": {
+        "currency": "EUR",
+        "value": "10.00"
+      },
+      "description": "Contract test & donation",
+      "metadata": null,
+      "details": null,
+      "_links": {
+        "checkout": {
+          "href": "https://www.mollie.com/checkout/mock"
+        },
+        "self": {
+          "href": "https://api.mollie.com/v2/payments/tr_mock123"
+        }
+      }
+    },
+    "source": "https://docs.mollie.com/reference/create-payment",
+    "status": 201
+  },
+  {
+    "name": "get-payment",
+    "method": "get",
+    "path": "payments/tr_mock123",
+    "request": {},
+    "response": {
+      "resource": "payment",
+      "id": "tr_mock123",
+      "mode": "test",
+      "createdAt": "2026-10-01T12:00:00+00:00",
+      "status": "open",
+      "isCancelable": true,
+      "amount": {
+        "currency": "EUR",
+        "value": "10.00"
+      },
+      "description": "Contract test & donation",
+      "metadata": null,
+      "details": null,
+      "_links": {
+        "checkout": {
+          "href": "https://www.mollie.com/checkout/mock"
+        },
+        "self": {
+          "href": "https://api.mollie.com/v2/payments/tr_mock123"
+        }
+      }
+    },
+    "source": "https://docs.mollie.com/reference/get-payment",
+    "status": 200
+  },
+  {
+    "name": "list-payments",
+    "method": "get",
+    "path": "payments?limit=250",
+    "request": {},
+    "response": {
+      "count": 1,
+      "_embedded": {
+        "payments": [
+          {
+            "resource": "payment",
+            "id": "tr_mock123",
+            "mode": "test",
+            "createdAt": "2026-10-01T12:00:00+00:00",
+            "status": "open",
+            "isCancelable": true,
+            "amount": {
+              "currency": "EUR",
+              "value": "10.00"
+            },
+            "description": "Contract test & donation",
+            "metadata": null,
+            "details": null,
+            "_links": {
+              "checkout": {
+                "href": "https://www.mollie.com/checkout/mock"
+              },
+              "self": {
+                "href": "https://api.mollie.com/v2/payments/tr_mock123"
+              }
+            }
+          }
+        ]
+      },
+      "_links": {
+        "next": {
+          "href": "https://api.mollie.com/v2/payments?from=tr_next&limit=250"
+        },
+        "previous": null
+      }
+    },
+    "source": "https://docs.mollie.com/reference/list-payments",
+    "status": 200
+  },
+  {
+    "name": "list-payments-next",
+    "method": "get",
+    "path": "https://api.mollie.com/v2/payments?from=tr_next&limit=250",
+    "request": {},
+    "response": {
+      "count": 0,
+      "_embedded": {
+        "payments": []
+      },
+      "_links": {
+        "next": null,
+        "previous": null
+      }
+    },
+    "source": "https://docs.mollie.com/reference/list-payments",
+    "status": 200
+  },
+  {
+    "name": "create-customer",
+    "method": "post",
+    "path": "customers",
+    "request": {
+      "name": "Ada Test",
+      "email": "ada@example.test"
+    },
+    "response": {
+      "resource": "customer",
+      "id": "cst_mock123",
+      "mode": "test",
+      "name": "Ada Test",
+      "email": "ada@example.test",
+      "locale": null,
+      "metadata": null,
+      "createdAt": "2026-10-01T12:00:00+00:00"
+    },
+    "source": "https://docs.mollie.com/reference/create-customer",
+    "status": 201
+  },
+  {
+    "name": "get-customer",
+    "method": "get",
+    "path": "customers/cst_mock123",
+    "request": {},
+    "response": {
+      "resource": "customer",
+      "id": "cst_mock123",
+      "mode": "test",
+      "name": "Ada Test",
+      "email": "ada@example.test",
+      "locale": null,
+      "metadata": null,
+      "createdAt": "2026-10-01T12:00:00+00:00"
+    },
+    "source": "https://docs.mollie.com/reference/get-customer",
+    "status": 200
+  },
+  {
+    "name": "list-mandates",
+    "method": "get",
+    "path": "customers/cst_mock123/mandates",
+    "request": {},
+    "response": {
+      "count": 1,
+      "_embedded": {
+        "mandates": [
+          {
+            "resource": "mandate",
+            "id": "mdt_mock123",
+            "status": "valid",
+            "method": "directdebit",
+            "details": {
+              "consumerName": "Ada Test",
+              "consumerAccount": "NL55INGB0000000000"
+            },
+            "mandateReference": "contract-test",
+            "signatureDate": "2026-10-01",
+            "createdAt": "2026-10-01T12:00:00+00:00"
+          }
+        ]
+      },
+      "_links": {
+        "next": null,
+        "previous": null
+      }
+    },
+    "source": "https://docs.mollie.com/reference/list-mandates",
+    "status": 200
+  },
+  {
+    "name": "create-subscription",
+    "method": "post",
+    "path": "customers/cst_mock123/subscriptions",
+    "request": {
+      "amount[currency]": "EUR",
+      "amount[value]": "10.00",
+      "interval": "1 month",
+      "description": "Donation"
+    },
+    "response": {
+      "resource": "subscription",
+      "id": "sub_mock123",
+      "customerId": "cst_mock123",
+      "mode": "test",
+      "status": "active",
+      "amount": {
+        "currency": "EUR",
+        "value": "10.00"
+      },
+      "interval": "1 month",
+      "startDate": "2026-10-01",
+      "nextPaymentDate": "2026-11-01",
+      "description": "Donation",
+      "method": null,
+      "metadata": null,
+      "createdAt": "2026-10-01T12:00:00+00:00"
+    },
+    "source": "https://docs.mollie.com/reference/create-subscription",
+    "status": 201
+  },
+  {
+    "name": "list-subscriptions",
+    "method": "get",
+    "path": "customers/cst_mock123/subscriptions?limit=250",
+    "request": {},
+    "response": {
+      "count": 1,
+      "_embedded": {
+        "subscriptions": [
+          {
+            "resource": "subscription",
+            "id": "sub_mock123",
+            "customerId": "cst_mock123",
+            "mode": "test",
+            "status": "active",
+            "amount": {
+              "currency": "EUR",
+              "value": "10.00"
+            },
+            "interval": "1 month",
+            "startDate": "2026-10-01",
+            "nextPaymentDate": "2026-11-01",
+            "description": "Donation",
+            "method": null,
+            "metadata": null,
+            "createdAt": "2026-10-01T12:00:00+00:00"
+          }
+        ]
+      },
+      "_links": {
+        "next": {
+          "href": "https://api.mollie.com/v2/customers/cst_mock123/subscriptions?from=sub_next&limit=250"
+        },
+        "previous": null
+      }
+    },
+    "source": "https://docs.mollie.com/reference/list-subscriptions",
+    "status": 200
+  },
+  {
+    "name": "list-subscriptions-next",
+    "method": "get",
+    "path": "https://api.mollie.com/v2/customers/cst_mock123/subscriptions?from=sub_next&limit=250",
+    "request": {},
+    "response": {
+      "count": 0,
+      "_embedded": {
+        "subscriptions": []
+      },
+      "_links": {
+        "next": null,
+        "previous": null
+      }
+    },
+    "source": "https://docs.mollie.com/reference/list-subscriptions",
+    "status": 200
+  },
+  {
+    "name": "cancel-subscription",
+    "method": "delete",
+    "path": "customers/cst_mock123/subscriptions/sub_mock123",
+    "request": {},
+    "response": {
+      "resource": "subscription",
+      "id": "sub_mock123",
+      "customerId": "cst_mock123",
+      "mode": "test",
+      "status": "canceled",
+      "amount": {
+        "currency": "EUR",
+        "value": "10.00"
+      },
+      "interval": "1 month",
+      "startDate": "2026-10-01",
+      "nextPaymentDate": "2026-11-01",
+      "description": "Donation",
+      "method": null,
+      "metadata": null,
+      "createdAt": "2026-10-01T12:00:00+00:00"
+    },
+    "source": "https://docs.mollie.com/reference/cancel-subscription",
+    "status": 200
+  },
+  {
+    "name": "discovery-page",
+    "method": "get",
+    "path": "payments?limit=250",
+    "request": {},
+    "response": {
+      "count": 1,
+      "_embedded": {
+        "payments": [
+          {
+            "resource": "payment",
+            "id": "tr_external",
+            "mode": "test",
+            "createdAt": "2026-10-01T12:00:00Z",
+            "status": "paid",
+            "paidAt": "2026-10-01T12:05:00Z",
+            "amount": {
+              "value": "12.34",
+              "currency": "EUR"
+            },
+            "description": "External payment",
+            "metadata": null,
+            "webhookUrl": null
+          }
+        ]
+      },
+      "_links": {
+        "next": {
+          "href": "https://api.mollie.com/v2/payments?from=tr_old&limit=250",
+          "type": "application/hal+json"
+        }
+      }
+    },
+    "source": "https://docs.mollie.com/reference/list-payments",
+    "status": 200
+  },
+  {
+    "name": "discovery-next",
+    "method": "get",
+    "path": "payments?limit=250&from=tr_old",
+    "request": {},
+    "response": {
+      "count": 1,
+      "_embedded": {
+        "payments": [
+          {
+            "resource": "payment",
+            "id": "tr_old",
+            "mode": "test",
+            "createdAt": "2026-09-01T12:00:00Z",
+            "status": "paid",
+            "paidAt": "2026-10-01T12:05:00Z",
+            "amount": {
+              "value": "12.34",
+              "currency": "EUR"
+            },
+            "description": "External payment",
+            "metadata": null,
+            "webhookUrl": null
+          }
+        ]
+      },
+      "_links": {
+        "next": null
+      }
+    },
+    "source": "https://docs.mollie.com/reference/list-payments",
+    "status": 200
+  }
+]

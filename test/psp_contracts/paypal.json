@@ -1,0 +1,287 @@
+[
+  {
+    "name": "create",
+    "method": "post",
+    "path": "/v2/checkout/orders",
+    "request": {
+      "intent": "CAPTURE",
+      "purchase_units": [
+        {
+          "amount": {
+            "currency_code": "EUR",
+            "value": "10.00"
+          }
+        }
+      ]
+    },
+    "response": {
+      "id": "ORDERMOCK123",
+      "intent": "CAPTURE",
+      "status": "CREATED",
+      "purchase_units": [
+        {
+          "reference_id": "default",
+          "amount": {
+            "currency_code": "EUR",
+            "value": "10.00"
+          }
+        }
+      ],
+      "create_time": "2026-10-01T12:00:00Z",
+      "links": [
+        {
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=ORDERMOCK123",
+          "rel": "approve",
+          "method": "GET"
+        }
+      ]
+    },
+    "source": "https://developer.paypal.com/api/orders/v2/orders-create",
+    "status": 201
+  },
+  {
+    "name": "get",
+    "method": "get",
+    "path": "/v2/checkout/orders/ORDERMOCK123",
+    "request": {},
+    "response": {
+      "id": "ORDERMOCK123",
+      "intent": "CAPTURE",
+      "status": "APPROVED",
+      "purchase_units": [
+        {
+          "reference_id": "default",
+          "amount": {
+            "currency_code": "EUR",
+            "value": "10.00"
+          }
+        }
+      ],
+      "create_time": "2026-10-01T12:00:00Z",
+      "links": [
+        {
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=ORDERMOCK123",
+          "rel": "approve",
+          "method": "GET"
+        }
+      ]
+    },
+    "source": "https://developer.paypal.com/api/orders/v2/orders-get",
+    "status": 200
+  },
+  {
+    "name": "capture",
+    "method": "post",
+    "path": "/v2/checkout/orders/ORDERMOCK123/capture",
+    "request": {},
+    "response": {
+      "id": "ORDERMOCK123",
+      "intent": "CAPTURE",
+      "status": "COMPLETED",
+      "purchase_units": [
+        {
+          "reference_id": "default",
+          "payments": {
+            "captures": [
+              {
+                "id": "CAPTUREMOCK123",
+                "status": "COMPLETED",
+                "amount": {
+                  "currency_code": "EUR",
+                  "value": "10.00"
+                },
+                "final_capture": true,
+                "create_time": "2026-10-01T12:00:00Z",
+                "update_time": "2026-10-01T12:00:00Z",
+                "supplementary_data": {
+                  "related_ids": {
+                    "order_id": "ORDERMOCK123"
+                  }
+                },
+                "links": [
+                  {
+                    "href": "https://api-m.sandbox.paypal.com/v2/checkout/orders/ORDERMOCK123",
+                    "rel": "up",
+                    "method": "GET"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "create_time": "2026-10-01T12:00:00Z",
+      "links": [
+        {
+          "href": "https://www.sandbox.paypal.com/checkoutnow?token=ORDERMOCK123",
+          "rel": "approve",
+          "method": "GET"
+        }
+      ]
+    },
+    "source": "https://developer.paypal.com/api/orders/v2/orders-capture",
+    "status": 201
+  },
+  {
+    "name": "get-capture",
+    "method": "get",
+    "path": "/v2/payments/captures/CAPTUREMOCK123",
+    "request": {},
+    "response": {
+      "id": "CAPTUREMOCK123",
+      "status": "COMPLETED",
+      "amount": {
+        "currency_code": "EUR",
+        "value": "10.00"
+      },
+      "final_capture": true,
+      "create_time": "2026-10-01T12:00:00Z",
+      "update_time": "2026-10-01T12:00:00Z",
+      "supplementary_data": {
+        "related_ids": {
+          "order_id": "ORDERMOCK123"
+        }
+      },
+      "links": [
+        {
+          "href": "https://api-m.sandbox.paypal.com/v2/checkout/orders/ORDERMOCK123",
+          "rel": "up",
+          "method": "GET"
+        }
+      ]
+    },
+    "source": "https://developer.paypal.com/api/payments/v2/captures-get",
+    "status": 200
+  },
+  {
+    "name": "verify",
+    "method": "post",
+    "path": "/v1/notifications/verify-webhook-signature",
+    "request": {
+      "auth_algo": "SHA256withRSA",
+      "cert_url": "https://api.paypal.com/v1/notifications/certs/CERTMOCK",
+      "transmission_id": "test-transmission",
+      "transmission_sig": "test-signature",
+      "transmission_time": "2026-10-01T12:00:00Z",
+      "webhook_id": "WHMOCK",
+      "webhook_event": {
+        "id": "EVENTMOCK",
+        "event_type": "PAYMENT.CAPTURE.COMPLETED",
+        "resource": {
+          "id": "CAPTUREMOCK123",
+          "status": "COMPLETED",
+          "amount": {
+            "currency_code": "EUR",
+            "value": "10.00"
+          },
+          "final_capture": true,
+          "create_time": "2026-10-01T12:00:00Z",
+          "update_time": "2026-10-01T12:00:00Z",
+          "supplementary_data": {
+            "related_ids": {
+              "order_id": "ORDERMOCK123"
+            }
+          },
+          "links": [
+            {
+              "href": "https://api-m.sandbox.paypal.com/v2/checkout/orders/ORDERMOCK123",
+              "rel": "up",
+              "method": "GET"
+            }
+          ]
+        }
+      }
+    },
+    "response": {
+      "verification_status": "SUCCESS"
+    },
+    "source": "https://developer.paypal.com/api/webhooks/v1/verify-webhook-signature-post",
+    "status": 200
+  },
+  {
+    "name": "discovery-page",
+    "method": "get",
+    "path": "/v1/reporting/transactions?start_date=2026-10-01T00%3A00%3A00Z&end_date=2026-10-02T00%3A00%3A00Z&fields=transaction_info&balance_affecting_records_only=Y&page=1&page_size=500",
+    "request": {},
+    "response": {
+      "transaction_details": [
+        {
+          "transaction_info": {
+            "transaction_id": "9AB12345CD678901E",
+            "transaction_event_code": "T0000",
+            "transaction_initiation_date": "2026-10-01T12:00:00Z",
+            "transaction_updated_date": "2026-10-01T12:05:00Z",
+            "transaction_amount": {
+              "currency_code": "EUR",
+              "value": "12.34"
+            },
+            "transaction_status": "S",
+            "transaction_subject": "External payment"
+          }
+        },
+        {
+          "transaction_info": {
+            "transaction_id": "9AB12345CD678902E",
+            "transaction_event_code": "T0000",
+            "transaction_initiation_date": "2026-10-01T12:00:00Z",
+            "transaction_updated_date": "2026-10-01T12:05:00Z",
+            "transaction_amount": {
+              "currency_code": "EUR",
+              "value": "-20.00"
+            },
+            "transaction_status": "S",
+            "transaction_subject": "External payment"
+          }
+        },
+        {
+          "transaction_info": {
+            "transaction_id": "9AB12345CD678903E",
+            "transaction_event_code": "T0100",
+            "transaction_initiation_date": "2026-10-01T12:00:00Z",
+            "transaction_updated_date": "2026-10-01T12:05:00Z",
+            "transaction_amount": {
+              "currency_code": "EUR",
+              "value": "12.34"
+            },
+            "transaction_status": "S",
+            "transaction_subject": "External payment"
+          }
+        }
+      ],
+      "page": 1,
+      "total_items": 4,
+      "total_pages": 2
+    },
+    "source": "https://developer.paypal.com/api/transaction-search/v1/search-get",
+    "status": 200
+  },
+  {
+    "name": "discovery-next",
+    "method": "get",
+    "path": "/v1/reporting/transactions?start_date=2026-10-01T00%3A00%3A00Z&end_date=2026-10-02T00%3A00%3A00Z&fields=transaction_info&balance_affecting_records_only=Y&page=2&page_size=500",
+    "request": {},
+    "response": {
+      "transaction_details": [
+        {
+          "transaction_info": {
+            "transaction_id": "9AB12345CD678904E",
+            "transaction_event_code": "T0000",
+            "transaction_initiation_date": "2026-10-01T12:00:00Z",
+            "transaction_updated_date": "2026-10-01T12:05:00Z",
+            "transaction_amount": {
+              "currency_code": "EUR",
+              "value": "12.34"
+            },
+            "transaction_status": "P",
+            "transaction_subject": "External payment"
+          }
+        }
+      ],
+      "page": 2,
+      "total_items": 4,
+      "total_pages": 2
+    },
+    "source": "https://developer.paypal.com/api/transaction-search/v1/search-get",
+    "status": 200
+  }
+]
