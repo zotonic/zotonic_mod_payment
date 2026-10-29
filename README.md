@@ -131,3 +131,93 @@ There are several configuration keys:
    for as short as needed (GDPR compliance).
 
 Check also the configuration keys for the PSP specific modules.
+
+
+Receiving external payments
+---------------------------
+
+By default, verified webhooks for unknown payments are rejected. To import them,
+set the site configuration `mod_payment.accept_unknown_payments` to `true`.
+Known payments continue to update regardless of this setting.
+
+The shared internal API is:
+
+```erlang
+mod_payment:receive_payment(PspModule, #{
+    psp_external_id => <<"provider-payment-id">>,
+    status => paid,
+    status_date => {{2026, 10, 29}, {10, 0, 0}},
+    amount => 12.34,
+    currency => <<"EUR">>,
+    event_id => <<"provider-event-id">>,
+    psp_data => ProviderData
+}, Context).
+```
+
+It returns `{ok, Payment}` or `{error, Reason}`. Call it only after verifying the
+PSP signature or retrieving the payment with the configured PSP credentials.
+It is not a browser/model endpoint and must not be used to import from redirects.
+
+Required fields are `psp_external_id`, a normalized status atom, and a UTC
+`status_date`. Import also requires a nonnegative numeric `amount` in major units
+and an uppercase three-letter `currency`; these are not limited to currencies
+supported by the outgoing checkout form. For existing payments, supplied amount
+and currency must match the stored values. Optional fields are `payment_nr`
+(local correlation), `description`, `contact` (a map with binary contact-field
+keys), `event_id`, and `psp_data`. PSP adapters own currency-unit conversion and
+mapping provider statuses to the existing local status vocabulary.
+
+Lookup, import policy, contact sanitization, event logging, and status updates
+are shared. A local reference cannot reassign an existing payment to another PSP
+or external ID. Initialization still in progress results in an error for retry.
+Imports receive a random local payment number, no local user or business key,
+and `is_external = true` in their properties and the returned payment map.
+Contact details are optional. Imports never initiate a checkout or subscription.
+
+The initial import and subsequent status changes emit `#payment_status{}` with
+`is_external = true`; existing observers must be recompiled with the updated
+header. The initial notification has `previous_status = undefined`. Paid imports
+also use the existing `mod_payment.email_paid` recipients. Retries do not repeat
+status notifications. Event IDs, when supplied, deduplicate successful deliveries
+per payment. Older statuses and open/pending updates for closed payments cannot
+reopen a payment. Notifications are emitted after the receive transaction commits;
+this is not a durable notification outbox.
+
+Schema version 10 adds a unique `(psp_module, psp_external_id)` index for nonempty
+PSP IDs. The same index is created on fresh installations and upgrades. Existing
+duplicate identities must be reconciled before upgrading; the migration fails
+rather than deleting or merging payment records. Per-identity transaction locks
+serialize concurrent webhook imports and updates.
+
+Implemented webhook adapters:
+
+* Buckaroo: verified incoming debit transaction pushes, including the generic
+  `/buckaroo/webhook` route. Existing `/buckaroo/webhook/<payment_nr>` URLs remain
+  valid. Credit transactions are not imported as incoming payments.
+* Stripe: the existing Checkout Session event family, including sessions without
+  Zotonic metadata. PaymentIntent, subscription, and charge event families are
+  outside this change.
+* PayPal: the existing order/capture event families. Orders are the canonical
+  identity for related captures. Standalone captures use a `capture:` ID prefix.
+  Refund events retrieve their parent capture so refund amounts are never imported
+  as new payments. Partial refunds retain the existing `paid` status convention.
+
+Mollie's numbered webhook and recurring-payment path, and Sovergn's restricted
+integration, are unchanged. No payment-list polling or historical backfill is
+performed.
+
+The pure tests are `payment_receive_tests` and the PSP API test modules. The
+optional `payment_receive_db_tests` runs when `PAYMENT_TEST_PORT` is set. It expects
+an isolated PostgreSQL instance on localhost, database `postgres`, user
+`payment_test`, and trust authentication. It creates and removes only the
+`payment_receive_test` schema, testing imports, policy, identity checks, stale
+updates, concurrent retries, and fresh/upgrade schema behavior.
+
+
+### Offline PSP contract tests
+
+The [PSP contract suite](test/psp_contracts/README.md) mocks only the HTTP APIs
+used by Mollie, Stripe, PayPal, Buckaroo and Sovergn, using documented PSP
+requests and responses. Run `apps_user/zotonic_mod_payment/test/run-psp-contracts.sh`
+from the compiled Zotonic umbrella checkout. No live PSP credentials or database
+are required.

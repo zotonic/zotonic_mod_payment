@@ -1,0 +1,87 @@
+[
+  {
+    "name": "create",
+    "method": "post",
+    "path": "/v1/checkout/sessions",
+    "request": {
+      "mode": "payment",
+      "success_url": "https://merchant.example/return",
+      "line_items[0][price_data][currency]": "eur",
+      "line_items[0][price_data][unit_amount]": "1000",
+      "line_items[0][price_data][product_data][name]": "Contract test & donation",
+      "line_items[0][quantity]": "1"
+    },
+    "response": {
+      "id": "cs_test_mock123",
+      "object": "checkout.session",
+      "amount_subtotal": 1000,
+      "amount_total": 1000,
+      "currency": "eur",
+      "customer": null,
+      "customer_details": null,
+      "metadata": {},
+      "mode": "payment",
+      "payment_intent": null,
+      "payment_status": "unpaid",
+      "status": "open",
+      "url": "https://checkout.stripe.com/c/pay/cs_test_mock123",
+      "created": 1790856000,
+      "expires_at": 1790942400,
+      "livemode": false
+    },
+    "source": "https://docs.stripe.com/api/checkout/sessions/create",
+    "status": 200
+  },
+  {
+    "name": "retrieve",
+    "method": "get",
+    "path": "/v1/checkout/sessions/cs_test_mock123",
+    "request": {},
+    "response": {
+      "id": "cs_test_mock123",
+      "object": "checkout.session",
+      "amount_subtotal": 1000,
+      "amount_total": 1000,
+      "currency": "eur",
+      "customer": null,
+      "customer_details": null,
+      "metadata": {},
+      "mode": "payment",
+      "payment_intent": null,
+      "payment_status": "unpaid",
+      "status": "open",
+      "url": "https://checkout.stripe.com/c/pay/cs_test_mock123",
+      "created": 1790856000,
+      "expires_at": 1790942400,
+      "livemode": false
+    },
+    "source": "https://docs.stripe.com/api/checkout/sessions/retrieve",
+    "status": 200
+  },
+  {
+    "name": "expire",
+    "method": "post",
+    "path": "/v1/checkout/sessions/cs_test_mock123/expire",
+    "request": {},
+    "response": {
+      "id": "cs_test_mock123",
+      "object": "checkout.session",
+      "amount_subtotal": 1000,
+      "amount_total": 1000,
+      "currency": "eur",
+      "customer": null,
+      "customer_details": null,
+      "metadata": {},
+      "mode": "payment",
+      "payment_intent": null,
+      "payment_status": "unpaid",
+      "status": "expired",
+      "url": null,
+      "created": 1790856000,
+      "expires_at": 1790942400,
+      "livemode": false
+    },
+    "source": "https://docs.stripe.com/api/checkout/sessions/expire",
+    "status": 200
+  }
+]

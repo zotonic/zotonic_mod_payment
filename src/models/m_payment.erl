@@ -33,6 +33,7 @@
     count_reserved_psp/2,
 
     insert/2,
+    receive_payment/3,
     insert_recurring_payment/4,
     insert_recurring_payment/5,
     get/2,
@@ -338,6 +339,153 @@ insert(PaymentReq, Context) ->
             Error
     end.
 
+%% @doc Persist a verified PSP update atomically. Only internal callers; this is
+%% deliberately not exposed through m_post. Notifications are sent by mod_payment
+%% after this transaction commits. No PSP requests are made inside the transaction.
+-spec receive_payment(PspModule, Data, Context) -> Result
+    when
+        PspModule :: module(),
+        Data :: map(),
+        Context :: z:context(),
+        Result :: {ok, map(), atom() | undefined, changed | unchanged} | {error, term()}.
+receive_payment(PspModule, Data, Context) when is_atom(PspModule) ->
+    case payment_receive:validate(Data) of
+        ok ->
+            Result = z_db:transaction(
+                fun(Ctx) ->
+                    % Serialize deliveries for this identity, including first import.
+                    Lock = iolist_to_binary([atom_to_binary(z_context:site(Ctx)), $:,
+                                             atom_to_binary(PspModule)]),
+                    z_db:q("select pg_advisory_xact_lock(hashtext($1), hashtext($2))",
+                           [Lock, maps:get(psp_external_id, Data)], Ctx),
+                    case receive_payment_1(PspModule, Data, Ctx) of
+                        {error, Reason} -> throw({rollback, Reason});
+                        Success -> Success
+                    end
+                end,
+                Context),
+            case Result of
+                {rollback, Reason} -> {error, Reason};
+                _ -> Result
+            end;
+        {error, _} = Error -> Error
+    end.
+
+receive_payment_1(PspModule, Data, Context) ->
+    ByPsp = get_by_psp(PspModule, maps:get(psp_external_id, Data), Context),
+    ByReference = case maps:get(payment_nr, Data, undefined) of
+        Ref when is_binary(Ref), Ref =/= <<>> -> get(Ref, Context);
+        _ -> {error, notfound}
+    end,
+    case receive_match(ByPsp, ByReference) of
+        {ok, #{ <<"id">> := Id }} ->
+            z_db:q("select id from payment where id = $1 for update", [Id], Context),
+            {ok, Payment} = get(Id, Context),
+            case payment_receive:matches(PspModule, Data, Payment) of
+                true ->
+                    case receive_is_duplicate(Payment, Data, Context) of
+                        true -> {ok, Payment, maps:get(<<"status">>, Payment), unchanged};
+                        false -> receive_update(Payment, Data, false, Context)
+                    end;
+                false -> {error, payment_mismatch}
+            end;
+        {error, notfound} ->
+            case m_config:get_boolean(mod_payment, accept_unknown_payments, Context) of
+                true -> receive_insert(PspModule, Data, Context);
+                false -> {error, notfound}
+            end;
+        {error, _} = Error -> Error
+    end.
+
+receive_match({ok, #{ <<"id">> := Id } = Payment}, {ok, #{ <<"id">> := Id }}) ->
+    {ok, Payment};
+receive_match({ok, _}, {ok, _}) -> {error, payment_mismatch};
+receive_match({ok, Payment}, {error, notfound}) -> {ok, Payment};
+receive_match({error, notfound}, {ok, Payment}) -> {ok, Payment};
+receive_match({error, notfound}, {error, notfound}) -> {error, notfound};
+receive_match({error, Reason}, _) -> {error, Reason};
+receive_match(_, {error, Reason}) -> {error, Reason}.
+
+receive_is_duplicate(#{ <<"id">> := Id }, #{event_id := EventId}, Context)
+    when is_binary(EventId), EventId =/= <<>> ->
+    z_db:q1("select 1 from payment_log
+             where payment_id = $1 and event = 'receive' and psp_external_log_id = $2 limit 1",
+            [Id, EventId], Context) =:= 1;
+receive_is_duplicate(_, _, _) -> false.
+
+receive_insert(PspModule, #{amount := Amount, currency := Currency} = Data, Context)
+    when is_number(Amount), is_binary(Currency) ->
+    Description = receive_text(maps:get(description, Data, <<>>), 60),
+    Contact = receive_contact(maps:get(contact, Data, #{})),
+    Props = Contact#{
+        <<"payment_nr">> => z_ids:identifier(32),
+        <<"psp_module">> => PspModule,
+        <<"psp_external_id">> => maps:get(psp_external_id, Data),
+        <<"psp_data">> => ?DB_PROPS(maps:get(psp_data, Data, #{})),
+        <<"psp_payment_description">> => Description,
+        <<"description">> => Description,
+        <<"amount">> => Amount,
+        <<"currency">> => Currency,
+        <<"is_external">> => true
+    },
+    case z_db:insert(payment, Props, Context) of
+        {ok, Id} ->
+            {ok, Payment} = get(Id, Context),
+            receive_update(Payment, Data, true, Context);
+        {error, _} = Error -> Error
+    end;
+receive_insert(_PspModule, _Data, _Context) ->
+    {error, payment_data}.
+
+receive_update(#{ <<"id">> := Id, <<"status">> := Previous } = Payment, Data, IsNew, Context) ->
+    Contact = receive_contact(maps:get(contact, Data, #{})),
+    case maybe_update_contact(Id, Contact, Context) of
+        ok -> ok;
+        {error, need_contact} -> ok;
+        {error, Reason} -> throw({rollback, Reason})
+    end,
+    {ok, _} = m_payment_log:log(Id, <<"receive">>, #{
+        <<"psp_module">> => maps:get(<<"psp_module">>, Payment),
+        <<"psp_external_log_id">> => maps:get(event_id, Data, undefined),
+        <<"description">> => <<"Verified PSP payment update">>,
+        <<"psp_data">> => maps:get(psp_data, Data, #{}),
+        <<"status">> => maps:get(status, Data)
+    }, Context),
+    Status = maps:get(status, Data),
+    % Delayed approval/open events must never reopen a completed payment.
+    Result = case lists:member(Status, [new, pending])
+                  andalso not lists:member(Previous, [new, pending]) of
+        true -> {ok, unchanged};
+        false when Previous =:= Status ->
+            % Remember the latest observation even without a status transition,
+            % otherwise an older, different status could subsequently win.
+            z_db:q("update payment set status_date = $2
+                    where id = $1 and (status_date is null or status_date < $2)",
+                   [Id, maps:get(status_date, Data)], Context),
+            {ok, unchanged};
+        false -> set_payment_status(Id, Status, maps:get(status_date, Data), Context)
+    end,
+    case Result of
+        {ok, Change} ->
+            {ok, Updated} = get(Id, Context),
+            case IsNew of
+                true ->
+                    % Even an imported 'new' payment must announce its arrival.
+                    {ok, Updated, undefined, changed};
+                false -> {ok, Updated, Previous, Change}
+            end;
+        {error, _} = Error -> Error
+    end.
+
+receive_contact(Contact) ->
+    maps:map(fun(_, V) -> receive_text(V, 200) end,
+        maps:filter(fun(_, V) -> is_binary(V) andalso V =/= <<>> end,
+            maps:with(?CONTACT_FIELDS, Contact))).
+
+receive_text(Value, Length) when is_binary(Value) ->
+    z_html:escape_check(z_string:truncate(z_html:strip(Value), Length));
+receive_text(_, _) -> <<>>.
+
 %% @doc Insert a recurring payment, automatically paid via the PSP. The RecurringPaymentId
 %% refers to the recurring payment that started the subscription.
 -spec insert_recurring_payment(PaymentId, Currency, Amount, Context) -> {ok, NewPaymentId} | {error, term()}
@@ -468,6 +616,7 @@ is_allowed_extra_prop(<<"status_date">>) -> false;
 is_allowed_extra_prop(<<"is_paid">>) -> false;
 is_allowed_extra_prop(<<"is_failed">>) -> false;
 is_allowed_extra_prop(<<"is_payment_link">>) -> false;
+is_allowed_extra_prop(<<"is_external">>) -> false;
 is_allowed_extra_prop(<<"created">>) -> false;
 is_allowed_extra_prop(<<"modified">>) -> false;
 is_allowed_extra_prop(<<"psp_", _/binary>>) -> false;
@@ -483,7 +632,8 @@ qargs_props(true, Context) ->
     Columns = [
         <<"is_paid">>,
         <<"is_failed">>,
-        <<"is_payment_link">>
+        <<"is_payment_link">>,
+        <<"is_external">>
         | z_db:column_names_bin(payment, Context)
     ],
     lists:foldl(
@@ -630,11 +780,16 @@ get_by_psp(PspModule, PspExternalId, Context) ->
 add_status_flags(#{ <<"status">> := StatusBin, <<"psp_module">> := Psp } = Payment) ->
     Status = bin_to_atom(StatusBin),
     Payment#{
+        <<"is_external">> => is_external(Payment),
         <<"status">> => Status,
         <<"is_paid">> => is_paid_status(Status),
         <<"is_failed">> => is_failed_status(Status),
         <<"psp_module">> => z_convert:to_atom(Psp)
     }.
+
+is_external(#{ <<"is_external">> := true }) -> true;
+is_external(#{ <<"props">> := #{ <<"is_external">> := true } }) -> true;
+is_external(_) -> false.
 
 bin_to_atom(undefined) -> undefined;
 bin_to_atom(A) when is_atom(A) -> A;
@@ -879,7 +1034,7 @@ set_payment_status(PaymentId, Status, StatusDate, Context) ->
             CurrStatusBin = z_db:q1("
                 select status
                 from payment
-                where id = $1",
+                where id = $1 for update",
                 [PaymentId],
                 Ctx),
             case z_convert:to_atom(CurrStatusBin) of
@@ -1214,7 +1369,12 @@ install(Context) ->
                     ok
             end,
             ok
-    end.
+    end,
+    [] = z_db:q("create unique index if not exists payment_psp_identity_key
+                  on payment (psp_module, psp_external_id)
+                  where psp_external_id is not null and psp_external_id <> ''", Context),
+    ok.
+
 
 indices(Table, Context) ->
     Is = z_db:q("

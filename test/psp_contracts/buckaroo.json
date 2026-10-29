@@ -1,0 +1,66 @@
+[
+  {
+    "name": "create",
+    "method": "post",
+    "path": "json/Transaction",
+    "request": {
+      "Currency": "EUR",
+      "AmountDebit": 10.0,
+      "Invoice": "invoice-mock",
+      "Services": {
+        "ServiceList": [
+          {
+            "Name": "ideal",
+            "Action": "Pay"
+          }
+        ]
+      }
+    },
+    "response": {
+      "Key": "0123456789abcdef0123456789abcdef",
+      "Invoice": "invoice-mock",
+      "Currency": "EUR",
+      "AmountDebit": 10.0,
+      "AmountCredit": 0.0,
+      "Status": {
+        "Code": {
+          "Code": 190,
+          "Description": "Success"
+        },
+        "SubCode": null,
+        "DateTime": "2026-10-01T14:00:00+02:00"
+      },
+      "IsTest": true,
+      "Services": [],
+      "RequiredAction": null
+    },
+    "source": "https://docs.buckaroo.io/docs/transaction-post",
+    "status": 200
+  },
+  {
+    "name": "status",
+    "method": "get",
+    "path": "json/Transaction/Status/0123456789abcdef0123456789abcdef",
+    "request": {},
+    "response": {
+      "Key": "0123456789abcdef0123456789abcdef",
+      "Invoice": "invoice-mock",
+      "Currency": "EUR",
+      "AmountDebit": 10.0,
+      "AmountCredit": 0.0,
+      "Status": {
+        "Code": {
+          "Code": 190,
+          "Description": "Success"
+        },
+        "SubCode": null,
+        "DateTime": "2026-10-01T14:00:00+02:00"
+      },
+      "IsTest": true,
+      "Services": [],
+      "RequiredAction": null
+    },
+    "source": "https://docs.buckaroo.io/docs/transaction-status-get",
+    "status": 200
+  }
+]
