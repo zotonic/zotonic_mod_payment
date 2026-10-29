@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Run from the Zotonic umbrella root, after ./rebar3 compile.
-# Test-only exports and beams stay outside the normal build.
+# Compiled beams stay outside the normal build.
 set -euo pipefail
 cd "$(dirname "$0")/../../.."
 build_dir=$(mktemp -d "${TMPDIR:-/tmp}/payment-contracts.XXXXXX")
@@ -25,7 +25,8 @@ for provider in "${providers[@]}"; do
         sources+=("apps_user/zotonic_mod_payment_${provider}/src/models/m_payment_${provider}_api.erl")
     fi
 done
-erlc -DTEST -I apps_user -o "$build_dir" "${sources[@]}" \
-    apps_user/zotonic_mod_payment/test/payment_psp*.erl
+erlc +debug_info -I apps_user -o "$build_dir" "${sources[@]}" \
+    apps_user/zotonic_mod_payment/test/payment_psp*.erl \
+    apps_user/zotonic_mod_payment/test/payment_test_mock.erl
 erl -pa _build/default/lib/*/ebin -pa "$build_dir" -noshell \
     -eval 'case eunit:test(payment_psp_contract_tests, [verbose]) of ok -> halt(0); _ -> halt(1) end.'

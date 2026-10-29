@@ -6,7 +6,16 @@
 
 contracts_test_() ->
     {foreach, fun payment_psp_mock:start/0, fun(_) -> payment_psp_mock:stop() end,
-        lists:append([provider_tests(P) || P <- providers()])}.
+        [scope_requests(T) || T <- lists:append([provider_tests(P) || P <- providers()])]}.
+
+%% EUnit runs each body in its own process. Mark it before any adapter call,
+%% so even a missing expect/2 fails closed instead of reaching the PSP.
+scope_requests({Description, Fun}) -> {Description, scope_requests(Fun)};
+scope_requests(Fun) ->
+    fun() ->
+        put(psp_requests, []),
+        try Fun() after erase(psp_requests) end
+    end.
 
 providers() ->
     case os:getenv("PAYMENT_TEST_PSP") of
@@ -168,9 +177,9 @@ paypal_webhook() ->
     Capture = fixture(paypal, <<"get-capture">>),
     Order = fixture(paypal, <<"get">>),
     payment_psp_mock:expect(paypal, with_oauth(paypal, Capture) ++ with_oauth(paypal, Order)),
-    meck:new(mod_payment, [no_link]),
+    meck:new(mod_payment, [passthrough, no_link]),
     try
-        meck:expect(mod_payment, receive_payment, fun(mod_payment_paypal, Data, _) ->
+        payment_test_mock:expect(mod_payment, receive_payment, psp, fun(mod_payment_paypal, Data, _) ->
             ?assertEqual(<<"ORDERMOCK123">>, maps:get(psp_external_id, Data)),
             ?assertEqual(<<"default">>, maps:get(payment_nr, Data)),
             ?assertEqual(paid, maps:get(status, Data)),
@@ -200,7 +209,7 @@ paypal_verify() ->
         <<"paypal-transmission-time">> => <<"transmission_time">>},
     meck:new(z_context, [passthrough, no_link]),
     try
-        meck:expect(z_context, get_req_header, fun(H, _) -> maps:get(maps:get(H, Headers), Payload) end),
+        payment_test_mock:expect(z_context, get_req_header, psp, fun(H, _) -> maps:get(maps:get(H, Headers), Payload) end),
         Body = jsx:encode(maps:get(<<"webhook_event">>, Payload)),
         payment_psp_mock:expect(paypal, with_oauth(paypal, C)),
         ?assert(m_payment_paypal_api:is_valid_webhook_signature(Body, undefined)),

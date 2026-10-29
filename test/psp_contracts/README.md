@@ -10,7 +10,7 @@ Pass a provider name (`mollie`, `stripe`, `paypal`, `buckaroo`, or `sovergn`) to
 run only that provider's contract tests. Only that PSP and `mod_payment` need to
 be checked out. With no argument, the runner tests all five providers.
 
-The runner compiles test-only exports into a temporary directory and removes it
+The runner compiles the adapters and test files into a temporary directory and removes it
 on exit. It needs Erlang, the normal Zotonic dependencies and `meck` (already a
 Zotonic core development dependency). No site, database, credentials or network
 access is needed. Expected failure tests emit adapter error logs.
@@ -53,14 +53,17 @@ responses are flat transaction objects, unlike webhook envelopes.
 
 `payment_psp_mock` intercepts `httpc:request/4` and `z_url_fetch:fetch/2,4`.
 The real adapters, `z_fetch`, form encoding and JSON decoding run. Configuration
-and Sovergn's token cache are isolated with meck. Both HTTP modules have **no
-passthrough**. An unexpected request fails; each test checks its expected calls
-were consumed. The mock checks exact methods, URLs, authentication, content types
+and Sovergn's token cache are isolated with meck. HTTP requests from the test
+process have **no passthrough**: an unexpected request fails, even if the test
+omits its request expectations. Each test checks its expected calls were consumed.
+Calls from unrelated sandbox workers pass through to the original modules.
+Context-based mocks apply only to the synthetic test contexts, preserving the
+live site's configuration, cache, database pool and notifications. The mock checks exact methods, URLs, authentication, content types
 and decoded request bodies against the independently authored fixture. Buckaroo
 HMAC verification uses the documented algorithm, not an adapter helper. Negative
 checks prove incorrect requests and credentials are rejected.
 
-The endpoint matrix tests transport via TEST-only adapter exports, with valid
+The endpoint matrix tests transport via explicitly documented adapter exports, with valid
 request examples. It does not claim to test every production request builder or
 every field allowed by the PSP. Additional workflow tests exercise actual Mollie
 pagination and cancellation, public Stripe/PayPal retrieval, Buckaroo status
@@ -85,14 +88,19 @@ out other PSPs. The `mod_payment` job checks out no PSPs. Land the shared test
 runner in `mod_payment/main` before relying on the PSP workflows.
 
 `test/run-ci.sh payment|mollie|stripe|paypal|buckaroo|sovergn` first starts Zotonic's
-real test sandbox, installs `mod_payment` and the selected PSP, and runs that
-module's unit tests. It uses an explicit test list because the stock
-`bin/zotonic runtests` CLI discovers `apps/`, not `apps_user/`. A watchdog makes
-sandbox startup/test failures fail the job instead of waiting indefinitely.
-The HTTP contract tests run afterward in a separate VM to keep global meck
-replacements away from live site workers.
+real test sandbox, installs `mod_payment` and the selected PSP, and runs all of
+that module's tests in the same sandbox VM, including its HTTP contract tests.
+It discovers every `test/*_tests.erl` file because the stock `bin/zotonic runtests`
+CLI discovers `apps/`, not `apps_user/`. A watchdog makes sandbox startup/test
+failures fail the job instead of waiting indefinitely. A final database and
+module-state check confirms that the sandbox still works after mock cleanup.
 
-For `payment`, the runner executes the real PostgreSQL persistence suite instead
+Tests live exclusively in `test/`, including the payment search-filter tests and
+Sovergn diagnostic tests formerly guarded by `TEST` inside production files.
+Tested helpers are exported unconditionally with comments explaining their use.
+Neither test discovery nor adapter compilation depends on the `TEST` macro.
+
+For `payment`, the runner executes the real PostgreSQL persistence suite in the sandbox instead
 of PSP contract tests. `PAYMENT_TEST_PORT` is mandatory in this mode so database
 tests cannot silently skip. Optional `PAYMENT_TEST_HOST`, `PAYMENT_TEST_USER`,
 `PAYMENT_TEST_PASSWORD` and `PAYMENT_TEST_DATABASE` select the disposable test

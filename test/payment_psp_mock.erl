@@ -1,19 +1,34 @@
 %% @doc Offline HTTP boundary for documented PSP contract fixtures.
-%% No passthrough: an unexpected request fails before any network access.
+%% Test-process requests never pass through; sandbox workers retain real IO.
 -module(payment_psp_mock).
 -export([start/0, stop/0, expect/2, done/0, fixtures/1, request/5]).
 -include_lib("eunit/include/eunit.hrl").
 
 start() ->
-    meck:new([httpc, z_url_fetch, m_config, z_depcache], [no_link, unstick]),
-    meck:expect(m_config, get_value, fun config/3),
-    meck:expect(m_config, get_boolean, fun(_, is_live, _) -> false end),
-    meck:expect(z_depcache, get, fun(_, _) -> undefined end),
-    meck:expect(z_depcache, set, fun(_, _, _, _) -> ok end),
-    meck:expect(z_depcache, flush, fun(_, _) -> ok end),
-    meck:expect(httpc, request, fun httpc_request/4),
-    meck:expect(z_url_fetch, fetch, fun(M, U, B, O) -> fetch(M, U, B, O) end),
-    meck:expect(z_url_fetch, fetch, fun(U, O) -> fetch(get, U, <<>>, O) end),
+    meck:new([httpc, z_url_fetch, m_config, z_depcache], [passthrough, no_link, unstick]),
+    payment_test_mock:expect(m_config, get_value, psp, fun config/3),
+    payment_test_mock:expect(m_config, get_boolean, psp, fun(_, is_live, _) -> false end),
+    payment_test_mock:expect(z_depcache, get, psp, fun(_, _) -> undefined end),
+    payment_test_mock:expect(z_depcache, set, psp, fun(_, _, _, _) -> ok end),
+    payment_test_mock:expect(z_depcache, flush, psp, fun(_, _) -> ok end),
+    meck:expect(httpc, request, fun(M, R, H, O) ->
+        case get(psp_requests) of
+            undefined -> meck:passthrough([M, R, H, O]);
+            _ -> httpc_request(M, R, H, O)
+        end
+    end),
+    meck:expect(z_url_fetch, fetch, fun(M, U, B, O) ->
+        case get(psp_requests) of
+            undefined -> meck:passthrough([M, U, B, O]);
+            _ -> fetch(M, U, B, O)
+        end
+    end),
+    meck:expect(z_url_fetch, fetch, fun(U, O) ->
+        case get(psp_requests) of
+            undefined -> meck:passthrough([U, O]);
+            _ -> fetch(get, U, <<>>, O)
+        end
+    end),
     ok.
 
 stop() ->
