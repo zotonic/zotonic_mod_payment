@@ -42,12 +42,11 @@ secret_read() ->
 save_and_clear() ->
     ?assertEqual(ok, m_payment_config:save(mod_payment, values(), undefined)),
     ?assertEqual(<<>>, get(secret)),
-    ?assertEqual(<<"0">>, get(enabled)),
+    ?assertEqual(false, get(enabled)),
     ?assertEqual(<<"10">>, get(amount)),
-    ?assertEqual(ok, m_payment_config:save(mod_payment,
-        [{<<"enabled">>, <<"1">>} | values()], undefined)),
+    ?assertEqual(ok, m_payment_config:save(mod_payment, [{<<"enabled">>, true} | values()], undefined)),
     ?assertEqual(<<>>, get(secret)),
-    ?assertEqual(<<"1">>, get(enabled)),
+    ?assertEqual(true, get(enabled)),
     ?assertEqual(ok, m_payment_config:save(mod_payment,
         [{<<"secret">>, <<"replacement">>}, {<<"amount">>, <<>>}], undefined)),
     ?assertEqual(<<"replacement">>, get(secret)).
