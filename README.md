@@ -120,7 +120,7 @@ Please check the modules for PSP specific configurations.
 Configuration
 -------------
 
-The admin page **Modules → Payment configuration** manages general settings and
+The admin page **System → Payment configuration** manages general settings and
 all enabled PSPs. Viewing and saving require `use.mod_admin_config`. Each PSP
 contributes `_admin_payment_config_psp.tpl`, included using `{% all include %}`.
 Sections use the shared `-mod_config` schema and save independently. Credentials use password inputs with the standard show-password control.

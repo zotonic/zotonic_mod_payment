@@ -476,7 +476,7 @@ observe_admin_menu(#admin_menu{}, Acc, Context) ->
                url={payments_admin_overview, []},
                visiblecheck={acl, use, mod_payment}},
     #menu_item{id=admin_payment_config,
-               parent=admin_modules,
+               parent=admin_system,
                label=?__("Payment configuration", Context),
                url={admin_payment_config, []},
                visiblecheck={acl, use, mod_admin_config}}
