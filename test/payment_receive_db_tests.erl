@@ -117,6 +117,10 @@ exercise(C0) ->
     % A failure after insertion rolls the import back, including its status/log.
     z_db:q("alter table payment_log add constraint reject_test_logs
             check (event <> 'receive') not valid", C),
+    ?LOG_NOTICE(#{
+        in => ?MODULE,
+        text => <<"Intentional test errors follow: reject_test_logs forces a log insert failure to verify transaction rollback and no notification.">>
+    }),
     ?assertMatch({error, _}, mod_payment:receive_payment(mod_payment_stripe,
         D#{psp_external_id => <<"rollback">>, event_id => <<"rollback-event">>}, C)),
     z_db:q("alter table payment_log drop constraint reject_test_logs", C),
@@ -131,6 +135,10 @@ exercise(C0) ->
     ?assertEqual(Columns, z_db:column_names(payment, C)),
     ?assertEqual(3, z_db:q1("select count(*) from payment", C)),
     ?assertEqual(Index, z_db:q1("select pg_get_indexdef('payment_psp_identity_key'::regclass)", C)),
+    ?LOG_NOTICE(#{
+        in => ?MODULE,
+        text => <<"Intentional test error follows: payment_psp_identity_key rejects a duplicate PSP payment to verify database uniqueness.">>
+    }),
     ?assertMatch({error, _}, z_db:insert(payment, #{<<"payment_nr">> => <<"duplicate">>,
         <<"psp_module">> => mod_payment_stripe, <<"psp_external_id">> => <<"external-1">>,
         <<"amount">> => 12.34}, C)).
