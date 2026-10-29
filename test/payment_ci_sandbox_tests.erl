@@ -1,6 +1,7 @@
 %% @doc CI smoke test: install payment and the selected PSP in Zotonic's test site.
 -module(payment_ci_sandbox_tests).
 -include_lib("eunit/include/eunit.hrl").
+-include_lib("zotonic_core/include/zotonic.hrl").
 
 sandbox_test_() ->
     case os:getenv("PAYMENT_CI_TARGET") of
@@ -21,7 +22,7 @@ install(Target) ->
             ?assert(z_module_manager:active(Module, Context))
     end,
     z_module_indexer:reindex(Context),
-    wait_templates(Target, Context, 100),
+    wait_templates(Target, Context, 300),
     Rendered = z_template:render_block(content, "admin_payment_config.tpl", [], Context),
     {Output, _} = z_render:output(Rendered, Context),
     Html = iolist_to_binary(Output),
@@ -52,12 +53,60 @@ psp_module("buckaroo") -> mod_payment_buckaroo;
 psp_module("sovergn") -> mod_payment_sovergn.
 
 
-%% Module activation finishes before the asynchronous template scan.
-wait_templates(Target, Context, N) when N > 0 ->
+%% Activation can overlap an older scan. The indexer ignores reindex requests
+%% while scanning, so retry once a second until the selected module is indexed.
+wait_templates(Target, Context, N) ->
     Page = z_module_indexer:find(template, <<"admin_payment_config.tpl">>, Context),
     Psps = z_module_indexer:find_all(template, <<"_admin_payment_config_psp.tpl">>, Context),
-    case {Page, Target =:= "payment" orelse Psps =/= []} of
-        {{ok, _}, true} -> ok;
-        _ -> timer:sleep(100), wait_templates(Target, Context, N - 1)
-    end;
-wait_templates(_, _, 0) -> error(payment_templates_not_indexed).
+    Modules = [M || #module_index{module = M} <- Psps],
+    HasPsp = Target =:= "payment" orelse lists:member(psp_module(Target), Modules),
+    case {Page, HasPsp, N} of
+        {{ok, _}, true, _} -> ok;
+        {_, _, 0} ->
+            error({payment_templates_not_indexed, #{
+                target => Target,
+                page => Page,
+                psp_templates => Modules,
+                active_modules => z_module_manager:active(Context)
+            }});
+        _ ->
+            case N rem 10 of
+                0 -> z_module_indexer:reindex(Context);
+                _ -> ok
+            end,
+            timer:sleep(100),
+            wait_templates(Target, Context, N - 1)
+    end.
+
+%% Simulate an older scan finishing with another PSP's template, followed by
+%% a reindex request lost during that scan. A later request must recover.
+template_reindex_retry_test() ->
+    Context = #context{},
+    Page = #module_index{
+        key = #module_index_key{site = default, type = template, name = <<"admin_payment_config.tpl">>},
+        module = mod_payment
+    },
+    Psp = Page#module_index{
+        key = #module_index_key{site = default, type = template, name = <<"_admin_payment_config_psp.tpl">>}
+    },
+    meck:new(z_module_indexer, [passthrough, no_link]),
+    put(reindex_requests, 0),
+    try
+        payment_test_mock:expect(z_module_indexer, find, psp,
+            fun(template, _, _) -> {ok, Page} end),
+        payment_test_mock:expect(z_module_indexer, find_all, psp,
+            fun(template, _, _) ->
+                Module = case get(reindex_requests) >= 2 of
+                    true -> mod_payment_stripe;
+                    false -> mod_payment_mollie
+                end,
+                [Psp#module_index{module = Module}]
+            end),
+        payment_test_mock:expect(z_module_indexer, reindex, psp,
+            fun(_) -> put(reindex_requests, get(reindex_requests) + 1), ok end),
+        ?assertEqual(ok, wait_templates("stripe", Context, 20)),
+        ?assertEqual(2, get(reindex_requests))
+    after
+        erase(reindex_requests),
+        meck:unload(z_module_indexer)
+    end.
