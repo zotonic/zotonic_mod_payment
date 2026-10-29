@@ -13,7 +13,7 @@ jobs:
   test:
     name: zotonic_mod_payment on OTP 28
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 90
     container:
       image: erlang:28.5
     defaults:
@@ -66,3 +66,9 @@ jobs:
             PAYMENT_TEST_HOST=postgres PAYMENT_TEST_PORT=5432 \
             PAYMENT_TEST_USER=zotonic PAYMENT_TEST_PASSWORD=zotonic PAYMENT_TEST_DATABASE=zotonic \
             apps_user/zotonic_mod_payment/test/run-ci.sh payment
+
+      - name: Run xref in the Zotonic umbrella
+        run: make xref
+
+      - name: Run Dialyzer in the Zotonic umbrella
+        run: make dialyzer
