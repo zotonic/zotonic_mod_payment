@@ -116,8 +116,8 @@ pages(Request, Seen, Cutoff, Context) ->
             end
     end.
 
-%% Discover unknown identities only. Known-payment status reconciliation stays
-%% with webhooks and payment_psp_status_sync, avoiding stale list snapshots.
+%% Creation-only lists discover identities. Provider update/event timestamps also
+%% allow reconciliation of known payments through the usual status/date guards.
 import([], _, _, _) -> ok;
 import([Data | Rest], Psp, Cutoff, Context) ->
     case within_retention(Data, Cutoff) of
@@ -131,18 +131,21 @@ import_payment(#{psp_external_id := Id} = Data, Rest, Psp, Cutoff, Context) ->
         false -> {error, disabled};
         true ->
             Result = case m_payment:get_by_psp(Psp, Id, Context) of
-                {ok, _} -> ok;
-                {error, notfound} ->
-                    case mod_payment:receive_payment(Psp, maps:remove(created_at, Data), Context) of
-                        {ok, _} -> ok;
-                        {error, _} = Error -> Error
-                    end;
+                {ok, _} when not is_map_key(updated_at, Data) -> ok;
+                {ok, _} -> receive_payment(Psp, Data, Context);
+                {error, notfound} -> receive_payment(Psp, Data, Context);
                 {error, _} = Error -> Error
             end,
             case Result of
                 ok -> import(Rest, Psp, Cutoff, Context);
                 {error, _} = Error1 -> Error1
             end
+    end.
+
+receive_payment(Psp, Data, Context) ->
+    case mod_payment:receive_payment(Psp, maps:without([created_at, updated_at], Data), Context) of
+        {ok, _} -> ok;
+        {error, _} = Error -> Error
     end.
 
 %% Use the configured day count, including binary values from the config table.
@@ -162,10 +165,14 @@ retention_cutoff(Now, Context) ->
 retained_start(Time, undefined) -> Time;
 retained_start(Time, Cutoff) -> max(Time, Cutoff).
 
-%% A freshly observed status is not the age of the payment (notably for Stripe).
-%% Require the PSP creation date when enforcing retention, rather than admitting
-%% undated records. Old records are skipped without preventing checkpoint progress.
+%% Prefer the PSP modification/event date, falling back to creation for APIs
+%% without change discovery. Never substitute the local observation time.
 within_retention(_Data, undefined) -> true;
+within_retention(#{updated_at := Date}, Cutoff) ->
+    case within_retention(#{created_at => Date}, Cutoff) of
+        {error, _} -> {error, payment_updated_at};
+        Result -> Result
+    end;
 within_retention(#{created_at := {Date, {H, M, S}} = Created}, Cutoff)
     when is_tuple(Date), tuple_size(Date) =:= 3, is_integer(H), H >= 0, H < 24,
          is_integer(M), M >= 0, M < 60, is_integer(S), S >= 0, S < 60 ->

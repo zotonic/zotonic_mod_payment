@@ -134,7 +134,9 @@ There are several configuration keys:
  * `mod_payment.email_paid` one of more email addresses to send an email for every payment that is set to `paid`.
  * `mod_payment.delete_after_days` if set and greater than 1, then payments not modified for this number of days
    are deleted. All payment data and payment logs are deleted. This is useful to retain as little personal information
-   for as short as needed (GDPR compliance).
+   for as short as needed (GDPR compliance). Actual status changes (including late refunds), contact changes,
+   PSP handler changes and recurring-payment cancellation refresh `modified`. Duplicate updates, stale status
+   events and later observations of an unchanged status do not extend retention.
 
 Check also the configuration keys for the PSP specific modules.
 
@@ -241,17 +243,19 @@ The first run looks back 24 hours. Subsequent runs resume from a per-PSP checkpo
 and overlap the previous day to cover reporting delays. If `delete_after_days`
 is configured (at least 2 days), the polling window is clamped to that retention
 period and individual results older than the cutoff are skipped, using the PSP's
-original creation/initiation date rather than a fresh status observation. Mollie's
-legacy recurring-payment poll uses the same policy for unknown payments. This
-prevents polling from recreating expired payments, without changing webhook or
-known-payment updates. With retention unset, there is no extra age restriction. Long outages are caught
+modification/event date when available, otherwise its original creation/initiation
+date. Local observation time never extends discovery retention. A recent event
+can therefore rediscover an old payment. Mollie's legacy recurring-payment poll
+still checks the original creation date for unknown payments. With retention unset, there is no extra age restriction. Long outages are caught
 up in seven-day steps on successive ticks. This is ongoing discovery, not a full
 historical account import. Checkpoints live in the properties of
 `mod_payment.payment_poll`; do not change them during a running job. Changing PSP
 accounts or live/test credentials requires resetting that PSP's checkpoint.
 
 Each page is imported through `mod_payment:receive_payment/3`; already-known PSP
-identities are skipped. A failed request, invalid payment, database error or
+identities are skipped for creation-only snapshots. Results with a PSP modification
+or event date also reconcile known payments, with the usual duplicate/stale-event
+checks. A failed request, invalid payment, database error or
 pagination loop leaves the checkpoint unchanged for retry on the next tick.
 Successful imports before a failure are safe to encounter again. The 1,000-page
 safety limit also fails without advancing the checkpoint.
@@ -259,10 +263,15 @@ safety limit also fails without advancing the checkpoint.
 Supported discovery APIs:
 
 - **Mollie:** payments in the profile selected by its API key. No local webhook
-  URL or local reference is required. Pages are ordered by creation time.
+  URL or local reference is required. Payments are scanned by creation time, then
+  the account refund list is scanned by refund creation time to find late refunds.
+  Refunds fetch the current payment state. There is no general modified-since
+  payment filter; a refund settling after the overlap window can still be missed.
 - **Stripe:** payment-mode Checkout Sessions, matching this module's payment
-  identity. Direct Charges/PaymentIntents and subscription sessions are outside
-  this adapter's scope.
+  identity. A second pass scans Checkout Session events and full charge refunds
+  by event date, resolving refunds back to their Checkout Session. Stripe retains
+  events for 30 days. Direct Charges/PaymentIntents without a Checkout Session,
+  subscription sessions and partial refunds are outside this adapter's scope.
 - **PayPal:** additionally requires `mod_payment_paypal.enable_reporting_polling = true`
   (default `false`) and the Transaction Search permission
   `https://uri.paypal.com/services/reporting/search/read`. Incoming positive
@@ -270,6 +279,9 @@ Supported discovery APIs:
   refund records are not imported as new payments. Order references resolve to
   the existing order identity; standalone/legacy payments use capture IDs.
   Pending legacy imports also use reporting for their existing status sync.
+  Returned transactions use `transaction_updated_date` for retention and
+  reconciliation. Transaction Search has no separate modified-since filter, so
+  updates to older transactions are not guaranteed to appear in the window.
   Reporting can lag by three hours. Missing permissions or inaccessible order
   details fail the poll and preserve its checkpoint; they are not silently skipped.
 - **Buckaroo:** the checkout gateway has no documented discovery/list endpoint;
@@ -279,7 +291,9 @@ Supported discovery APIs:
 To add a provider, observe `#payment_psp_poll{}`. An untargeted `map` notification
 asks for supported provider module atoms. A targeted `first` notification supplies
 UTC `since`/`until` boundaries and an opaque page cursor. Include the original PSP
-creation datetime as `created_at` in each payment map for retention checks. Return
+creation datetime as `created_at`, or a PSP modification/event datetime as
+`updated_at`. The latter takes precedence for retention and enables reconciliation
+of known payments. These metadata fields are removed before receiving. Return
 `{ok, NormalizedPayments, NextCursor}` (`undefined` at the end), or `{error, Reason}`.
 The provider retrieves authenticated API data and normalizes it; shared code owns
 configuration gates, pagination, checkpoints, deduplication and imports.

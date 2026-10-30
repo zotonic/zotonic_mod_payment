@@ -131,5 +131,130 @@
     },
     "source": "https://docs.stripe.com/api/checkout/sessions/list",
     "status": 200
+  },
+  {
+    "name": "discovery-events-empty",
+    "method": "get",
+    "path": "/v1/events?limit=100&created%5Bgte%5D=1790812800&created%5Blte%5D=1790899200&types%5B%5D=checkout.session.completed&types%5B%5D=checkout.session.expired&types%5B%5D=checkout.session.async_payment_succeeded&types%5B%5D=checkout.session.async_payment_failed&types%5B%5D=charge.refunded",
+    "request": {},
+    "response": {
+      "object": "list",
+      "data": [],
+      "has_more": false
+    },
+    "source": "https://docs.stripe.com/api/events/list",
+    "status": 200
+  },
+  {
+    "name": "discovery-late-event",
+    "method": "get",
+    "path": "/v1/events?limit=100&created%5Bgte%5D=1790812800&created%5Blte%5D=1790899200&types%5B%5D=checkout.session.completed&types%5B%5D=checkout.session.expired&types%5B%5D=checkout.session.async_payment_succeeded&types%5B%5D=checkout.session.async_payment_failed&types%5B%5D=charge.refunded&starting_after=evt_partial",
+    "request": {},
+    "response": {
+      "object": "list",
+      "data": [
+        {
+          "id": "evt_late_paid",
+          "object": "event",
+          "created": 1790856000,
+          "type": "checkout.session.completed",
+          "data": {
+            "object": {
+              "id": "cs_old",
+              "object": "checkout.session",
+              "mode": "payment",
+              "created": 946684800,
+              "amount_total": 1234,
+              "currency": "eur",
+              "status": "complete",
+              "payment_status": "paid",
+              "metadata": {},
+              "customer_details": null,
+              "customer_email": null
+            }
+          }
+        }
+      ],
+      "has_more": false
+    },
+    "source": "https://docs.stripe.com/api/events/list",
+    "status": 200
+  },
+  {
+    "name": "discovery-late-refund",
+    "method": "get",
+    "path": "/v1/events?limit=100&created%5Bgte%5D=1790812800&created%5Blte%5D=1790899200&types%5B%5D=checkout.session.completed&types%5B%5D=checkout.session.expired&types%5B%5D=checkout.session.async_payment_succeeded&types%5B%5D=checkout.session.async_payment_failed&types%5B%5D=charge.refunded",
+    "request": {},
+    "response": {
+      "object": "list",
+      "data": [
+        {
+          "id": "evt_late_refund",
+          "object": "event",
+          "created": 1790859600,
+          "type": "charge.refunded",
+          "data": {
+            "object": {
+              "id": "ch_refund",
+              "object": "charge",
+              "created": 946684800,
+              "payment_intent": "pi_old",
+              "amount": 1234,
+              "amount_refunded": 1234,
+              "refunded": true,
+              "currency": "eur"
+            }
+          }
+        },
+        {
+          "id": "evt_partial",
+          "object": "event",
+          "created": 1790857800,
+          "type": "charge.refunded",
+          "data": {
+            "object": {
+              "id": "ch_refund",
+              "object": "charge",
+              "created": 946684800,
+              "payment_intent": "pi_old",
+              "amount": 1234,
+              "amount_refunded": 100,
+              "refunded": false,
+              "currency": "eur"
+            }
+          }
+        }
+      ],
+      "has_more": true
+    },
+    "source": "https://docs.stripe.com/api/events/list",
+    "status": 200
+  },
+  {
+    "name": "refund-session",
+    "method": "get",
+    "path": "/v1/checkout/sessions?payment_intent=pi_old&limit=1",
+    "request": {},
+    "response": {
+      "object": "list",
+      "data": [
+        {
+          "id": "cs_old",
+          "object": "checkout.session",
+          "mode": "payment",
+          "created": 946684800,
+          "amount_total": 1234,
+          "currency": "eur",
+          "status": "complete",
+          "payment_status": "paid",
+          "metadata": {},
+          "customer_details": null,
+          "customer_email": null
+        }
+      ],
+      "has_more": false
+    },
+    "source": "https://docs.stripe.com/api/checkout/sessions/list",
+    "status": 200
   }
 ]

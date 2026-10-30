@@ -381,5 +381,106 @@
     },
     "source": "https://docs.mollie.com/reference/list-payments",
     "status": 200
+  },
+  {
+    "name": "discovery-events-empty",
+    "method": "get",
+    "path": "refunds?limit=250",
+    "request": {},
+    "response": {
+      "_embedded": {
+        "refunds": []
+      },
+      "_links": {
+        "next": null
+      }
+    },
+    "source": "https://docs.mollie.com/reference/list-all-refunds",
+    "status": 200
+  },
+  {
+    "name": "discovery-late-refund",
+    "method": "get",
+    "path": "refunds?limit=250",
+    "request": {},
+    "response": {
+      "_embedded": {
+        "refunds": [
+          {
+            "resource": "refund",
+            "id": "re_late",
+            "paymentId": "tr_old",
+            "createdAt": "2026-10-01T12:00:00Z",
+            "status": "refunded",
+            "amount": {
+              "value": "12.34",
+              "currency": "EUR"
+            }
+          }
+        ]
+      },
+      "_links": {
+        "next": {
+          "href": "https://api.mollie.com/v2/refunds?from=re_old&limit=250"
+        }
+      }
+    },
+    "source": "https://docs.mollie.com/reference/list-all-refunds",
+    "status": 200
+  },
+  {
+    "name": "discovery-refund-next",
+    "method": "get",
+    "path": "refunds?limit=250&from=re_old",
+    "request": {},
+    "response": {
+      "_embedded": {
+        "refunds": [
+          {
+            "resource": "refund",
+            "id": "re_old",
+            "paymentId": "tr_old",
+            "createdAt": "2000-01-01T00:00:00Z",
+            "status": "refunded",
+            "amount": {
+              "value": "12.34",
+              "currency": "EUR"
+            }
+          }
+        ]
+      },
+      "_links": {
+        "next": null
+      }
+    },
+    "source": "https://docs.mollie.com/reference/list-all-refunds",
+    "status": 200
+  },
+  {
+    "name": "refund-payment",
+    "method": "get",
+    "path": "payments/tr_old",
+    "request": {},
+    "response": {
+      "resource": "payment",
+      "id": "tr_old",
+      "mode": "test",
+      "createdAt": "2000-01-01T00:00:00Z",
+      "status": "paid",
+      "paidAt": "2026-10-01T12:05:00Z",
+      "amount": {
+        "value": "12.34",
+        "currency": "EUR"
+      },
+      "description": "External payment",
+      "metadata": null,
+      "webhookUrl": null,
+      "amountRefunded": {
+        "value": "12.34",
+        "currency": "EUR"
+      }
+    },
+    "source": "https://docs.mollie.com/reference/get-payment",
+    "status": 200
   }
 ]

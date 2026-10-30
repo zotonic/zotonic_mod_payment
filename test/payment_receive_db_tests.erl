@@ -169,7 +169,8 @@ exercise(C0) ->
     ?assertMatch({error, _}, z_db:insert(payment, #{<<"payment_nr">> => <<"duplicate">>,
         <<"psp_module">> => mod_payment_stripe, <<"psp_external_id">> => <<"external-1">>,
         <<"amount">> => 12.34}, C)),
-    polling(D, C).
+    polling(D, C),
+    modification_retention(C).
 
 concurrency(D, C) ->
     Parent = self(),
@@ -212,4 +213,87 @@ polling(D, C) ->
     ?assertEqual(ok, payment_poll:poll_provider(mod_payment_example, Now,
         z_context:set(retention_days, <<"2">>, C))),
     ?assertEqual({error, notfound}, m_payment:get_by_psp(mod_payment_example, <<"discovered">>, C)),
-    receive #payment_status{} -> error(expired_poll_notification) after 0 -> ok end.
+    receive #payment_status{} -> error(expired_poll_notification) after 0 -> ok end,
+    % A recent PSP event can rediscover an old payment, then reconcile a refund.
+    Recent = z_datetime:timestamp_to_datetime(Now),
+    Event = (get(poll_payment))#{updated_at => Recent, status_date => Recent,
+        event_id => <<"rediscovered">>},
+    put(poll_payment, Event),
+    RetentionContext = z_context:set(retention_days, <<"2">>, C),
+    ?assertEqual(ok, payment_poll:poll_provider(mod_payment_example, Now, RetentionContext)),
+    {ok, #{<<"id">> := NewId, <<"status">> := paid}} =
+        m_payment:get_by_psp(mod_payment_example, <<"discovered">>, C),
+    receive #payment_status{payment_id = NewId, previous_status = undefined} -> ok
+    after 1000 -> error(no_rediscovery_notification) end,
+    RefundDate = z_datetime:timestamp_to_datetime(Now + 1),
+    put(poll_payment, Event#{status => refunded, updated_at => RefundDate,
+        status_date => RefundDate, event_id => <<"discovered-refund">>}),
+    ?assertEqual(ok, payment_poll:poll_provider(mod_payment_example, Now + 1, RetentionContext)),
+    {ok, #{<<"status">> := refunded}} = m_payment:get(NewId, C),
+    receive #payment_status{payment_id = NewId, previous_status = paid} -> ok
+    after 1000 -> error(no_discovery_refund_notification) end,
+    ?assertEqual(ok, payment_poll:poll_provider(mod_payment_example, Now + 1, RetentionContext)),
+    receive #payment_status{} -> error(duplicate_discovery_refund) after 0 -> ok end.
+
+%% A late refund restarts retention; repeated observations must not do so.
+modification_retention(C) ->
+    Old = {{2000, 1, 1}, {0, 0, 0}},
+    {ok, Id} = z_db:insert(payment, #{
+        <<"payment_nr">> => <<"retention-refund">>,
+        <<"psp_module">> => mod_payment_stripe,
+        <<"psp_external_id">> => <<"retention-psp">>,
+        <<"amount">> => 12.34, <<"currency">> => <<"EUR">>,
+        <<"status">> => paid, <<"status_date">> => Old,
+        <<"created">> => Old, <<"modified">> => Old
+    }, C),
+    Data = #{psp_external_id => <<"retention-psp">>, status => refunded,
+        status_date => {{2001, 1, 1}, {0, 0, 0}}, event_id => <<"late-refund">>},
+    {ok, _} = mod_payment:receive_payment(mod_payment_stripe, Data, C),
+    ?assert(modified(Id, C) > Old),
+    ?assertEqual(Old, z_db:q1("select created from payment where id = $1", [Id], C)),
+    ?assertEqual({ok, 0}, m_payment:delete_old(2, C)),
+    % Make timestamp comparisons deterministic without sleeping.
+    age_payment(Id, Old, C),
+    {ok, _} = mod_payment:receive_payment(mod_payment_stripe, Data, C),
+    ?assertEqual(Old, modified(Id, C)),
+    {ok, _} = mod_payment:receive_payment(mod_payment_stripe,
+        Data#{event_id => <<"refund-observed">>, status_date => {{2002, 1, 1}, {0, 0, 0}}}, C),
+    ?assertEqual(Old, modified(Id, C)),
+    ?assertEqual({ok, unchanged}, m_payment:set_payment_status(Id, paid, Old, C)),
+    ?assertEqual(Old, modified(Id, C)),
+    ?assertEqual({ok, 1}, m_payment:delete_old(2, C)),
+    ?assertEqual({error, notfound}, m_payment:get(Id, C)),
+    contact_and_handler_modification(Old, C).
+
+contact_and_handler_modification(Old, C) ->
+    {ok, Id} = z_db:insert(payment, #{<<"payment_nr">> => <<"retention-contact">>,
+        <<"is_payment_link">> => true, <<"amount">> => 12.34,
+        <<"currency">> => <<"EUR">>, <<"modified">> => Old}, C),
+    Contact = #{<<"name_first">> => <<"Test">>, <<"email">> => <<"test@example.com">>,
+        <<"address_street_1">> => <<"Street 1">>, <<"address_postcode">> => <<"1234AB">>,
+        <<"address_city">> => <<"Amsterdam">>, <<"address_country">> => <<"nl">>},
+    ?assertEqual(ok, m_payment:maybe_update_contact(Id, Contact, C)),
+    ?assert(modified(Id, C) > Old),
+    age_payment(Id, Old, C),
+    ?assertEqual(ok, m_payment:maybe_update_contact(Id, Contact, C)),
+    ?assertEqual(Old, modified(Id, C)),
+    Handler = #payment_psp_handler{psp_module = mod_payment_stripe,
+        psp_external_id = <<"contact-session">>, psp_data = #{}, redirect_uri = <<>>},
+    ?assertEqual(ok, m_payment:update_psp_handler(Id, Handler, C)),
+    ?assert(modified(Id, C) > Old),
+    age_payment(Id, Old, C),
+    ?assertEqual(ok, m_payment:update_psp_handler(Id, Handler, C)),
+    ?assertEqual(Old, modified(Id, C)),
+    UserId = z_db:q1("insert into rsc default values returning id", C),
+    z_db:q("update payment set user_id = $2, is_recurring_start = true where id = $1", [Id, UserId], C),
+    ?assertEqual(1, m_payment:cancel_recurring_payment(UserId, C)),
+    ?assert(modified(Id, C) > Old),
+    age_payment(Id, Old, C),
+    ?assertEqual(0, m_payment:cancel_recurring_payment(UserId, C)),
+    ?assertEqual(Old, modified(Id, C)).
+
+age_payment(Id, Date, C) ->
+    1 = z_db:q("update payment set modified = $2 where id = $1", [Id, Date], C).
+
+modified(Id, C) ->
+    z_db:q1("select modified from payment where id = $1", [Id], C).

@@ -17,15 +17,15 @@ access is needed. Expected failure tests emit adapter error logs.
 
 ## Contract sources
 
-Fixtures were authored from the PSP documentation, consulted on 2026-10-29,
+Fixtures were authored from the PSP documentation, consulted on 2026-10-29 and 2026-10-30,
 with synthetic identifiers, amounts and merchant details. Each fixture records
 its source URL. They are not recordings or snapshots of our adapter's output.
 
 | PSP | Documented operations mocked |
 | --- | --- |
-| Mollie | Create/get/list payments; create/get customers; list mandates; create/list/cancel customer subscriptions |
-| Stripe | Create/retrieve/expire Checkout Sessions |
-| PayPal | OAuth client credentials; create/get/capture orders; get captures; verify webhook signatures |
+| Mollie | Create/get/list payments; list refunds; create/get customers; list mandates; create/list/cancel customer subscriptions |
+| Stripe | Create/retrieve/list/expire Checkout Sessions; list Events |
+| PayPal | OAuth client credentials; create/get/capture orders; get captures; verify webhook signatures; Transaction Search |
 | Buckaroo | Create transaction; get transaction status |
 | Sovergn | OAuth client credentials; create checkout session; get merchant status by checkout session |
 
@@ -126,3 +126,12 @@ boundary, including pagination, Mollie creation cutoff, non-payment exclusion,
 PayPal's opt-in gate and canonical order identity. Core polling tests cover the
 shared gates, failed imports/pages, retry boundaries and cursor loops; the real
 PostgreSQL suite verifies one import/notification across repeated discovery.
+
+Late-update fixtures additionally follow [Mollie list refunds](https://docs.mollie.com/reference/list-all-refunds),
+[Stripe list Events](https://docs.stripe.com/api/events/list) and the
+[Stripe Charge object](https://docs.stripe.com/api/charges/object). They use old
+payment creation dates with recent event dates, exercise refund pagination and
+Checkout Session lookup by PaymentIntent, and exclude partial Stripe refunds.
+PayPal tests distinguish transaction initiation and update dates. Shared tests
+verify event-based retention, reconciliation of known payments and duplicate
+notification suppression in PostgreSQL.

@@ -25,7 +25,7 @@ poll_test_() ->
     {foreach, fun setup/0, fun(_) -> cleanup() end,
         [fun gates/0, fun pages_and_known/0, fun failed_page_retries/0,
          fun failed_import_retries/0, fun cursor_loop/0, fun catchup_window/0,
-         fun disable_during_poll/0, fun retention/0, fun retention_disabled/0, fun missing_creation_date/0]}.
+         fun disable_during_poll/0, fun retention/0, fun retention_disabled/0, fun missing_creation_date/0, fun updated_retention/0]}.
 
 setup() ->
     meck:new([m_config, m_payment, mod_payment, z_notifier, z_sidejob], [passthrough, no_link]),
@@ -157,3 +157,18 @@ missing_creation_date() ->
 
 dated(Id, Time) ->
     #{psp_external_id => Id, created_at => z_datetime:timestamp_to_datetime(Time)}.
+
+updated_retention() ->
+    put(retention_days, 2),
+    Old = z_datetime:timestamp_to_datetime(1000000),
+    Recent = z_datetime:timestamp_to_datetime(1999999),
+    Data = #{psp_external_id => <<"known">>, created_at => Old, updated_at => Recent},
+    page(fun(_, _) -> {ok, [Data], undefined} end),
+    ?assertEqual(ok, poll()),
+    ?assertEqual([#{psp_external_id => <<"known">>}], get(imported)),
+    put(imported, []),
+    page(fun(_, _) -> {ok, [Data#{created_at => Recent, updated_at => Old}], undefined} end),
+    ?assertEqual(ok, poll()),
+    ?assertEqual([], get(imported)),
+    page(fun(_, _) -> {ok, [Data#{updated_at => undefined}], undefined} end),
+    ?assertEqual({error, payment_updated_at}, poll()).

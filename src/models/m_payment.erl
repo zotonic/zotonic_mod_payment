@@ -496,6 +496,7 @@ receive_update(#{ <<"id">> := Id, <<"status">> := Previous } = Payment, Data, Is
                   andalso not lists:member(Previous, [new, pending]) of
         true -> {ok, unchanged};
         false when Previous =:= Status ->
+            % Keep modified unchanged: observing a payment does not extend retention.
             % Remember the latest observation even without a status transition,
             % otherwise an older, different status could subsequently win.
             z_db:q("update payment set status_date = $2
@@ -851,7 +852,11 @@ update_psp_handler(PaymentId, Handler, Context) ->
         set psp_module = $2,
             psp_external_id = $3,
             psp_payment_description = $4,
-            psp_data = $5
+            psp_data = $5,
+            modified = case when
+                row(psp_module, psp_external_id, psp_payment_description, psp_data)
+                    is distinct from row($2::varchar, $3::varchar, $4::text, $5::bytea)
+                then now() else modified end
         where id = $1
         ",
         [
@@ -991,9 +996,19 @@ update_empty_contact_fields_1(PaymentId, Payment, Contact, Context) ->
             address_state = case when $14 then $9 else address_state end,
             address_country = case when $14 then $10 else address_country end,
             email = case when (email is null or email = '') and $11 <> '' then $11 else email end,
-            phone = case when (phone is null or phone = '') and $12 <> '' then $12 else phone end
+            phone = case when (phone is null or phone = '') and $12 <> '' then $12 else phone end,
+            modified = now()
         where id = $1
           and status = 'new'
+          and (
+              ($13 and row(name_first, name_surname_prefix, name_surname)
+                  is distinct from row($2, $3, $4))
+              or ($14 and row(address_street_1, address_street_2, address_postcode,
+                             address_city, address_state, address_country)
+                  is distinct from row($5, $6, $7, $8, $9, $10))
+              or ((email is null or email = '') and $11 <> '')
+              or ((phone is null or phone = '') and $12 <> '')
+          )
         ",
         [
             PaymentId,
@@ -1085,7 +1100,8 @@ set_payment_status(PaymentId, Status, StatusDate, Context) ->
                     case z_db:q("
                         update payment
                         set status = $1::varchar,
-                            status_date = $3
+                            status_date = $3,
+                            modified = now()
                         where id = $2
                           and status <> $1::varchar
                           and (   status_date is null
@@ -1550,4 +1566,5 @@ ensure_reference_index(Context) ->
 
 
 cancel_recurring_payment(UserId, Context) ->
-    z_db:q("update payment set is_recurring_start = false where user_id = $1", [UserId], Context).
+    z_db:q("update payment set is_recurring_start = false, modified = now()
+            where user_id = $1 and is_recurring_start = true", [UserId], Context).

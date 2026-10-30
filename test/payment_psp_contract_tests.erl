@@ -253,6 +253,7 @@ oauth_failure() ->
 %% These calls exercise the real HTTP serialization and response normalization.
 polling_tests(P) when P =:= mollie; P =:= stripe; P =:= paypal ->
     [{"discovery pages: " ++ atom_to_list(P), fun() -> discovery(P) end}]
+    ++ [{"late payment discovery: " ++ atom_to_list(P), fun() -> late_discovery(P) end}]
     ++ case P of paypal -> [fun reporting_disabled/0, fun reporting_order/0,
         fun reporting_permission_error/0, fun reporting_capture/0, fun reporting_pending_sync/0]; _ -> [] end;
 polling_tests(_) -> [].
@@ -267,7 +268,8 @@ poll(paypal, R) -> psp_call(mod_payment_paypal, observe_payment_psp_poll, [R#pay
 discovery(P) ->
     A = fixture(P, <<"discovery-page">>),
     B = fixture(P, <<"discovery-next">>),
-    payment_psp_mock:expect(P, with_oauth(P, A) ++ with_oauth(P, B)),
+    Extra = case P of paypal -> []; _ -> [fixture(P, <<"discovery-events-empty">>)] end,
+    payment_psp_mock:expect(P, with_oauth(P, A) ++ with_oauth(P, B) ++ Extra),
     {ok, [Data], Next} = poll(P, poll_request()),
     ?assertEqual(ok, payment_receive:validate(Data)),
     ?assertEqual({{2026,10,1},{12,0,0}}, maps:get(created_at, Data)),
@@ -275,13 +277,15 @@ discovery(P) ->
     ?assertEqual(12.34, maps:get(amount, Data)),
     ?assertEqual(<<"EUR">>, maps:get(currency, Data)),
     ?assertEqual(undefined, maps:get(payment_nr, Data, undefined)),
-    {ok, Tail, undefined} = poll(P, (poll_request())#payment_psp_poll{cursor = Next}),
+    {ok, Tail, EventCursor} = poll(P, (poll_request())#payment_psp_poll{cursor = Next}),
     case P of
         paypal ->
             [Pending] = Tail,
             ?assertEqual(pending, maps:get(status, Pending)),
             ?assertEqual(<<"capture:9AB12345CD678901E">>, maps:get(psp_external_id, Data));
-        _ -> ?assertEqual([], Tail)
+        _ ->
+            ?assertEqual([], Tail),
+            ?assertMatch({ok, [], undefined}, poll(P, (poll_request())#payment_psp_poll{cursor = EventCursor}))
     end,
     payment_psp_mock:done().
 
@@ -377,3 +381,46 @@ mollie_retention() ->
 %% Resolve calls at runtime so standalone mod_payment analysis needs no PSPs.
 psp_call(Module, Function, Args) ->
     erlang:apply(Module, Function, Args).
+
+%% Documentation-shaped event fixtures deliberately refer to payments created
+%% before the polling window. Partial Stripe refunds must not fully reverse them.
+late_discovery(stripe) ->
+    A = fixture(stripe, <<"discovery-late-event">>),
+    B = fixture(stripe, <<"discovery-late-refund">>),
+    S = fixture(stripe, <<"refund-session">>),
+    % Stripe lists newest events first, including across page boundaries.
+    payment_psp_mock:expect(stripe, [B, S, A]),
+    {ok, [Refund], Next} = poll(stripe, (poll_request())#payment_psp_poll{cursor = {events, undefined}}),
+    {ok, [Paid], undefined} = poll(stripe, (poll_request())#payment_psp_poll{cursor = Next}),
+    ?assertEqual(paid, maps:get(status, Paid)),
+    ?assertEqual({{2026,10,1},{12,0,0}}, maps:get(updated_at, Paid)),
+    ?assertEqual(refunded, maps:get(status, Refund)),
+    ?assertEqual(<<"cs_old">>, maps:get(psp_external_id, Refund)),
+    ?assertEqual({{2026,10,1},{13,0,0}}, maps:get(updated_at, Refund)),
+    ?assertEqual(ok, payment_receive:validate(Refund)),
+    payment_psp_mock:done();
+late_discovery(mollie) ->
+    A = fixture(mollie, <<"discovery-late-refund">>),
+    B = fixture(mollie, <<"refund-payment">>),
+    C = fixture(mollie, <<"discovery-refund-next">>),
+    payment_psp_mock:expect(mollie, [A, B, C]),
+    {ok, [Refund], Next} = poll(mollie, (poll_request())#payment_psp_poll{cursor = {refunds, undefined}}),
+    ?assertEqual(refunded, maps:get(status, Refund)),
+    ?assertEqual(<<"tr_old">>, maps:get(psp_external_id, Refund)),
+    ?assertEqual({{2026,10,1},{12,0,0}}, maps:get(updated_at, Refund)),
+    ?assertEqual(ok, payment_receive:validate(Refund)),
+    ?assertEqual({ok, [], undefined}, poll(mollie, (poll_request())#payment_psp_poll{cursor = Next})),
+    payment_psp_mock:done();
+late_discovery(paypal) ->
+    C = fixture(paypal, <<"discovery-page">>),
+    #{<<"transaction_details">> := [#{<<"transaction_info">> := Info} | _]} = maps:get(<<"response">>, C),
+    Updated = Info#{<<"transaction_initiation_date">> => <<"2000-01-01T00:00:00Z">>,
+                   <<"transaction_status">> => <<"V">>},
+    Case = C#{<<"response">> => #{<<"transaction_details">> => [#{<<"transaction_info">> => Updated}],
+                                  <<"total_pages">> => 1}},
+    payment_psp_mock:expect(paypal, with_oauth(paypal, Case)),
+    {ok, [Data], undefined} = poll(paypal, poll_request()),
+    ?assertEqual({{2000,1,1},{0,0,0}}, maps:get(created_at, Data)),
+    ?assertEqual({{2026,10,1},{12,5,0}}, maps:get(updated_at, Data)),
+    ?assertEqual(refunded, maps:get(status, Data)),
+    payment_psp_mock:done().
