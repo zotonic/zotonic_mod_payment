@@ -18,6 +18,51 @@
 %% limitations under the License.
 
 -module(mod_payment).
+-moduledoc(#{
+    zotonic_keywords => [
+        "reference", "backend_developer", "site_administrator", "module",
+        "payments", "configuration", "api_and_integration"
+    ]
+}).
+-moduledoc("
+Manage payment requests, local payment records, status notifications and PSP adapters.
+
+Enable this module and at least one payment provider module. Configure the site under
+**System → Payment configuration**, which requires `use.mod_admin_config`. Payment
+administration and exports use `use.mod_payment`.
+
+## Integration
+
+Include `zotonic_mod_payment/include/payment.hrl` and send a `#payment_request{}`
+with `z_notifier:first/2`. Set `preferred_psp_module` to select a provider explicitly.
+A successful request returns `#payment_request_redirect{}` with the checkout URL.
+Observe `#payment_status{}` to react to status changes. Provider adapters implement
+`#payment_psp_request{}` and status synchronization notifications.
+
+Verified provider updates enter through `receive_payment/3`. Shared logic validates
+amounts and currencies, deduplicates PSP identities, records updates and emits
+notifications after the receive transaction commits. Repeated updates must not
+reopen finalized payments.
+
+## Site configuration
+
+- `description`, `currency` and `amount`: defaults for new payment requests. Amounts
+  use major currency units; the optional configured amount is a whole number.
+- `email_paid`: recipients of paid-payment notifications.
+- `delete_after_days`: retention based on modification time; unset disables deletion,
+  and configured retention must be at least two days.
+- `accept_unknown_payments`: allow verified incoming payments not initiated here.
+  Defaults to false.
+- `disable_unknown_payment_polling`: disable discovery while retaining webhook
+  imports. Defaults to false.
+
+With unknown payments enabled, supported providers are polled every four hours.
+Discovery starts with a recent window, not a complete historical backfill. Payments
+created before the retention cutoff are not imported by polling. Mollie, Stripe
+and PayPal implement discovery; PayPal additionally requires its reporting option.
+Buckaroo and Sovergn do not discover unknown payments by polling.
+").
+
 
 -mod_title("Payments").
 -mod_description("Payment services using Payment Service Provider modules").

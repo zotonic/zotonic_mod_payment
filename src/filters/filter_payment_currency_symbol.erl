@@ -18,6 +18,13 @@
 %% limitations under the License.
 
 -module(filter_payment_currency_symbol).
+-moduledoc(#{
+    zotonic_keywords => [
+        "reference", "frontend_developer", "template_filter",
+        "payments", "identifier", "format"
+    ]
+}).
+
 -moduledoc("
 Show a payment currency using its preferred symbol or short form.
 

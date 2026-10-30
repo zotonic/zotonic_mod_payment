@@ -18,6 +18,13 @@
 %% limitations under the License.
 
 -module(filter_payment_is_valid).
+-moduledoc(#{
+    zotonic_keywords => [
+        "reference", "frontend_developer", "template_filter",
+        "payments", "number", "validate"
+    ]
+}).
+
 -moduledoc("
 Test if an amount and currency can be used for a payment request.
 

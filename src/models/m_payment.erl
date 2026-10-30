@@ -19,6 +19,42 @@
 %% limitations under the License.
 
 -module(m_payment).
+-moduledoc(#{
+    zotonic_keywords => [
+        "reference", "backend_developer", "model",
+        "payments", "query"
+    ]
+}).
+-moduledoc("
+Read payment data and maintain local payment records.
+
+## Template model paths
+
+```django
+{{ m.payment.default.currency }}
+{{ m.payment.status[payment_nr].status }}
+```
+
+`default.currency`, `default.amount` and `default.description` expose configured
+request defaults. `status[payment_nr]` exposes status, amount and currency;
+anonymous payments can be checked without authentication. `[payment_nr]` returns
+full data to payment administrators, restricted fields to authorized users and a
+status subset for anonymous payments. Other unauthorized reads return `eacces`.
+
+`list_user[user]` requires payment administration or edit access to that user.
+`list_email[email]` and `years` require payment administration. `redirect_psp[payment_nr]`
+requires `use.mod_payment` and returns the provider's payment URL. Successful model
+callbacks return `{ok, {Value, Rest}}`; lookups can return `{error, notfound}`.
+
+## Erlang API
+
+`m_payment:get(PaymentIdOrNumber, Context)` returns `{ok, PaymentMap}` or an error.
+Direct Erlang reads and writes are trusted server APIs and do not inherit the
+model-path ACL checks. Use `mod_payment:receive_payment/3` for verified PSP updates
+so shared import policy, validation and notifications are applied. The database
+model also provides status changes, recurring payments, contact updates and searches.
+").
+
 
 %% Exported for search-filter regression tests in test/m_payment_tests.erl.
 -export([search_filter/1]).

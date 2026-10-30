@@ -1,9 +1,58 @@
+%% @copyright 2026 Marc Worrell
 %% @doc Payment configuration UI. Reads and writes require use.mod_admin_config.
 %% Only declared settings of active payment modules are editable. Credentials
 %% are returned only to authorized admins and edited using password inputs.
+%% @end
+
+%% Copyright 2026 Marc Worrell
+%%
+%% Licensed under the Apache License, Version 2.0 (the "License");
+%% you may not use this file except in compliance with the License.
+%% You may obtain a copy of the License at
+%%
+%%     http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing, software
+%% distributed under the License is distributed on an "AS IS" BASIS,
+%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%% See the License for the specific language governing permissions and
+%% limitations under the License.
+
 -module(m_payment_config).
+-moduledoc(#{
+    zotonic_keywords => [
+        "reference", "backend_developer", "site_administrator", "model",
+        "payments", "configuration", "configure"
+    ]
+}).
+-moduledoc("
+Expose editable configuration for active payment modules.
+
+```django
+{% for field in m.payment_config.fields.mod_payment %}
+    {{ field.label|escape }}
+{% endfor %}
+```
+
+The `fields[module]` path returns field maps derived from the module's `-mod_config`
+declaration, including current values. Access requires `use.mod_admin_config`;
+secret values are included for these authorized administrators. Only mod_payment
+and active modules directly depending on it are accepted.
+
+`save(Module, Values, Context)` accepts a list of binary form keys and values,
+validates the complete submission and then writes settings individually. It also
+requires `z_acl:is_admin_editable/1`. Returns `ok`, `{error, eacces}` or
+`{error, invalid_config}`. Unknown and read-only fields are rejected. Unchecked
+checkboxes submit an empty binary; booleans are normalized before saving. Currency
+values are trimmed and uppercased. Empty credential fields clear their values.
+The submit message `{save, [{module, Module}]}` uses the same save API.
+").
+
+
 -behaviour(zotonic_model).
+
 -export([m_get/3, event/2, save/3]).
+
 -include_lib("zotonic_core/include/zotonic.hrl").
 
 m_get([<<"fields">>, Module | Rest], _Msg, Context) ->

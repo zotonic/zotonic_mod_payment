@@ -17,6 +17,27 @@
 %% limitations under the License.
 
 -module(m_payment_log).
+-moduledoc(#{
+    zotonic_keywords => [
+        "reference", "backend_developer", "model",
+        "payments", "logging_and_monitoring"
+    ]
+}).
+-moduledoc("
+Append audit events to a payment's log from trusted server code.
+
+```erlang
+m_payment_log:log(PaymentId, <<\"received\">>,
+    #{psp_module => mod_payment_stripe, description => <<\"Payment received\">>}, Context).
+```
+
+`log/4` accepts an event and a map or property list. Events are trimmed and
+lowercased; property-list keys become binaries. The result is `{ok, LogId}` or
+`{error, Reason}`. Log rows belong to a payment and are deleted with it.
+This module has no template model paths or independent ACL checks; callers must
+provide an authorized server context and avoid logging unnecessary sensitive data.
+").
+
 
 -export([
     log/4,
