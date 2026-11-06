@@ -42,7 +42,9 @@ full data to payment administrators, restricted fields to authorized users and a
 status subset for anonymous payments. Other unauthorized reads return `eacces`.
 
 `list_user[user]` requires payment administration or edit access to that user.
-`list_email[email]` and `years` require payment administration. `redirect_psp[payment_nr]`
+`list_email[email]`, `years`, `profiles` and `succeeded_totals[filters]` require payment administration.
+The succeeded totals follow the search filters, across all pages, grouped by currency.
+`redirect_psp[payment_nr]`
 requires `use.mod_payment` and returns the provider's payment URL. Successful model
 callbacks return `{ok, {Value, Rest}}`; lookups can return `{error, notfound}`.
 
@@ -69,6 +71,9 @@ model also provides status changes, recurring payments, contact updates and sear
     list_user/2,
     list_email/2,
     years/1,
+    profiles/1,
+    succeeded_totals/2,
+    update_psp_profile/3,
     count_reserved_psp/2,
 
     insert/2,
@@ -150,6 +155,16 @@ m_get([ <<"list_email">>, Email | Rest ], _Msg, Context) ->
             {ok, {list_email(Email, Context), Rest}};
         false ->
             {error, eacces}
+    end;
+m_get([ <<"succeeded_totals">>, Args | Rest ], _Msg, Context) when is_map(Args) ->
+    case z_acl:is_allowed(use, mod_payment, Context) orelse z_acl:is_admin(Context) of
+        true -> {ok, {succeeded_totals(Args, Context), Rest}};
+        false -> {error, eacces}
+    end;
+m_get([ <<"profiles">> | Rest ], _Msg, Context) ->
+    case z_acl:is_allowed(use, mod_payment, Context) orelse z_acl:is_admin(Context) of
+        true -> {ok, {profiles(Context), Rest}};
+        false -> {error, eacces}
     end;
 m_get([ <<"years">> | Rest ], _Msg, Context) ->
     case z_acl:is_allowed(use, mod_payment, Context)
@@ -301,6 +316,25 @@ list_email(Email, Context) ->
             add_status_flags(P)
         end,
         L).
+
+%% @doc Profiles present on payments, for administration and source selection.
+-spec profiles(Context) -> [map()] when Context :: z:context().
+profiles(Context) ->
+    {ok, Rows} = z_db:qmap("select distinct psp_module, psp_profile_id from payment
+        where psp_profile_id is not null and psp_profile_id <> ''
+        order by psp_module, psp_profile_id", Context),
+    [R#{<<"psp_module">> => z_convert:to_atom(maps:get(<<"psp_module">>, R))} || R <- Rows].
+
+%% @doc Remember an authenticated PSP profile before sending status notifications.
+%% An omitted profile must not clear previously collected information.
+-spec update_psp_profile(Id, Profile, Context) -> ok when
+    Id :: integer(), Profile :: binary() | undefined, Context :: z:context().
+update_psp_profile(_Id, undefined, _Context) -> ok;
+update_psp_profile(Id, Profile, Context) when is_binary(Profile), Profile =/= <<>> ->
+    Count = z_db:q("update payment set psp_profile_id = $2, modified = now()
+        where id = $1 and psp_profile_id is distinct from $2", [Id, Profile], Context),
+    true = is_integer(Count),
+    ok.
 
 %% @doc Return payment creation years, newest first, for admin filters.
 -spec years(z:context()) -> [integer()].
@@ -460,6 +494,7 @@ receive_insert(PspModule, #{amount := Amount, currency := Currency} = Data, Cont
         <<"payment_nr">> => z_ids:identifier(32),
         <<"psp_module">> => PspModule,
         <<"psp_external_id">> => maps:get(psp_external_id, Data),
+        <<"psp_profile_id">> => maps:get(psp_profile_id, Data, undefined),
         <<"psp_data">> => ?DB_PROPS(maps:get(psp_data, Data, #{})),
         <<"psp_payment_description">> => Description,
         <<"description">> => Description,
@@ -477,6 +512,7 @@ receive_insert(_PspModule, _Data, _Context) ->
     {error, payment_data}.
 
 receive_update(#{ <<"id">> := Id, <<"status">> := Previous } = Payment, Data, IsNew, Context) ->
+    ok = update_psp_profile(Id, maps:get(psp_profile_id, Data, undefined), Context),
     Contact = receive_contact(maps:get(contact, Data, #{})),
     case maybe_update_contact(Id, Contact, Context) of
         ok -> ok;
@@ -853,9 +889,10 @@ update_psp_handler(PaymentId, Handler, Context) ->
             psp_external_id = $3,
             psp_payment_description = $4,
             psp_data = $5,
+            psp_profile_id = $6,
             modified = case when
-                row(psp_module, psp_external_id, psp_payment_description, psp_data)
-                    is distinct from row($2::varchar, $3::varchar, $4::text, $5::bytea)
+                row(psp_module, psp_external_id, psp_payment_description, psp_data, psp_profile_id)
+                    is distinct from row($2::varchar, $3::varchar, $4::text, $5::bytea, $6::varchar)
                 then now() else modified end
         where id = $1
         ",
@@ -864,7 +901,8 @@ update_psp_handler(PaymentId, Handler, Context) ->
             Handler#payment_psp_handler.psp_module,
             Handler#payment_psp_handler.psp_external_id,
             Handler#payment_psp_handler.psp_payment_description,
-            ?DB_PROPS(Handler#payment_psp_handler.psp_data)
+            ?DB_PROPS(Handler#payment_psp_handler.psp_data),
+            Handler#payment_psp_handler.psp_profile_id
         ],
         Context)
     of
@@ -1142,23 +1180,43 @@ search_query(Args, {Offset, Limit}, Context) ->
         total = total(Where, FilterArgs, Context)
     }.
 
+%% @doc Sum succeeded payments across the entire filtered result, per currency.
+-spec succeeded_totals(Args, Context) -> [map()] when
+    Args :: map(), Context :: z:context().
+succeeded_totals(Args, Context) ->
+    {Where, FilterArgs} = search_filter(Args),
+    Paid = case Where of
+        <<>> -> " where status = 'paid'";
+        _ -> " and status = 'paid'"
+    end,
+    Sql = iolist_to_binary([
+        "select currency, sum(amount::numeric)::double precision as amount from payment",
+        Where, Paid, " group by currency order by currency"
+    ]),
+    {ok, Rows} = z_db:qmap(Sql, FilterArgs, Context),
+    Rows.
+
 %% z_search normalizes named-search arguments into a list of query terms.
 %% Keep accepting flat maps for direct callers of search_query/3.
 search_filter(#{ <<"q">> := Terms }) when is_list(Terms) ->
     Args = maps:from_list([
         {Key, Value}
         || #{ <<"term">> := Key, <<"value">> := Value } <- Terms,
-           Key =:= <<"payment">> orelse Key =:= <<"reference">> orelse Key =:= <<"year">>
+           Key =:= <<"payment">> orelse Key =:= <<"reference">> orelse Key =:= <<"year">> orelse Key =:= <<"profile">>
     ]),
     search_filter(Args);
 search_filter(Args) ->
+    Profile = case maps:get(<<"profile">>, Args, undefined) of
+        P when is_binary(P), P =/= <<>> -> {profile, P};
+        _ -> undefined
+    end,
     Payment = filter_payment(maps:get(<<"payment">>, Args, undefined)),
     Reference = filter_reference(maps:get(<<"reference">>, Args, undefined)),
     YearRange = filter_year(maps:get(<<"year">>, Args, undefined)),
     {RevConditions, RevArgs, _NextParam} = lists:foldl(
         fun add_search_filter/2,
         {[], [], 1},
-        [Payment, Reference, YearRange]),
+        [Payment, Reference, YearRange, Profile]),
     Conditions = lists:reverse(RevConditions),
     FilterArgs = lists:reverse(RevArgs),
     case Conditions of
@@ -1168,6 +1226,9 @@ search_filter(Args) ->
             {iolist_to_binary([" where ", lists:join(" and ", Conditions)]), FilterArgs}
     end.
 
+add_search_filter({profile, Profile}, {Conditions, Args, Param}) ->
+    Condition = iolist_to_binary(["psp_profile_id = $", integer_to_binary(Param)]),
+    {[Condition | Conditions], [Profile | Args], Param + 1};
 add_search_filter(undefined, Acc) ->
     Acc;
 add_search_filter({payment_id_or_number, Id, Number}, {Conditions, Args, Param}) ->
@@ -1332,6 +1393,7 @@ install(Context) ->
 
                     psp_module character varying(64),
                     psp_external_id character varying(128),
+                    psp_profile_id character varying(128),
                     psp_payment_description text,
                     psp_data bytea,
 
@@ -1400,6 +1462,12 @@ install(Context) ->
                 Context),
             ok;
         true ->
+            case z_db:column(payment, psp_profile_id, Context) of
+                {error, enoent} ->
+                    z_db:q("alter table payment add column psp_profile_id varchar(128)", Context),
+                    z_db:flush(Context);
+                {ok, _} -> ok
+            end,
             add_recurring_payment_id_column(Context),
             add_recurring_column(Context),
             add_status_date_column(Context),
@@ -1425,6 +1493,8 @@ install(Context) ->
             end,
             ok
     end,
+    [] = z_db:q("create index if not exists payment_psp_profile_key
+                  on payment (psp_profile_id) where psp_profile_id is not null", Context),
     [] = z_db:q("create unique index if not exists payment_psp_identity_key
                   on payment (psp_module, psp_external_id)
                   where psp_external_id is not null and psp_external_id <> ''", Context),

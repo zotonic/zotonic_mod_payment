@@ -1,0 +1,319 @@
+# Translations for mod_payment.
+msgid ""
+msgstr ""
+"Project-Id-Version: mod_payment\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-06 12:00+0100\n"
+"PO-Revision-Date: 2026-11-06 12:00+0100\n"
+"Last-Translator: Zotonic contributors\n"
+"Language-Team: he\n"
+"Language: he\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n==2 ? 1 : 2);\n"
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:58
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:63
+msgid "Address"
+msgstr "כתובת"
+
+#: zotonic_mod_payment/priv/templates/payment_link.tpl:61
+msgid "After clicking the button, you will be redirected to the payment provider's website to complete your payment."
+msgstr "לאחר לחיצה על הכפתור תתבצע הפניה לאתר ספק התשלומים להשלמת התשלום."
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:52
+msgid "All profiles"
+msgstr "כל הפרופילים"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:38
+msgid "All years"
+msgstr "כל השנים"
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:11
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:27
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:117
+msgid "Amount"
+msgstr "סכום"
+
+#: zotonic_mod_payment/src/mod_payment.erl:205
+#: zotonic_mod_payment/src/mod_payment.erl:300
+msgid "At the moment we cannot handle payments, please try again later."
+msgstr "לא ניתן לעבד תשלומים כרגע. נא לנסות שוב מאוחר יותר."
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:120
+msgid "Change status"
+msgstr "שינוי מצב"
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:136
+msgid "Changing the status can make the system inconsistent as the Payment Service Provider will not be in sync anymore."
+msgstr "שינוי המצב עלול לגרום לחוסר עקביות במערכת, משום שהנתונים לא יהיו מסונכרנים עוד עם ספק שירותי התשלום."
+
+#: zotonic_mod_payment/src/models/m_payment_config.erl:70
+msgid "Check the configuration values. No settings were saved."
+msgstr "יש לבדוק את ערכי ההגדרות. לא נשמרו הגדרות."
+
+#: zotonic_mod_payment/src/mod_payment.erl:268
+msgid "Checking status for pending and new transactions, come back later."
+msgstr "מתבצעת בדיקת מצב של עסקאות ממתינות וחדשות. נא לחזור מאוחר יותר."
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:62
+msgid "Clear"
+msgstr "נקה"
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:141
+msgid "Close"
+msgstr "סגור"
+
+#: zotonic_mod_payment/priv/templates/payment_redirect_psp.tpl:12
+msgid "Close Window"
+msgstr "סגירת החלון"
+
+#: zotonic_mod_payment/priv/templates/admin_payment_config.tpl:15
+msgid "Configure payment defaults, incoming payments, notifications and the enabled payment providers. Save each section separately."
+msgstr "ניתן להגדיר ברירות מחדל לתשלומים, תשלומים נכנסים, התראות וספקי תשלומים פעילים. יש לשמור כל מקטע בנפרד."
+
+#: zotonic_mod_payment/priv/templates/payment_link.tpl:55
+msgid "Continue to payment"
+msgstr "המשך לתשלום"
+
+#: zotonic_mod_payment/priv/templates/admin_payment_config.tpl:16
+msgid "Credentials are masked. Use the show-password button to view them, or empty a field to remove its value."
+msgstr "פרטי ההזדהות מוסתרים. להצגתם יש להשתמש בכפתור הצגת הסיסמה, ולהסרת ערך יש לרוקן את השדה."
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:37
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:47
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:105
+msgid "Date"
+msgstr "תאריך"
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:21
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:37
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:114
+msgid "Description"
+msgstr "תיאור"
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:67
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:72
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:123
+msgid "Email"
+msgstr "אימייל"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:69
+msgid "Export selection"
+msgstr "ייצוא הבחירה"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:60
+msgid "Filter"
+msgstr "סנן"
+
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:10
+msgid "From"
+msgstr "מאת"
+
+#: zotonic_mod_payment/priv/templates/admin_payment_config.tpl:18
+msgid "General payment settings"
+msgstr "הגדרות תשלום כלליות"
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:43
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:53
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:120
+msgid "Name"
+msgstr "שם"
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:93
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:98
+msgid "No PSP"
+msgstr "אין ספק שירותי תשלום"
+
+#: zotonic_mod_payment/src/mod_payment.erl:259
+msgid "No payment found."
+msgstr "לא נמצא תשלום."
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:177
+msgid "No payments found."
+msgstr "לא נמצאו תשלומים."
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:96
+msgid "No succeeded payments."
+msgstr "אין תשלומים שהושלמו בהצלחה."
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:199
+msgid "Only administrators are allowed to see payments"
+msgstr "רק מנהלי מערכת רשאים לצפות בתשלומים"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:189
+#: zotonic_mod_payment/priv/templates/payment_link.tpl:3
+#: zotonic_mod_payment/src/mod_payment.erl:254
+msgid "Payment"
+msgstr "תשלום"
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:81
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:86
+msgid "Payment Service Provider"
+msgstr "ספק שירותי תשלום"
+
+#: zotonic_mod_payment/priv/templates/admin_payment_config.tpl:3
+#: zotonic_mod_payment/priv/templates/admin_payment_config.tpl:12
+#: zotonic_mod_payment/src/mod_payment.erl:522
+msgid "Payment configuration"
+msgstr "הגדרות תשלומים"
+
+#: zotonic_mod_payment/src/models/m_payment_config.erl:68
+msgid "Payment configuration saved."
+msgstr "הגדרות התשלומים נשמרו."
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:17
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:24
+msgid "Payment id or number"
+msgstr "מזהה או מספר תשלום"
+
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:6
+msgid "Payment of {currency} {amount} received."
+msgstr "התקבל תשלום בסך {currency} {amount}."
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:3
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:7
+#: zotonic_mod_payment/src/mod_payment.erl:517
+msgid "Payments"
+msgstr "תשלומים"
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:74
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:79
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:126
+msgid "Phone"
+msgstr "טלפון"
+
+#: zotonic_mod_payment/priv/templates/payment_link.tpl:24
+msgid "Please confirm your payment"
+msgstr "נא לאשר את התשלום"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:50
+msgid "Profile"
+msgstr "פרופיל"
+
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:3
+msgid "Received payment on"
+msgstr "תאריך קבלת התשלום"
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:16
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:32
+msgid "Recurring"
+msgstr "חוזר"
+
+#: zotonic_mod_payment/priv/templates/payment_redirect_psp.tpl:17
+msgid "Redirecting to payment service provider..."
+msgstr "מתבצעת הפניה לספק שירותי התשלום..."
+
+#: zotonic_mod_payment/priv/templates/payment_link.tpl:51
+msgid "Redirecting..."
+msgstr "מפנה מחדש ..."
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:32
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:111
+msgid "Reference"
+msgstr "אסמכתה"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:27
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:33
+msgid "Reference prefix"
+msgstr "קידומת אסמכתה"
+
+#: zotonic_mod_payment/priv/templates/payment_link.tpl:32
+msgid "Reference: <b>{reference}</b>"
+msgstr "אסמכתה: <b>{reference}</b>"
+
+#: zotonic_mod_payment/priv/templates/_admin_payment_config_section.tpl:57
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:142
+msgid "Save"
+msgstr "שמירה"
+
+#: zotonic_mod_payment/src/mod_payment.erl:198
+#: zotonic_mod_payment/src/mod_payment.erl:290
+msgid "Something went wrong whilst handling the payment request, please try again later."
+msgstr "אירעה שגיאה בעת הטיפול בבקשת התשלום. נא לנסות שוב מאוחר יותר."
+
+#: zotonic_mod_payment/src/mod_payment.erl:197
+#: zotonic_mod_payment/src/mod_payment.erl:204
+#: zotonic_mod_payment/src/mod_payment.erl:307
+msgid "Sorry"
+msgstr "מצטער"
+
+#: zotonic_mod_payment/priv/templates/payment_link.tpl:66
+msgid "Sorry, the payment amount or currency is not valid."
+msgstr "סכום התשלום או המטבע אינם תקינים."
+
+#: zotonic_mod_payment/src/mod_payment.erl:210
+#: zotonic_mod_payment/src/mod_payment.erl:222
+#: zotonic_mod_payment/src/mod_payment.erl:234
+msgid "Sorry, you are not allowed to do this."
+msgstr "מצטער, אסור לך לעשות זאת."
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:4
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:20
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:108
+msgid "Status"
+msgstr "מצב"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:74
+msgid "Sync new &amp; pending"
+msgstr "סנכרון תשלומים חדשים &amp; ממתינים"
+
+#: zotonic_mod_payment/priv/templates/payment_psp_done.tpl:23
+msgid "Thank you for your payment!"
+msgstr "תודה על התשלום!"
+
+#: zotonic_mod_payment/src/mod_payment.erl:179
+msgid "The payment amount or currency is not valid."
+msgstr "סכום התשלום או המטבע אינם תקינים."
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:92
+msgid "Total succeeded payments:"
+msgstr "סכום התשלומים שהושלמו בהצלחה:"
+
+#: zotonic_mod_payment/priv/templates/payment_psp_done.tpl:19
+msgid "Unknown payment"
+msgstr "תשלום לא מוכר"
+
+#: zotonic_mod_payment/priv/templates/payment_redirect_psp.tpl:8
+msgid "Unknown payment or no detail page available."
+msgstr "התשלום אינו מוכר או שאין דף פרטים זמין."
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:137
+msgid "Y-m-d H:i"
+msgstr "Y-m-d H:i"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:36
+msgid "Year"
+msgstr "שנה"
+
+#: zotonic_mod_payment/priv/templates/admin_payment_config.tpl:22
+#: zotonic_mod_payment/src/models/m_payment_config.erl:69
+msgid "You are not allowed to configure payments."
+msgstr "אין הרשאה להגדרת תשלומים."
+
+#: zotonic_mod_payment/src/mod_payment.erl:245
+#: zotonic_mod_payment/src/mod_payment.erl:270
+msgid "You do not have permission to change the status"
+msgstr "אין הרשאה לשינוי המצב"
+
+#: zotonic_mod_payment/src/mod_payment.erl:262
+msgid "You do not have permission to view payments."
+msgstr "אין הרשאה לצפייה בתשלומים."
+
+#: zotonic_mod_payment/priv/templates/payment_psp_done.tpl:39
+msgid "Your payment is pending."
+msgstr "התשלום ממתין."
+
+#: zotonic_mod_payment/priv/templates/payment_psp_done.tpl:30
+msgid "Your payment was cancelled."
+msgstr "התשלום בוטל."
+
+#: zotonic_mod_payment/priv/templates/payment_psp_done.tpl:32
+msgid "Your payment was not handled."
+msgstr "התשלום לא טופל."
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:87
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:92
+msgid "view at {psp}"
+msgstr "הצגה אצל {psp}"

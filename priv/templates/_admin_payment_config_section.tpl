@@ -4,6 +4,7 @@
             <section id="payment-config-{{ module|escape }}" class="widget">
                 <div class="widget-header">{{ title|escape }}</div>
                 <div class="widget-content">
+                    {% if notice %}<p class="alert alert-info">{{ notice|escape }}</p>{% endif %}
                     {% if explanation %}<p>{{ explanation|escape }}</p>{% endif %}
                     {% wire id=#form type="submit" postback={save module=module} delegate=`m_payment_config` %}
                     <form id="{{ #form }}" method="post" action="postback" class="form">

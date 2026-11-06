@@ -30,7 +30,8 @@
         "self": {
           "href": "https://api.mollie.com/v2/payments/tr_mock123"
         }
-      }
+      },
+      "profileId": "pfl_mock123"
     },
     "source": "https://docs.mollie.com/reference/create-payment",
     "status": 201
@@ -61,7 +62,8 @@
         "self": {
           "href": "https://api.mollie.com/v2/payments/tr_mock123"
         }
-      }
+      },
+      "profileId": "pfl_mock123"
     },
     "source": "https://docs.mollie.com/reference/get-payment",
     "status": 200
@@ -96,7 +98,8 @@
               "self": {
                 "href": "https://api.mollie.com/v2/payments/tr_mock123"
               }
-            }
+            },
+            "profileId": "pfl_mock123"
           }
         ]
       },
@@ -335,7 +338,8 @@
             },
             "description": "External payment",
             "metadata": null,
-            "webhookUrl": null
+            "webhookUrl": null,
+            "profileId": "pfl_mock123"
           }
         ]
       },
@@ -371,7 +375,8 @@
             },
             "description": "External payment",
             "metadata": null,
-            "webhookUrl": null
+            "webhookUrl": null,
+            "profileId": "pfl_mock123"
           }
         ]
       },
@@ -478,7 +483,8 @@
       "amountRefunded": {
         "value": "12.34",
         "currency": "EUR"
-      }
+      },
+      "profileId": "pfl_mock123"
     },
     "source": "https://docs.mollie.com/reference/get-payment",
     "status": 200

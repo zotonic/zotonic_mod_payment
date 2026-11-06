@@ -70,6 +70,7 @@
 -record(payment_psp_handler, {
     psp_module :: atom(),
     psp_external_id :: binary(),
+    psp_profile_id = undefined :: binary() | undefined,
     psp_payment_description = <<>> :: binary(),
     psp_data :: term(),
     redirect_uri :: binary()

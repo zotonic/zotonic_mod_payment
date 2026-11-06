@@ -200,6 +200,7 @@ paypal_webhook() ->
         payment_test_mock:expect(mod_payment, receive_payment, psp, fun(mod_payment_paypal, Data, _) ->
             ?assertEqual(<<"ORDERMOCK123">>, maps:get(psp_external_id, Data)),
             ?assertEqual(<<"default">>, maps:get(payment_nr, Data)),
+            ?assertEqual(undefined, maps:get(psp_profile_id, Data, undefined)),
             ?assertEqual(paid, maps:get(status, Data)),
             ?assertEqual(10.0, maps:get(amount, Data)),
             ?assertEqual(<<"EUR">>, maps:get(currency, Data)),
@@ -273,6 +274,8 @@ discovery(P) ->
     {ok, [Data], Next} = poll(P, poll_request()),
     ?assertEqual(ok, payment_receive:validate(Data)),
     ?assertEqual({{2026,10,1},{12,0,0}}, maps:get(created_at, Data)),
+    ?assertEqual(case P of mollie -> <<"pfl_mock123">>; _ -> undefined end,
+        maps:get(psp_profile_id, Data, undefined)),
     ?assertEqual(paid, maps:get(status, Data)),
     ?assertEqual(12.34, maps:get(amount, Data)),
     ?assertEqual(<<"EUR">>, maps:get(currency, Data)),
@@ -343,6 +346,7 @@ reporting_pending_sync() ->
     meck:new(mod_payment, [passthrough, no_link]),
     try
         payment_test_mock:expect(mod_payment, receive_payment, psp, fun(mod_payment_paypal, Data, _) ->
+            ?assertEqual(undefined, maps:get(psp_profile_id, Data, undefined)),
             ?assertEqual(paid, maps:get(status, Data)),
             ?assertEqual(<<"capture:9AB12345CD678901E">>, maps:get(psp_external_id, Data)),
             ?assertEqual(ok, payment_receive:validate(Data)),

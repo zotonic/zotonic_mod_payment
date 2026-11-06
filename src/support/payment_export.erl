@@ -33,6 +33,7 @@ headers() ->
         date,
         status,
         reference,
+        psp_profile_id,
         description,
         currency,
         amount,
@@ -52,7 +53,8 @@ data(Context) ->
     Args = #{
         <<"payment">> => z_context:get_q(<<"qpayment">>, Context),
         <<"reference">> => z_context:get_q(<<"qreference">>, Context),
-        <<"year">> => z_context:get_q(<<"qyear">>, Context)
+        <<"year">> => z_context:get_q(<<"qyear">>, Context),
+        <<"profile">> => z_context:get_q(<<"qprofile">>, Context)
     },
     #search_result{result = Result} = z_search:search(
         <<"payments">>, Args, 1, 100000, Context),
@@ -62,6 +64,7 @@ values(Item, Context) ->
     [ z_datetime:format(maps:get(<<"created">>, Item), "c", Context)
     , maps:get(<<"status">>, Item)
     , maps:get(<<"reference">>, Item, <<>>)
+    , maps:get(<<"psp_profile_id">>, Item, undefined)
     , maps:get(<<"description">>, Item)
     , maps:get(<<"currency">>, Item)
     , maps:get(<<"amount">>, Item)

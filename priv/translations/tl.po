@@ -1,0 +1,319 @@
+# Translations for mod_payment.
+msgid ""
+msgstr ""
+"Project-Id-Version: mod_payment\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-06 12:00+0100\n"
+"PO-Revision-Date: 2026-11-06 12:00+0100\n"
+"Last-Translator: Zotonic contributors\n"
+"Language-Team: tl\n"
+"Language: tl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:58
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:63
+msgid "Address"
+msgstr "Address"
+
+#: zotonic_mod_payment/priv/templates/payment_link.tpl:61
+msgid "After clicking the button, you will be redirected to the payment provider's website to complete your payment."
+msgstr "Pagkatapos i-click ang button, dadalhin ka sa website ng provider ng pagbabayad upang kumpletuhin ang iyong bayad."
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:52
+msgid "All profiles"
+msgstr "Lahat ng profile"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:38
+msgid "All years"
+msgstr "Lahat ng taon"
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:11
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:27
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:117
+msgid "Amount"
+msgstr "Halaga"
+
+#: zotonic_mod_payment/src/mod_payment.erl:205
+#: zotonic_mod_payment/src/mod_payment.erl:300
+msgid "At the moment we cannot handle payments, please try again later."
+msgstr "Hindi namin maproseso ang mga bayad sa ngayon. Pakisubukang muli mamaya."
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:120
+msgid "Change status"
+msgstr "Baguhin ang status"
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:136
+msgid "Changing the status can make the system inconsistent as the Payment Service Provider will not be in sync anymore."
+msgstr "Maaaring magdulot ng hindi pagtutugma sa sistema ang pagbabago ng status dahil hindi na magiging naka-sync ang datos sa provider ng serbisyo sa pagbabayad."
+
+#: zotonic_mod_payment/src/models/m_payment_config.erl:70
+msgid "Check the configuration values. No settings were saved."
+msgstr "Suriin ang mga halaga ng configuration. Walang na-save na setting."
+
+#: zotonic_mod_payment/src/mod_payment.erl:268
+msgid "Checking status for pending and new transactions, come back later."
+msgstr "Sinusuri ang status ng mga nakabinbin at bagong transaksyon. Bumalik mamaya."
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:62
+msgid "Clear"
+msgstr "I-clear"
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:141
+msgid "Close"
+msgstr "Isara"
+
+#: zotonic_mod_payment/priv/templates/payment_redirect_psp.tpl:12
+msgid "Close Window"
+msgstr "Isara ang window"
+
+#: zotonic_mod_payment/priv/templates/admin_payment_config.tpl:15
+msgid "Configure payment defaults, incoming payments, notifications and the enabled payment providers. Save each section separately."
+msgstr "I-configure ang mga default sa pagbabayad, papasok na bayad, notification, at pinaganang provider ng pagbabayad. I-save ang bawat seksyon nang hiwalay."
+
+#: zotonic_mod_payment/priv/templates/payment_link.tpl:55
+msgid "Continue to payment"
+msgstr "Magpatuloy sa pagbabayad"
+
+#: zotonic_mod_payment/priv/templates/admin_payment_config.tpl:16
+msgid "Credentials are masked. Use the show-password button to view them, or empty a field to remove its value."
+msgstr "Nakatago ang mga kredensyal. Gamitin ang button na nagpapakita ng password para makita ang mga ito, o alisan ng laman ang field para alisin ang halaga nito."
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:37
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:47
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:105
+msgid "Date"
+msgstr "Petsa"
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:21
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:37
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:114
+msgid "Description"
+msgstr "Paglalarawan"
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:67
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:72
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:123
+msgid "Email"
+msgstr "Email"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:69
+msgid "Export selection"
+msgstr "I-export ang napili"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:60
+msgid "Filter"
+msgstr "I-filter"
+
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:10
+msgid "From"
+msgstr "Mula kay"
+
+#: zotonic_mod_payment/priv/templates/admin_payment_config.tpl:18
+msgid "General payment settings"
+msgstr "Pangkalahatang setting ng pagbabayad"
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:43
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:53
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:120
+msgid "Name"
+msgstr "Pangalan"
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:93
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:98
+msgid "No PSP"
+msgstr "Walang PSP"
+
+#: zotonic_mod_payment/src/mod_payment.erl:259
+msgid "No payment found."
+msgstr "Hindi nahanap ang bayad."
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:177
+msgid "No payments found."
+msgstr "Walang nahanap na mga bayad."
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:96
+msgid "No succeeded payments."
+msgstr "Walang matagumpay na bayad."
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:199
+msgid "Only administrators are allowed to see payments"
+msgstr "Mga administrator lamang ang maaaring tumingin sa mga bayad"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:189
+#: zotonic_mod_payment/priv/templates/payment_link.tpl:3
+#: zotonic_mod_payment/src/mod_payment.erl:254
+msgid "Payment"
+msgstr "Bayad"
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:81
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:86
+msgid "Payment Service Provider"
+msgstr "Provider ng serbisyo sa pagbabayad"
+
+#: zotonic_mod_payment/priv/templates/admin_payment_config.tpl:3
+#: zotonic_mod_payment/priv/templates/admin_payment_config.tpl:12
+#: zotonic_mod_payment/src/mod_payment.erl:522
+msgid "Payment configuration"
+msgstr "Configuration ng pagbabayad"
+
+#: zotonic_mod_payment/src/models/m_payment_config.erl:68
+msgid "Payment configuration saved."
+msgstr "Na-save ang configuration ng pagbabayad."
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:17
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:24
+msgid "Payment id or number"
+msgstr "ID o numero ng bayad"
+
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:6
+msgid "Payment of {currency} {amount} received."
+msgstr "Natanggap ang bayad na {currency} {amount}."
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:3
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:7
+#: zotonic_mod_payment/src/mod_payment.erl:517
+msgid "Payments"
+msgstr "Mga bayad"
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:74
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:79
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:126
+msgid "Phone"
+msgstr "Telepono"
+
+#: zotonic_mod_payment/priv/templates/payment_link.tpl:24
+msgid "Please confirm your payment"
+msgstr "Pakikumpirma ang iyong bayad"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:50
+msgid "Profile"
+msgstr "Profile"
+
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:3
+msgid "Received payment on"
+msgstr "Petsa ng pagtanggap ng bayad"
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:16
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:32
+msgid "Recurring"
+msgstr "Paulit-ulit"
+
+#: zotonic_mod_payment/priv/templates/payment_redirect_psp.tpl:17
+msgid "Redirecting to payment service provider..."
+msgstr "Dinadala sa provider ng serbisyo sa pagbabayad..."
+
+#: zotonic_mod_payment/priv/templates/payment_link.tpl:51
+msgid "Redirecting..."
+msgstr "Nire-redirect..."
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:32
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:111
+msgid "Reference"
+msgstr "Reference"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:27
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:33
+msgid "Reference prefix"
+msgstr "Prefix ng reference"
+
+#: zotonic_mod_payment/priv/templates/payment_link.tpl:32
+msgid "Reference: <b>{reference}</b>"
+msgstr "Reference: <b>{reference}</b>"
+
+#: zotonic_mod_payment/priv/templates/_admin_payment_config_section.tpl:57
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:142
+msgid "Save"
+msgstr "I-save"
+
+#: zotonic_mod_payment/src/mod_payment.erl:198
+#: zotonic_mod_payment/src/mod_payment.erl:290
+msgid "Something went wrong whilst handling the payment request, please try again later."
+msgstr "Nagkaproblema sa pagproseso ng kahilingan sa pagbabayad. Pakisubukang muli mamaya."
+
+#: zotonic_mod_payment/src/mod_payment.erl:197
+#: zotonic_mod_payment/src/mod_payment.erl:204
+#: zotonic_mod_payment/src/mod_payment.erl:307
+msgid "Sorry"
+msgstr "Paumanhin"
+
+#: zotonic_mod_payment/priv/templates/payment_link.tpl:66
+msgid "Sorry, the payment amount or currency is not valid."
+msgstr "Paumanhin, hindi wasto ang halaga o currency ng bayad."
+
+#: zotonic_mod_payment/src/mod_payment.erl:210
+#: zotonic_mod_payment/src/mod_payment.erl:222
+#: zotonic_mod_payment/src/mod_payment.erl:234
+msgid "Sorry, you are not allowed to do this."
+msgstr "Paumanhin, wala kang pahintulot na gawin ito."
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:4
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:20
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:108
+msgid "Status"
+msgstr "Status"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:74
+msgid "Sync new &amp; pending"
+msgstr "I-sync ang bago &amp; nakabinbin"
+
+#: zotonic_mod_payment/priv/templates/payment_psp_done.tpl:23
+msgid "Thank you for your payment!"
+msgstr "Salamat sa iyong bayad!"
+
+#: zotonic_mod_payment/src/mod_payment.erl:179
+msgid "The payment amount or currency is not valid."
+msgstr "Hindi wasto ang halaga o currency ng bayad."
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:92
+msgid "Total succeeded payments:"
+msgstr "Kabuuang halaga ng matagumpay na mga bayad:"
+
+#: zotonic_mod_payment/priv/templates/payment_psp_done.tpl:19
+msgid "Unknown payment"
+msgstr "Hindi kilalang bayad"
+
+#: zotonic_mod_payment/priv/templates/payment_redirect_psp.tpl:8
+msgid "Unknown payment or no detail page available."
+msgstr "Hindi kilalang bayad o walang available na pahina ng mga detalye."
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:137
+msgid "Y-m-d H:i"
+msgstr "Y-m-d H:i"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:36
+msgid "Year"
+msgstr "Taon"
+
+#: zotonic_mod_payment/priv/templates/admin_payment_config.tpl:22
+#: zotonic_mod_payment/src/models/m_payment_config.erl:69
+msgid "You are not allowed to configure payments."
+msgstr "Wala kang pahintulot na i-configure ang mga pagbabayad."
+
+#: zotonic_mod_payment/src/mod_payment.erl:245
+#: zotonic_mod_payment/src/mod_payment.erl:270
+msgid "You do not have permission to change the status"
+msgstr "Wala kang pahintulot na baguhin ang status"
+
+#: zotonic_mod_payment/src/mod_payment.erl:262
+msgid "You do not have permission to view payments."
+msgstr "Wala kang pahintulot na tingnan ang mga bayad."
+
+#: zotonic_mod_payment/priv/templates/payment_psp_done.tpl:39
+msgid "Your payment is pending."
+msgstr "Nakabinbin ang iyong bayad."
+
+#: zotonic_mod_payment/priv/templates/payment_psp_done.tpl:30
+msgid "Your payment was cancelled."
+msgstr "Kinansela ang iyong bayad."
+
+#: zotonic_mod_payment/priv/templates/payment_psp_done.tpl:32
+msgid "Your payment was not handled."
+msgstr "Hindi naproseso ang iyong bayad."
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:87
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:92
+msgid "view at {psp}"
+msgstr "tingnan sa {psp}"
