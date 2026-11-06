@@ -70,3 +70,10 @@ normalized_search_filter_test_() ->
     ],
     [?_assertEqual(Expected, m_payment:search_filter(z_search:props_to_map(Args)))
         || {Args, Expected} <- Cases].
+
+profile_filter_test() ->
+    Args = #{<<"profile">> => <<"pfl_example">>},
+    Expected = {<<" where psp_profile_id = $1">>, [<<"pfl_example">>]},
+    ?assertEqual(Expected, m_payment:search_filter(Args)),
+    ?assertEqual(Expected, m_payment:search_filter(z_search:props_to_map(Args))),
+    ?assertEqual({<<>>, []}, m_payment:search_filter(#{<<"profile">> => <<>>})).

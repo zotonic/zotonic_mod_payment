@@ -44,15 +44,28 @@
                         {% endfor %}
                     </select>
                 </div>
+                {% with m.payment.profiles as profiles %}
+                    {% if profiles %}
+                        <div class="form-group">
+                            <label class="sr-only" for="payment-profile-filter">{_ Profile _}</label>
+                            <select id="payment-profile-filter" class="form-control" name="qprofile">
+                                <option value="">{_ All profiles _}</option>
+                                {% for profile in profiles %}
+                                    <option value="{{ profile.psp_profile_id|escape }}" {% if q.qprofile == profile.psp_profile_id %}selected{% endif %}>{{ profile.psp_profile_id|escape }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    {% endif %}
+                {% endwith %}
                 <button class="btn btn-primary" type="submit">{_ Filter _}</button>
-                {% if q.qpayment or q.qreference or q.qyear %}
+                {% if q.qpayment or q.qreference or q.qyear or q.qprofile %}
                     <a class="btn btn-default" href="{% url payments_admin_overview %}">{_ Clear _}</a>
                 {% endif %}
             </form>
 
             <div class="pull-right">
                 <a class="btn btn-primary"
-                   href="{% url export_payments_csv qpayment=q.qpayment qreference=q.qreference qyear=q.qyear %}">
+                   href="{% url export_payments_csv qpayment=q.qpayment qreference=q.qreference qyear=q.qyear qprofile=q.qprofile %}">
                     {_ Export selection _}
                 </a>
 
@@ -65,15 +78,25 @@
             </div>
         </div>
 
-        {% with m.search.paged.payments::%{
+        {% with %{
                     payment: q.qpayment,
                     reference: q.qreference,
                     year: q.qyear,
+                    profile: q.qprofile,
                     page: q.page,
                     pagelen: 20
                 }
-                as result
+                as filters
         %}
+            <p class="payment-totals">
+                <strong>{_ Total succeeded payments: _}</strong>
+                {% for total in m.payment.succeeded_totals[filters] %}
+                    <span>{{ total.currency|escape }} {{ total.amount|format_price }}</span>{% if not forloop.last %}; {% endif %}
+                {% empty %}
+                    {_ No succeeded payments. _}
+                {% endfor %}
+            </p>
+        {% with m.search.paged.payments::filters as result %}
             <table class="table table-striped do_adminLinkedTable" id="payments">
                 <thead>
                     <tr>
@@ -159,6 +182,7 @@
             </table>
 
             {% pager result=result dispatch=`payments_admin_overview` qargs hide_single_page %}
+        {% endwith %}
         {% endwith %}
 
         {% wire name="payment-info"

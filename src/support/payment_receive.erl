@@ -28,6 +28,7 @@ validate(#{psp_external_id := Id, status := Status, status_date := Date} = Data)
         andalso valid_amount(maps:get(amount, Data, undefined))
         andalso valid_currency(maps:get(currency, Data, undefined))
         andalso valid_event_id(maps:get(event_id, Data, undefined))
+        andalso valid_profile(maps:get(psp_profile_id, Data, undefined))
         andalso valid_reference(maps:get(payment_nr, Data, undefined))
         andalso is_map(maps:get(contact, Data, #{})),
     case Valid of
@@ -51,6 +52,9 @@ matches_currency(undefined, _) -> true;
 matches_currency(Currency, Payment) -> Currency =:= maps:get(<<"currency">>, Payment).
 matches_amount(undefined, _) -> true;
 matches_amount(Amount, Payment) -> abs(Amount - maps:get(<<"amount">>, Payment)) < 0.0000001.
+
+valid_profile(undefined) -> true;
+valid_profile(P) -> is_binary(P) andalso byte_size(P) > 0 andalso byte_size(P) =< 128.
 
 valid_amount(undefined) -> true;
 valid_amount(Amount) -> is_number(Amount) andalso Amount >= 0.

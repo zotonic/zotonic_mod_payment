@@ -67,7 +67,7 @@ Buckaroo and Sovergn do not discover unknown payments by polling.
 -mod_title("Payments").
 -mod_description("Payment services using Payment Service Provider modules").
 -mod_author("Driebit").
--mod_schema(10).
+-mod_schema(11).
 -mod_config([
     #{key => description, type => binary, default => <<>>, label => "Default description",
       description => "Default description for new payment requests."},

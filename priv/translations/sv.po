@@ -1,0 +1,319 @@
+# Translations for mod_payment.
+msgid ""
+msgstr ""
+"Project-Id-Version: mod_payment\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-06 12:00+0100\n"
+"PO-Revision-Date: 2026-11-06 12:00+0100\n"
+"Last-Translator: Zotonic contributors\n"
+"Language-Team: sv\n"
+"Language: sv\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:58
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:63
+msgid "Address"
+msgstr "Adress"
+
+#: zotonic_mod_payment/priv/templates/payment_link.tpl:61
+msgid "After clicking the button, you will be redirected to the payment provider's website to complete your payment."
+msgstr "Efter att du klickat på knappen kommer du att omdirigeras till betalningsleverantörens webbplats för att slutföra din betalning."
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:52
+msgid "All profiles"
+msgstr "Alla profiler"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:38
+msgid "All years"
+msgstr "Alla år"
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:11
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:27
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:117
+msgid "Amount"
+msgstr "Belopp"
+
+#: zotonic_mod_payment/src/mod_payment.erl:205
+#: zotonic_mod_payment/src/mod_payment.erl:300
+msgid "At the moment we cannot handle payments, please try again later."
+msgstr "För tillfället kan vi inte hantera betalningar, försök igen senare."
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:120
+msgid "Change status"
+msgstr "Ändra status"
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:136
+msgid "Changing the status can make the system inconsistent as the Payment Service Provider will not be in sync anymore."
+msgstr "Att ändra status kan göra systemet inkonsekvent eftersom betaltjänstleverantören inte kommer att synkroniseras längre."
+
+#: zotonic_mod_payment/src/models/m_payment_config.erl:70
+msgid "Check the configuration values. No settings were saved."
+msgstr "Kontrollera konfigurationsvärdena. Inga inställningar sparades."
+
+#: zotonic_mod_payment/src/mod_payment.erl:268
+msgid "Checking status for pending and new transactions, come back later."
+msgstr "Status för väntande och nya transaktioner kontrolleras. Kom tillbaka senare."
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:62
+msgid "Clear"
+msgstr "Rensa"
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:141
+msgid "Close"
+msgstr "Stäng"
+
+#: zotonic_mod_payment/priv/templates/payment_redirect_psp.tpl:12
+msgid "Close Window"
+msgstr "Stäng fönster"
+
+#: zotonic_mod_payment/priv/templates/admin_payment_config.tpl:15
+msgid "Configure payment defaults, incoming payments, notifications and the enabled payment providers. Save each section separately."
+msgstr "Konfigurera betalningsstandarder, inkommande betalningar, meddelanden och aktiverade betalningsleverantörer. Spara varje avsnitt separat."
+
+#: zotonic_mod_payment/priv/templates/payment_link.tpl:55
+msgid "Continue to payment"
+msgstr "Fortsätt till betalning"
+
+#: zotonic_mod_payment/priv/templates/admin_payment_config.tpl:16
+msgid "Credentials are masked. Use the show-password button to view them, or empty a field to remove its value."
+msgstr "Inloggningsuppgifterna är dolda. Använd knappen för att visa lösenordet, eller töm ett fält för att ta bort dess värde."
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:37
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:47
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:105
+msgid "Date"
+msgstr "Datum"
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:21
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:37
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:114
+msgid "Description"
+msgstr "Beskrivning"
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:67
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:72
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:123
+msgid "Email"
+msgstr "E-post"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:69
+msgid "Export selection"
+msgstr "Exportera markering"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:60
+msgid "Filter"
+msgstr "Filtrera"
+
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:10
+msgid "From"
+msgstr "Från"
+
+#: zotonic_mod_payment/priv/templates/admin_payment_config.tpl:18
+msgid "General payment settings"
+msgstr "Allmänna betalningsinställningar"
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:43
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:53
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:120
+msgid "Name"
+msgstr "Namn"
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:93
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:98
+msgid "No PSP"
+msgstr "Ingen PSP"
+
+#: zotonic_mod_payment/src/mod_payment.erl:259
+msgid "No payment found."
+msgstr "Ingen betalning hittades."
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:177
+msgid "No payments found."
+msgstr "Inga betalningar hittades."
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:96
+msgid "No succeeded payments."
+msgstr "Inga lyckade betalningar."
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:199
+msgid "Only administrators are allowed to see payments"
+msgstr "Endast administratörer tillåts se betalningar"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:189
+#: zotonic_mod_payment/priv/templates/payment_link.tpl:3
+#: zotonic_mod_payment/src/mod_payment.erl:254
+msgid "Payment"
+msgstr "Betalning"
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:81
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:86
+msgid "Payment Service Provider"
+msgstr "Betaltjänstleverantör"
+
+#: zotonic_mod_payment/priv/templates/admin_payment_config.tpl:3
+#: zotonic_mod_payment/priv/templates/admin_payment_config.tpl:12
+#: zotonic_mod_payment/src/mod_payment.erl:522
+msgid "Payment configuration"
+msgstr "Konfiguration av betalning"
+
+#: zotonic_mod_payment/src/models/m_payment_config.erl:68
+msgid "Payment configuration saved."
+msgstr "Betalningskonfiguration sparad."
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:17
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:24
+msgid "Payment id or number"
+msgstr "Betalnings-ID eller nummer"
+
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:6
+msgid "Payment of {currency} {amount} received."
+msgstr "Betalning av {currency} {amount} mottagen."
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:3
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:7
+#: zotonic_mod_payment/src/mod_payment.erl:517
+msgid "Payments"
+msgstr "Betalningar"
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:74
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:79
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:126
+msgid "Phone"
+msgstr "Telefon"
+
+#: zotonic_mod_payment/priv/templates/payment_link.tpl:24
+msgid "Please confirm your payment"
+msgstr "Vänligen bekräfta din betalning"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:50
+msgid "Profile"
+msgstr "Profil"
+
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:3
+msgid "Received payment on"
+msgstr "Datum då betalningen togs emot"
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:16
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:32
+msgid "Recurring"
+msgstr "Återkommande"
+
+#: zotonic_mod_payment/priv/templates/payment_redirect_psp.tpl:17
+msgid "Redirecting to payment service provider..."
+msgstr "Omdirigerar till betaltjänstleverantör..."
+
+#: zotonic_mod_payment/priv/templates/payment_link.tpl:51
+msgid "Redirecting..."
+msgstr "Omdirigerar ..."
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:32
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:111
+msgid "Reference"
+msgstr "Referens"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:27
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:33
+msgid "Reference prefix"
+msgstr "Referensprefix"
+
+#: zotonic_mod_payment/priv/templates/payment_link.tpl:32
+msgid "Reference: <b>{reference}</b>"
+msgstr "Referens: <b>{reference}</b>"
+
+#: zotonic_mod_payment/priv/templates/_admin_payment_config_section.tpl:57
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:142
+msgid "Save"
+msgstr "Spara"
+
+#: zotonic_mod_payment/src/mod_payment.erl:198
+#: zotonic_mod_payment/src/mod_payment.erl:290
+msgid "Something went wrong whilst handling the payment request, please try again later."
+msgstr "Något gick fel vid hanteringen av betalningsbegäran, försök igen senare."
+
+#: zotonic_mod_payment/src/mod_payment.erl:197
+#: zotonic_mod_payment/src/mod_payment.erl:204
+#: zotonic_mod_payment/src/mod_payment.erl:307
+msgid "Sorry"
+msgstr "Förlåt"
+
+#: zotonic_mod_payment/priv/templates/payment_link.tpl:66
+msgid "Sorry, the payment amount or currency is not valid."
+msgstr "Tyvärr, är betalningsbeloppet eller valutan ogiltig."
+
+#: zotonic_mod_payment/src/mod_payment.erl:210
+#: zotonic_mod_payment/src/mod_payment.erl:222
+#: zotonic_mod_payment/src/mod_payment.erl:234
+msgid "Sorry, you are not allowed to do this."
+msgstr "Tyvärr, du får inte göra detta."
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:4
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:20
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:108
+msgid "Status"
+msgstr "Status"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:74
+msgid "Sync new &amp; pending"
+msgstr "Synkronisera nya &amp; väntande betalningar"
+
+#: zotonic_mod_payment/priv/templates/payment_psp_done.tpl:23
+msgid "Thank you for your payment!"
+msgstr "Tack för din betalning!"
+
+#: zotonic_mod_payment/src/mod_payment.erl:179
+msgid "The payment amount or currency is not valid."
+msgstr "Betalningsbeloppet eller valutan är inte giltig."
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:92
+msgid "Total succeeded payments:"
+msgstr "Totalt belopp för lyckade betalningar:"
+
+#: zotonic_mod_payment/priv/templates/payment_psp_done.tpl:19
+msgid "Unknown payment"
+msgstr "Okänd betalning"
+
+#: zotonic_mod_payment/priv/templates/payment_redirect_psp.tpl:8
+msgid "Unknown payment or no detail page available."
+msgstr "Okänd betalning eller ingen detaljsida tillgänglig."
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:137
+msgid "Y-m-d H:i"
+msgstr "Y-m-d H:i"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:36
+msgid "Year"
+msgstr "År"
+
+#: zotonic_mod_payment/priv/templates/admin_payment_config.tpl:22
+#: zotonic_mod_payment/src/models/m_payment_config.erl:69
+msgid "You are not allowed to configure payments."
+msgstr "Du har inte behörighet att konfigurera betalningar."
+
+#: zotonic_mod_payment/src/mod_payment.erl:245
+#: zotonic_mod_payment/src/mod_payment.erl:270
+msgid "You do not have permission to change the status"
+msgstr "Du har inte behörighet att ändra status"
+
+#: zotonic_mod_payment/src/mod_payment.erl:262
+msgid "You do not have permission to view payments."
+msgstr "Du har inte behörighet att se betalningar."
+
+#: zotonic_mod_payment/priv/templates/payment_psp_done.tpl:39
+msgid "Your payment is pending."
+msgstr "Din betalning väntar."
+
+#: zotonic_mod_payment/priv/templates/payment_psp_done.tpl:30
+msgid "Your payment was cancelled."
+msgstr "Din betalning avbröts."
+
+#: zotonic_mod_payment/priv/templates/payment_psp_done.tpl:32
+msgid "Your payment was not handled."
+msgstr "Din betalning har inte hanterats."
+
+#: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:87
+#: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:92
+msgid "view at {psp}"
+msgstr "visa på {psp}"

@@ -297,3 +297,14 @@ of known payments. These metadata fields are removed before receiving. Return
 `{ok, NormalizedPayments, NextCursor}` (`undefined` at the end), or `{error, Reason}`.
 The provider retrieves authenticated API data and normalizes it; shared code owns
 configuration gates, pagination, checkpoints, deduplication and imports.
+
+### PSP profiles
+
+Payments have an optional `psp_profile_id` (a binary, or `undefined`). Mollie
+populates this from the authenticated payment response's `profileId`; other
+providers leave it unset. PSP handlers can supply it in `#payment_psp_handler{}`
+and verified incoming payment maps can supply `psp_profile_id`.
+
+The administration overview filters by profile when profiles are present on
+payments. CSV exports include `psp_profile_id` and honor the same filter.
+`m.payment.profiles` lists distinct provider/profile pairs for payment administrators.

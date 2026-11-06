@@ -87,6 +87,26 @@ cleanup(C) ->
 exercise(C0) ->
     logger:set_process_metadata(#{site => payment_receive_test}),
     C = z_context:set(owner, self(), C0),
+    %% Test an existing installation missing the new column, then idempotence.
+    z_db:q("alter table payment drop column psp_profile_id", C),
+    z_db:flush(C),
+    ok = m_payment:install(C),
+    ok = m_payment:install(C),
+    {ok, ProfileId} = z_db:insert(payment, #{<<"payment_nr">> => <<"profile-test">>,
+        <<"amount">> => 1, <<"psp_module">> => mod_payment_mollie}, C),
+    Handler = #payment_psp_handler{psp_module = mod_payment_mollie,
+        psp_external_id = <<"tr_profile">>, psp_profile_id = <<"pfl_test">>, psp_data = #{}},
+    ok = m_payment:update_psp_handler(ProfileId, Handler, C),
+    ok = m_payment:update_psp_profile(ProfileId, undefined, C),
+    {ok, ProfilePayment} = m_payment:get(ProfileId, C),
+    ?assertEqual(<<"pfl_test">>, maps:get(<<"psp_profile_id">>, ProfilePayment)),
+    ?assertEqual([#{<<"psp_module">> => mod_payment_mollie,
+        <<"psp_profile_id">> => <<"pfl_test">>}], m_payment:profiles(C)),
+    Headers = payment_export:headers(),
+    Values = payment_export:values(ProfilePayment, C),
+    ?assertEqual(length(Headers), length(Values)),
+    ?assertEqual(<<"pfl_test">>, proplists:get_value(psp_profile_id, lists:zip(Headers, Values))),
+    z_db:q("delete from payment where id = $1", [ProfileId], C),
     D = #{psp_external_id => <<"external-1">>, amount => 12.34, currency => <<"EUR">>,
           status => paid, status_date => {{2026, 10, 29}, {10, 0, 0}}, event_id => <<"evt-1">>,
           contact => #{<<"email">> => <<"payer@example.com">>}},
@@ -95,6 +115,8 @@ exercise(C0) ->
     ?assertEqual(0, z_db:q1("select count(*) from payment", C)),
     {ok, P} = mod_payment:receive_payment(mod_payment_stripe, D, C),
     Id = maps:get(<<"id">>, P),
+    ?assertEqual(undefined, maps:get(<<"psp_profile_id">>, P)),
+    ?assertEqual([], m_payment:profiles(C)),
     ?assertEqual(true, maps:get(<<"is_external">>, P)),
     ?assertEqual(undefined, maps:get(<<"user_id">>, P)),
     ?assertEqual(undefined, maps:get(<<"key">>, P)),
@@ -170,7 +192,8 @@ exercise(C0) ->
         <<"psp_module">> => mod_payment_stripe, <<"psp_external_id">> => <<"external-1">>,
         <<"amount">> => 12.34}, C)),
     polling(D, C),
-    modification_retention(C).
+    modification_retention(C),
+    succeeded_totals(C).
 
 concurrency(D, C) ->
     Parent = self(),
@@ -297,3 +320,27 @@ age_payment(Id, Date, C) ->
 
 modified(Id, C) ->
     z_db:q1("select modified from payment where id = $1", [Id], C).
+
+succeeded_totals(C) ->
+    z_db:q("delete from payment_log", C),
+    z_db:q("delete from payment", C),
+    lists:foreach(fun({Nr, Currency, Amount, Status, Reference, Profile, Date}) ->
+        {ok, _} = z_db:insert(payment, #{<<"payment_nr">> => Nr,
+            <<"currency">> => Currency, <<"amount">> => Amount, <<"status">> => Status,
+            <<"reference">> => Reference, <<"psp_profile_id">> => Profile, <<"created">> => Date}, C)
+    end, [
+        {<<"sum-1">>, <<"EUR">>, 10.10, paid, <<"campaign-1">>, <<"pfl_one">>, {{2026,1,1},{0,0,0}}},
+        {<<"sum-2">>, <<"EUR">>, 20.20, paid, <<"campaign-2">>, <<"pfl_one">>, {{2026,2,1},{0,0,0}}},
+        {<<"sum-3">>, <<"USD">>, 5.0, paid, <<"other">>, <<"pfl_two">>, {{2025,1,1},{0,0,0}}},
+        {<<"sum-4">>, <<"EUR">>, 100.0, refunded, <<"campaign-1">>, <<"pfl_one">>, {{2026,1,1},{0,0,0}}},
+        {<<"sum-5">>, <<"EUR">>, 100.0, pending, <<"campaign-1">>, <<"pfl_one">>, {{2026,1,1},{0,0,0}}}
+    ]),
+    Normalize = fun(Rows) -> [{maps:get(<<"currency">>, R), z_convert:to_float(maps:get(<<"amount">>, R))} || R <- Rows] end,
+    ?assertEqual([{<<"EUR">>, 30.3}, {<<"USD">>, 5.0}], Normalize(m_payment:succeeded_totals(#{}, C))),
+    [Euro | _] = m_payment:succeeded_totals(#{}, C),
+    ?assertEqual(<<"30.30">>, filter_format_price:format_price(maps:get(<<"amount">>, Euro), C)),
+    Filters = #{<<"reference">> => <<"campaign-">>, <<"year">> => <<"2026">>,
+        <<"profile">> => <<"pfl_one">>, <<"page">> => 2, <<"pagelen">> => 1},
+    ?assertEqual([{<<"EUR">>, 30.3}], Normalize(m_payment:succeeded_totals(Filters, C))),
+    ?assertEqual([{<<"EUR">>, 10.1}], Normalize(m_payment:succeeded_totals(Filters#{<<"payment">> => <<"sum-1">>}, C))),
+    ?assertEqual([], m_payment:succeeded_totals(#{<<"profile">> => <<"missing">>}, C)).

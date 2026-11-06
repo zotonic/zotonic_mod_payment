@@ -52,6 +52,11 @@ install(Target) ->
             ?assertNotEqual(nomatch, binary:match(Html, <<"model/password/post/toggle">>)),
             ?assertEqual(nomatch, binary:match(Html, <<"name=\"clear_">>))
     end,
+    Overview = z_template:render_block(content, "admin_payments.tpl", [], Context),
+    {OverviewOutput, _} = z_render:output(Overview, Context),
+    OverviewHtml = iolist_to_binary(OverviewOutput),
+    ?assertNotEqual(nomatch, binary:match(OverviewHtml, <<"Total succeeded payments:">>)),
+    ?assertEqual(nomatch, binary:match(OverviewHtml, <<"Error rendering">>)),
     case Target of
         "mollie" ->
             ?assertMatch({match, _}, re:run(Html, <<"<select[^>]+name=\"recurring_payment_interval\"">>)),
