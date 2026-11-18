@@ -24,6 +24,10 @@
 start() ->
     meck:new([httpc, z_url_fetch, m_config, z_depcache], [passthrough, no_link, unstick]),
     payment_test_mock:expect(m_config, get_value, psp, fun config/3),
+    %% Contract fixtures use the beta API, independently of test/live mode.
+    payment_test_mock:expect(m_config, get_value, psp, fun
+        (mod_payment_sovergn, api_endpoint, _, _) -> <<"beta">>
+    end),
     payment_test_mock:expect(m_config, get_boolean, psp, fun
         (_, is_live, _) -> false;
         (mod_payment_paypal, enable_reporting_polling, _) -> true
