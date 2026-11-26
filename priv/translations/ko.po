@@ -3,8 +3,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mod_payment\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-06 12:00+0100\n"
-"PO-Revision-Date: 2026-11-06 12:00+0100\n"
+"POT-Creation-Date: 2026-11-26 11:02+0100\n"
+"PO-Revision-Date: 2026-11-26 11:02+0100\n"
 "Last-Translator: Zotonic contributors\n"
 "Language-Team: ko\n"
 "Language: ko\n"
@@ -23,8 +23,16 @@ msgid "After clicking the button, you will be redirected to the payment provider
 msgstr "버튼을 클릭하면 결제를 완료할 수 있도록 결제 제공업체의 웹사이트로 이동합니다."
 
 #: zotonic_mod_payment/priv/templates/admin_payments.tpl:52
+msgid "All payment providers"
+msgstr "모든 결제 서비스 제공업체"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:78
 msgid "All profiles"
 msgstr "모든 프로필"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:63
+msgid "All statuses"
+msgstr "모든 상태"
 
 #: zotonic_mod_payment/priv/templates/admin_payments.tpl:38
 msgid "All years"
@@ -32,14 +40,18 @@ msgstr "모든 연도"
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:11
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:27
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:117
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:145
 msgid "Amount"
 msgstr "금액"
 
-#: zotonic_mod_payment/src/mod_payment.erl:205
-#: zotonic_mod_payment/src/mod_payment.erl:300
+#: zotonic_mod_payment/src/mod_payment.erl:206
+#: zotonic_mod_payment/src/mod_payment.erl:301
 msgid "At the moment we cannot handle payments, please try again later."
 msgstr "현재 결제를 처리할 수 없습니다. 나중에 다시 시도해 주세요."
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:67
+msgid "Cancelled"
+msgstr "취소됨"
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:120
 msgid "Change status"
@@ -53,11 +65,11 @@ msgstr "상태를 변경하면 결제 서비스 제공업체와 더 이상 동�
 msgid "Check the configuration values. No settings were saved."
 msgstr "설정값을 확인해 주세요. 설정이 저장되지 않았습니다."
 
-#: zotonic_mod_payment/src/mod_payment.erl:268
+#: zotonic_mod_payment/src/mod_payment.erl:269
 msgid "Checking status for pending and new transactions, come back later."
 msgstr "대기 중인 거래와 새 거래의 상태를 확인하고 있습니다. 나중에 다시 확인해 주세요."
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:62
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:88
 msgid "Clear"
 msgstr "지우기"
 
@@ -83,27 +95,35 @@ msgstr "인증 정보가 숨겨져 있습니다. 비밀번호 표시 버튼으�
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:37
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:47
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:105
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:133
 msgid "Date"
 msgstr "날짜"
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:21
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:37
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:114
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:142
 msgid "Description"
 msgstr "설명"
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:67
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:72
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:123
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:151
 msgid "Email"
 msgstr "이메일"
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:69
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:70
+msgid "Error"
+msgstr "오류"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:95
 msgid "Export selection"
 msgstr "선택 항목 내보내기"
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:60
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:68
+msgid "Failed"
+msgstr "실패"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:86
 msgid "Filter"
 msgstr "필터"
 
@@ -117,45 +137,54 @@ msgstr "일반 결제 설정"
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:43
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:53
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:120
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:148
 msgid "Name"
 msgstr "이름"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:64
+msgid "New"
+msgstr "신규"
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:93
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:98
 msgid "No PSP"
 msgstr "PSP 없음"
 
-#: zotonic_mod_payment/src/mod_payment.erl:259
+#: zotonic_mod_payment/src/mod_payment.erl:260
 msgid "No payment found."
 msgstr "결제를 찾을 수 없습니다."
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:177
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:205
 msgid "No payments found."
 msgstr "결제 내역을 찾을 수 없습니다."
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:96
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:124
 msgid "No succeeded payments."
 msgstr "성공한 결제가 없습니다."
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:199
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:227
 msgid "Only administrators are allowed to see payments"
 msgstr "관리자만 결제를 볼 수 있습니다"
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:189
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:66
+msgid "Paid"
+msgstr "결제 완료"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:217
 #: zotonic_mod_payment/priv/templates/payment_link.tpl:3
-#: zotonic_mod_payment/src/mod_payment.erl:254
+#: zotonic_mod_payment/src/mod_payment.erl:255
 msgid "Payment"
 msgstr "결제"
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:81
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:86
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:50
 msgid "Payment Service Provider"
 msgstr "결제 서비스 제공업체"
 
 #: zotonic_mod_payment/priv/templates/admin_payment_config.tpl:3
 #: zotonic_mod_payment/priv/templates/admin_payment_config.tpl:12
-#: zotonic_mod_payment/src/mod_payment.erl:522
+#: zotonic_mod_payment/src/mod_payment.erl:523
 msgid "Payment configuration"
 msgstr "결제 설정"
 
@@ -174,13 +203,17 @@ msgstr "{currency} {amount} 결제를 받았습니다."
 
 #: zotonic_mod_payment/priv/templates/admin_payments.tpl:3
 #: zotonic_mod_payment/priv/templates/admin_payments.tpl:7
-#: zotonic_mod_payment/src/mod_payment.erl:517
+#: zotonic_mod_payment/src/mod_payment.erl:518
 msgid "Payments"
 msgstr "결제"
 
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:65
+msgid "Pending"
+msgstr "대기 중"
+
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:74
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:79
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:126
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:154
 msgid "Phone"
 msgstr "전화번호"
 
@@ -188,7 +221,7 @@ msgstr "전화번호"
 msgid "Please confirm your payment"
 msgstr "결제를 확인해 주세요"
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:50
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:76
 msgid "Profile"
 msgstr "프로필"
 
@@ -210,7 +243,7 @@ msgid "Redirecting..."
 msgstr "리디렉션 중..."
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:32
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:111
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:139
 msgid "Reference"
 msgstr "참조 번호"
 
@@ -223,19 +256,23 @@ msgstr "참조 번호 접두사"
 msgid "Reference: <b>{reference}</b>"
 msgstr "참조 번호: <b>{reference}</b>"
 
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:69
+msgid "Refunded"
+msgstr "환불됨"
+
 #: zotonic_mod_payment/priv/templates/_admin_payment_config_section.tpl:57
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:142
 msgid "Save"
 msgstr "저장"
 
-#: zotonic_mod_payment/src/mod_payment.erl:198
-#: zotonic_mod_payment/src/mod_payment.erl:290
+#: zotonic_mod_payment/src/mod_payment.erl:199
+#: zotonic_mod_payment/src/mod_payment.erl:291
 msgid "Something went wrong whilst handling the payment request, please try again later."
 msgstr "결제 요청을 처리하는 중 오류가 발생했습니다. 나중에 다시 시도해 주세요."
 
-#: zotonic_mod_payment/src/mod_payment.erl:197
-#: zotonic_mod_payment/src/mod_payment.erl:204
-#: zotonic_mod_payment/src/mod_payment.erl:307
+#: zotonic_mod_payment/src/mod_payment.erl:198
+#: zotonic_mod_payment/src/mod_payment.erl:205
+#: zotonic_mod_payment/src/mod_payment.erl:308
 msgid "Sorry"
 msgstr "죄송합니다"
 
@@ -243,19 +280,20 @@ msgstr "죄송합니다"
 msgid "Sorry, the payment amount or currency is not valid."
 msgstr "죄송합니다. 결제 금액 또는 통화가 올바르지 않습니다."
 
-#: zotonic_mod_payment/src/mod_payment.erl:210
-#: zotonic_mod_payment/src/mod_payment.erl:222
-#: zotonic_mod_payment/src/mod_payment.erl:234
+#: zotonic_mod_payment/src/mod_payment.erl:211
+#: zotonic_mod_payment/src/mod_payment.erl:223
+#: zotonic_mod_payment/src/mod_payment.erl:235
 msgid "Sorry, you are not allowed to do this."
 msgstr "죄송합니다. 이 작업을 수행할 권한이 없습니다."
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:4
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:20
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:108
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:61
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:136
 msgid "Status"
 msgstr "상태"
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:74
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:100
 msgid "Sync new &amp; pending"
 msgstr "신규 &amp; 대기 중인 결제 동기화"
 
@@ -263,11 +301,11 @@ msgstr "신규 &amp; 대기 중인 결제 동기화"
 msgid "Thank you for your payment!"
 msgstr "결제해 주셔서 감사합니다!"
 
-#: zotonic_mod_payment/src/mod_payment.erl:179
+#: zotonic_mod_payment/src/mod_payment.erl:180
 msgid "The payment amount or currency is not valid."
 msgstr "결제 금액 또는 통화가 올바르지 않습니다."
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:92
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:120
 msgid "Total succeeded payments:"
 msgstr "성공한 결제 총액:"
 
@@ -279,7 +317,7 @@ msgstr "알 수 없는 결제"
 msgid "Unknown payment or no detail page available."
 msgstr "알 수 없는 결제이거나 상세 페이지를 사용할 수 없습니다."
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:137
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:165
 msgid "Y-m-d H:i"
 msgstr "Y-m-d H:i"
 
@@ -292,12 +330,12 @@ msgstr "연도"
 msgid "You are not allowed to configure payments."
 msgstr "결제를 설정할 권한이 없습니다."
 
-#: zotonic_mod_payment/src/mod_payment.erl:245
-#: zotonic_mod_payment/src/mod_payment.erl:270
+#: zotonic_mod_payment/src/mod_payment.erl:246
+#: zotonic_mod_payment/src/mod_payment.erl:271
 msgid "You do not have permission to change the status"
 msgstr "상태를 변경할 권한이 없습니다"
 
-#: zotonic_mod_payment/src/mod_payment.erl:262
+#: zotonic_mod_payment/src/mod_payment.erl:263
 msgid "You do not have permission to view payments."
 msgstr "결제를 볼 권한이 없습니다."
 

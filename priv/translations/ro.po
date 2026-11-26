@@ -3,8 +3,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mod_payment\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-06 12:00+0100\n"
-"PO-Revision-Date: 2026-11-06 12:00+0100\n"
+"POT-Creation-Date: 2026-11-26 11:02+0100\n"
+"PO-Revision-Date: 2026-11-26 11:02+0100\n"
 "Last-Translator: Zotonic contributors\n"
 "Language-Team: ro\n"
 "Language: ro\n"
@@ -23,8 +23,16 @@ msgid "After clicking the button, you will be redirected to the payment provider
 msgstr "După ce faceți clic pe buton, veți fi redirecționat către website-ul furnizorului de plăți pentru a finaliza plata."
 
 #: zotonic_mod_payment/priv/templates/admin_payments.tpl:52
+msgid "All payment providers"
+msgstr "Toți furnizorii de plăți"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:78
 msgid "All profiles"
 msgstr "Toate profilurile"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:63
+msgid "All statuses"
+msgstr "Toate stările"
 
 #: zotonic_mod_payment/priv/templates/admin_payments.tpl:38
 msgid "All years"
@@ -32,14 +40,18 @@ msgstr "Toți anii"
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:11
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:27
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:117
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:145
 msgid "Amount"
 msgstr "Sumă"
 
-#: zotonic_mod_payment/src/mod_payment.erl:205
-#: zotonic_mod_payment/src/mod_payment.erl:300
+#: zotonic_mod_payment/src/mod_payment.erl:206
+#: zotonic_mod_payment/src/mod_payment.erl:301
 msgid "At the moment we cannot handle payments, please try again later."
 msgstr "În acest moment nu putem gestiona plățile, vă rugăm să încercați din nou mai târziu."
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:67
+msgid "Cancelled"
+msgstr "Anulată"
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:120
 msgid "Change status"
@@ -53,11 +65,11 @@ msgstr "Schimbarea statusului poate face sistemul inconsecvent deoarece furnizor
 msgid "Check the configuration values. No settings were saved."
 msgstr "Verificați valorile de configurare. Nu au fost salvate setările."
 
-#: zotonic_mod_payment/src/mod_payment.erl:268
+#: zotonic_mod_payment/src/mod_payment.erl:269
 msgid "Checking status for pending and new transactions, come back later."
 msgstr "Verificarea statutului pentru tranzacții în așteptare și noi tranzacții, reveniți mai târziu."
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:62
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:88
 msgid "Clear"
 msgstr "Goliți"
 
@@ -83,27 +95,35 @@ msgstr "Datele de autentificare sunt ascunse. Folosiți butonul de afișare a pa
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:37
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:47
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:105
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:133
 msgid "Date"
 msgstr "Dată"
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:21
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:37
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:114
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:142
 msgid "Description"
 msgstr "Descriere"
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:67
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:72
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:123
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:151
 msgid "Email"
 msgstr "E-mail"
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:69
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:70
+msgid "Error"
+msgstr "Eroare"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:95
 msgid "Export selection"
 msgstr "Exportă selecția"
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:60
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:68
+msgid "Failed"
+msgstr "Eșuată"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:86
 msgid "Filter"
 msgstr "Filtrați"
 
@@ -117,45 +137,54 @@ msgstr "Setări generale de plată"
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:43
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:53
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:120
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:148
 msgid "Name"
 msgstr "Nume"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:64
+msgid "New"
+msgstr "Nouă"
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:93
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:98
 msgid "No PSP"
 msgstr "Niciun PSP"
 
-#: zotonic_mod_payment/src/mod_payment.erl:259
+#: zotonic_mod_payment/src/mod_payment.erl:260
 msgid "No payment found."
 msgstr "Nicio plată găsită."
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:177
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:205
 msgid "No payments found."
 msgstr "Nicio plată găsită."
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:96
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:124
 msgid "No succeeded payments."
 msgstr "Nicio plată reușită."
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:199
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:227
 msgid "Only administrators are allowed to see payments"
 msgstr "Numai administratorii au permisiunea de a vedea plățile"
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:189
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:66
+msgid "Paid"
+msgstr "Plătită"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:217
 #: zotonic_mod_payment/priv/templates/payment_link.tpl:3
-#: zotonic_mod_payment/src/mod_payment.erl:254
+#: zotonic_mod_payment/src/mod_payment.erl:255
 msgid "Payment"
 msgstr "Plată"
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:81
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:86
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:50
 msgid "Payment Service Provider"
 msgstr "Furnizor de servicii de plată"
 
 #: zotonic_mod_payment/priv/templates/admin_payment_config.tpl:3
 #: zotonic_mod_payment/priv/templates/admin_payment_config.tpl:12
-#: zotonic_mod_payment/src/mod_payment.erl:522
+#: zotonic_mod_payment/src/mod_payment.erl:523
 msgid "Payment configuration"
 msgstr "Configurare plată"
 
@@ -174,13 +203,17 @@ msgstr "S-a primit plata de {currency} {amount}."
 
 #: zotonic_mod_payment/priv/templates/admin_payments.tpl:3
 #: zotonic_mod_payment/priv/templates/admin_payments.tpl:7
-#: zotonic_mod_payment/src/mod_payment.erl:517
+#: zotonic_mod_payment/src/mod_payment.erl:518
 msgid "Payments"
 msgstr "Plăți"
 
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:65
+msgid "Pending"
+msgstr "În așteptare"
+
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:74
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:79
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:126
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:154
 msgid "Phone"
 msgstr "Telefon"
 
@@ -188,7 +221,7 @@ msgstr "Telefon"
 msgid "Please confirm your payment"
 msgstr "Vă rugăm să confirmați plata"
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:50
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:76
 msgid "Profile"
 msgstr "Profil"
 
@@ -210,7 +243,7 @@ msgid "Redirecting..."
 msgstr "Se redirecționează..."
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:32
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:111
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:139
 msgid "Reference"
 msgstr "Referință"
 
@@ -223,19 +256,23 @@ msgstr "Prefix de referință"
 msgid "Reference: <b>{reference}</b>"
 msgstr "Referință: <b>{reference}</b>"
 
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:69
+msgid "Refunded"
+msgstr "Rambursată"
+
 #: zotonic_mod_payment/priv/templates/_admin_payment_config_section.tpl:57
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:142
 msgid "Save"
 msgstr "Salvați"
 
-#: zotonic_mod_payment/src/mod_payment.erl:198
-#: zotonic_mod_payment/src/mod_payment.erl:290
+#: zotonic_mod_payment/src/mod_payment.erl:199
+#: zotonic_mod_payment/src/mod_payment.erl:291
 msgid "Something went wrong whilst handling the payment request, please try again later."
 msgstr "Ceva nu a funcționat în timpul procesării cererii de plată, vă rugăm să încercați din nou mai târziu."
 
-#: zotonic_mod_payment/src/mod_payment.erl:197
-#: zotonic_mod_payment/src/mod_payment.erl:204
-#: zotonic_mod_payment/src/mod_payment.erl:307
+#: zotonic_mod_payment/src/mod_payment.erl:198
+#: zotonic_mod_payment/src/mod_payment.erl:205
+#: zotonic_mod_payment/src/mod_payment.erl:308
 msgid "Sorry"
 msgstr "Ne pare rău"
 
@@ -243,19 +280,20 @@ msgstr "Ne pare rău"
 msgid "Sorry, the payment amount or currency is not valid."
 msgstr "Ne pare rău, suma de plată sau moneda nu este validă."
 
-#: zotonic_mod_payment/src/mod_payment.erl:210
-#: zotonic_mod_payment/src/mod_payment.erl:222
-#: zotonic_mod_payment/src/mod_payment.erl:234
+#: zotonic_mod_payment/src/mod_payment.erl:211
+#: zotonic_mod_payment/src/mod_payment.erl:223
+#: zotonic_mod_payment/src/mod_payment.erl:235
 msgid "Sorry, you are not allowed to do this."
 msgstr "Nu aveți permisiunea de a face acest lucru."
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:4
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:20
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:108
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:61
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:136
 msgid "Status"
 msgstr "Stare"
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:74
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:100
 msgid "Sync new &amp; pending"
 msgstr "Sincronizează plățile noi &amp; în așteptare"
 
@@ -263,11 +301,11 @@ msgstr "Sincronizează plățile noi &amp; în așteptare"
 msgid "Thank you for your payment!"
 msgstr "Vă mulțumim pentru plată!"
 
-#: zotonic_mod_payment/src/mod_payment.erl:179
+#: zotonic_mod_payment/src/mod_payment.erl:180
 msgid "The payment amount or currency is not valid."
 msgstr "Suma de plată sau moneda nu este validă."
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:92
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:120
 msgid "Total succeeded payments:"
 msgstr "Suma totală a plăților reușite:"
 
@@ -279,7 +317,7 @@ msgstr "Plată necunoscută"
 msgid "Unknown payment or no detail page available."
 msgstr "Plată necunoscută sau nici o pagină de detalii disponibilă."
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:137
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:165
 msgid "Y-m-d H:i"
 msgstr "d.m.Y H:i"
 
@@ -292,12 +330,12 @@ msgstr "An"
 msgid "You are not allowed to configure payments."
 msgstr "Nu aveți permisiunea de a configura plățile."
 
-#: zotonic_mod_payment/src/mod_payment.erl:245
-#: zotonic_mod_payment/src/mod_payment.erl:270
+#: zotonic_mod_payment/src/mod_payment.erl:246
+#: zotonic_mod_payment/src/mod_payment.erl:271
 msgid "You do not have permission to change the status"
 msgstr "Nu aveţi permisiunea de a modifica statusul"
 
-#: zotonic_mod_payment/src/mod_payment.erl:262
+#: zotonic_mod_payment/src/mod_payment.erl:263
 msgid "You do not have permission to view payments."
 msgstr "Nu aveţi permisiunea de a vizualiza plăţile."
 

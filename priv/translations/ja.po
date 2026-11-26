@@ -3,8 +3,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mod_payment\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-06 12:00+0100\n"
-"PO-Revision-Date: 2026-11-06 12:00+0100\n"
+"POT-Creation-Date: 2026-11-26 11:02+0100\n"
+"PO-Revision-Date: 2026-11-26 11:02+0100\n"
 "Last-Translator: Zotonic contributors\n"
 "Language-Team: ja\n"
 "Language: ja\n"
@@ -23,8 +23,16 @@ msgid "After clicking the button, you will be redirected to the payment provider
 msgstr "ボタンをクリックすると、支払いを完了するために支払いプロバイダのウェブサイトにリダイレクトされます。"
 
 #: zotonic_mod_payment/priv/templates/admin_payments.tpl:52
+msgid "All payment providers"
+msgstr "すべての決済サービスプロバイダー"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:78
 msgid "All profiles"
 msgstr "すべてのプロファイル"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:63
+msgid "All statuses"
+msgstr "すべてのステータス"
 
 #: zotonic_mod_payment/priv/templates/admin_payments.tpl:38
 msgid "All years"
@@ -32,14 +40,18 @@ msgstr "全年"
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:11
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:27
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:117
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:145
 msgid "Amount"
 msgstr "金額"
 
-#: zotonic_mod_payment/src/mod_payment.erl:205
-#: zotonic_mod_payment/src/mod_payment.erl:300
+#: zotonic_mod_payment/src/mod_payment.erl:206
+#: zotonic_mod_payment/src/mod_payment.erl:301
 msgid "At the moment we cannot handle payments, please try again later."
 msgstr "現時点ではお支払いを処理できません。後でもう一度お試しください。"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:67
+msgid "Cancelled"
+msgstr "キャンセル済み"
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:120
 msgid "Change status"
@@ -53,11 +65,11 @@ msgstr "ステータスを変更すると、決済サービスプロバイダー
 msgid "Check the configuration values. No settings were saved."
 msgstr "設定値を確認してください。設定は保存されませんでした。"
 
-#: zotonic_mod_payment/src/mod_payment.erl:268
+#: zotonic_mod_payment/src/mod_payment.erl:269
 msgid "Checking status for pending and new transactions, come back later."
 msgstr "保留中および新規の取引の状態を確認しています。後でもう一度確認してください。"
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:62
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:88
 msgid "Clear"
 msgstr "クリア"
 
@@ -83,27 +95,35 @@ msgstr "認証情報は非表示になっています。パスワード表示ボ
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:37
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:47
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:105
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:133
 msgid "Date"
 msgstr "日付"
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:21
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:37
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:114
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:142
 msgid "Description"
 msgstr "説明"
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:67
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:72
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:123
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:151
 msgid "Email"
 msgstr "メール"
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:69
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:70
+msgid "Error"
+msgstr "エラー"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:95
 msgid "Export selection"
 msgstr "選択範囲をエクスポート"
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:60
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:68
+msgid "Failed"
+msgstr "失敗"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:86
 msgid "Filter"
 msgstr "フィルター"
 
@@ -117,45 +137,54 @@ msgstr "全般的な支払い設定"
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:43
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:53
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:120
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:148
 msgid "Name"
 msgstr "名前"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:64
+msgid "New"
+msgstr "新規"
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:93
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:98
 msgid "No PSP"
 msgstr "PSPなし"
 
-#: zotonic_mod_payment/src/mod_payment.erl:259
+#: zotonic_mod_payment/src/mod_payment.erl:260
 msgid "No payment found."
 msgstr "支払いが見つかりません。"
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:177
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:205
 msgid "No payments found."
 msgstr "支払いが見つかりません。"
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:96
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:124
 msgid "No succeeded payments."
 msgstr "成功した支払いはありません。"
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:199
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:227
 msgid "Only administrators are allowed to see payments"
 msgstr "管理者のみ支払いを確認できます"
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:189
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:66
+msgid "Paid"
+msgstr "支払い済み"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:217
 #: zotonic_mod_payment/priv/templates/payment_link.tpl:3
-#: zotonic_mod_payment/src/mod_payment.erl:254
+#: zotonic_mod_payment/src/mod_payment.erl:255
 msgid "Payment"
 msgstr "支払い"
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:81
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:86
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:50
 msgid "Payment Service Provider"
 msgstr "支払いサービスプロバイダー"
 
 #: zotonic_mod_payment/priv/templates/admin_payment_config.tpl:3
 #: zotonic_mod_payment/priv/templates/admin_payment_config.tpl:12
-#: zotonic_mod_payment/src/mod_payment.erl:522
+#: zotonic_mod_payment/src/mod_payment.erl:523
 msgid "Payment configuration"
 msgstr "支払い設定"
 
@@ -174,13 +203,17 @@ msgstr "{currency} {amount} の支払いを受信しました。"
 
 #: zotonic_mod_payment/priv/templates/admin_payments.tpl:3
 #: zotonic_mod_payment/priv/templates/admin_payments.tpl:7
-#: zotonic_mod_payment/src/mod_payment.erl:517
+#: zotonic_mod_payment/src/mod_payment.erl:518
 msgid "Payments"
 msgstr "支払い"
 
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:65
+msgid "Pending"
+msgstr "保留中"
+
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:74
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:79
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:126
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:154
 msgid "Phone"
 msgstr "電話番号"
 
@@ -188,7 +221,7 @@ msgstr "電話番号"
 msgid "Please confirm your payment"
 msgstr "お支払いを確認してください"
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:50
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:76
 msgid "Profile"
 msgstr "プロファイル"
 
@@ -210,7 +243,7 @@ msgid "Redirecting..."
 msgstr "リダイレクト中..."
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:32
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:111
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:139
 msgid "Reference"
 msgstr "参照"
 
@@ -223,19 +256,23 @@ msgstr "参照の接頭辞："
 msgid "Reference: <b>{reference}</b>"
 msgstr "リファレンス： <b>{reference}</b>"
 
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:69
+msgid "Refunded"
+msgstr "返金済み"
+
 #: zotonic_mod_payment/priv/templates/_admin_payment_config_section.tpl:57
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:142
 msgid "Save"
 msgstr "保存"
 
-#: zotonic_mod_payment/src/mod_payment.erl:198
-#: zotonic_mod_payment/src/mod_payment.erl:290
+#: zotonic_mod_payment/src/mod_payment.erl:199
+#: zotonic_mod_payment/src/mod_payment.erl:291
 msgid "Something went wrong whilst handling the payment request, please try again later."
 msgstr "支払いリクエストの処理中に問題が発生しました。後でもう一度お試しください。"
 
-#: zotonic_mod_payment/src/mod_payment.erl:197
-#: zotonic_mod_payment/src/mod_payment.erl:204
-#: zotonic_mod_payment/src/mod_payment.erl:307
+#: zotonic_mod_payment/src/mod_payment.erl:198
+#: zotonic_mod_payment/src/mod_payment.erl:205
+#: zotonic_mod_payment/src/mod_payment.erl:308
 msgid "Sorry"
 msgstr "申し訳ありません"
 
@@ -243,19 +280,20 @@ msgstr "申し訳ありません"
 msgid "Sorry, the payment amount or currency is not valid."
 msgstr "申し訳ありませんが、支払い金額または通貨が無効です。"
 
-#: zotonic_mod_payment/src/mod_payment.erl:210
-#: zotonic_mod_payment/src/mod_payment.erl:222
-#: zotonic_mod_payment/src/mod_payment.erl:234
+#: zotonic_mod_payment/src/mod_payment.erl:211
+#: zotonic_mod_payment/src/mod_payment.erl:223
+#: zotonic_mod_payment/src/mod_payment.erl:235
 msgid "Sorry, you are not allowed to do this."
 msgstr "申し訳ありませんが、これは許可されていません。"
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:4
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:20
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:108
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:61
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:136
 msgid "Status"
 msgstr "状態"
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:74
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:100
 msgid "Sync new &amp; pending"
 msgstr "新規 &amp; 保留中の支払いを同期"
 
@@ -263,11 +301,11 @@ msgstr "新規 &amp; 保留中の支払いを同期"
 msgid "Thank you for your payment!"
 msgstr "お支払いいただきありがとうございます！"
 
-#: zotonic_mod_payment/src/mod_payment.erl:179
+#: zotonic_mod_payment/src/mod_payment.erl:180
 msgid "The payment amount or currency is not valid."
 msgstr "支払額または通貨が無効です。"
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:92
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:120
 msgid "Total succeeded payments:"
 msgstr "成功した支払いの合計金額:"
 
@@ -279,7 +317,7 @@ msgstr "不明な支払い"
 msgid "Unknown payment or no detail page available."
 msgstr "不明な支払いまたは詳細ページが利用できません。"
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:137
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:165
 msgid "Y-m-d H:i"
 msgstr "Y-m-d H:i"
 
@@ -292,12 +330,12 @@ msgstr "年"
 msgid "You are not allowed to configure payments."
 msgstr "支払いを設定する権限がありません。"
 
-#: zotonic_mod_payment/src/mod_payment.erl:245
-#: zotonic_mod_payment/src/mod_payment.erl:270
+#: zotonic_mod_payment/src/mod_payment.erl:246
+#: zotonic_mod_payment/src/mod_payment.erl:271
 msgid "You do not have permission to change the status"
 msgstr "ステータスを変更する権限がありません"
 
-#: zotonic_mod_payment/src/mod_payment.erl:262
+#: zotonic_mod_payment/src/mod_payment.erl:263
 msgid "You do not have permission to view payments."
 msgstr "支払いを表示する権限がありません。"
 

@@ -3,8 +3,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mod_payment\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-06 12:00+0100\n"
-"PO-Revision-Date: 2026-11-06 12:00+0100\n"
+"POT-Creation-Date: 2026-11-26 11:02+0100\n"
+"PO-Revision-Date: 2026-11-26 11:02+0100\n"
 "Last-Translator: Zotonic contributors\n"
 "Language-Team: cs\n"
 "Language: cs\n"
@@ -23,8 +23,16 @@ msgid "After clicking the button, you will be redirected to the payment provider
 msgstr "Po kliknutí na tlačítko budete přesměrováni na webové stránky poskytovatele platby, abyste dokončili Vaši platbu."
 
 #: zotonic_mod_payment/priv/templates/admin_payments.tpl:52
+msgid "All payment providers"
+msgstr "Všichni poskytovatelé plateb"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:78
 msgid "All profiles"
 msgstr "Všechny profily"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:63
+msgid "All statuses"
+msgstr "Všechny stavy"
 
 #: zotonic_mod_payment/priv/templates/admin_payments.tpl:38
 msgid "All years"
@@ -32,14 +40,18 @@ msgstr "Všechny roky"
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:11
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:27
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:117
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:145
 msgid "Amount"
 msgstr "Částka"
 
-#: zotonic_mod_payment/src/mod_payment.erl:205
-#: zotonic_mod_payment/src/mod_payment.erl:300
+#: zotonic_mod_payment/src/mod_payment.erl:206
+#: zotonic_mod_payment/src/mod_payment.erl:301
 msgid "At the moment we cannot handle payments, please try again later."
 msgstr "V tuto chvíli nemůžeme zpracovat platby, zkuste to prosím znovu později."
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:67
+msgid "Cancelled"
+msgstr "Zrušeno"
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:120
 msgid "Change status"
@@ -53,11 +65,11 @@ msgstr "Změna stavu může způsobit nekonzistenci systému, protože poskytova
 msgid "Check the configuration values. No settings were saved."
 msgstr "Zkontrolujte hodnoty konfigurace. Žádné nastavení nebylo uloženo."
 
-#: zotonic_mod_payment/src/mod_payment.erl:268
+#: zotonic_mod_payment/src/mod_payment.erl:269
 msgid "Checking status for pending and new transactions, come back later."
 msgstr "Kontrola stavu čekajících a nových transakcí, vraťte se později."
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:62
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:88
 msgid "Clear"
 msgstr "Vymazat"
 
@@ -83,27 +95,35 @@ msgstr "Přihlašovací údaje jsou skryté. Zobrazíte je tlačítkem pro zobra
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:37
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:47
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:105
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:133
 msgid "Date"
 msgstr "Datum"
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:21
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:37
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:114
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:142
 msgid "Description"
 msgstr "Popis"
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:67
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:72
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:123
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:151
 msgid "Email"
 msgstr "E-mail"
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:69
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:70
+msgid "Error"
+msgstr "Chyba"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:95
 msgid "Export selection"
 msgstr "Exportovat výběr"
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:60
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:68
+msgid "Failed"
+msgstr "Neúspěšné"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:86
 msgid "Filter"
 msgstr "Filtr"
 
@@ -117,45 +137,54 @@ msgstr "Obecná nastavení platby"
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:43
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:53
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:120
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:148
 msgid "Name"
 msgstr "Jméno"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:64
+msgid "New"
+msgstr "Nové"
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:93
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:98
 msgid "No PSP"
 msgstr "Žádný PSP"
 
-#: zotonic_mod_payment/src/mod_payment.erl:259
+#: zotonic_mod_payment/src/mod_payment.erl:260
 msgid "No payment found."
 msgstr "Nebyla nalezena žádná platba."
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:177
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:205
 msgid "No payments found."
 msgstr "Nebyly nalezeny žádné platby."
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:96
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:124
 msgid "No succeeded payments."
 msgstr "Žádné platby nebyly úspěšné."
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:199
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:227
 msgid "Only administrators are allowed to see payments"
 msgstr "Pouze administrátoři mohou vidět platby"
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:189
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:66
+msgid "Paid"
+msgstr "Zaplaceno"
+
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:217
 #: zotonic_mod_payment/priv/templates/payment_link.tpl:3
-#: zotonic_mod_payment/src/mod_payment.erl:254
+#: zotonic_mod_payment/src/mod_payment.erl:255
 msgid "Payment"
 msgstr "Platba"
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:81
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:86
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:50
 msgid "Payment Service Provider"
 msgstr "Poskytovatel platebních služeb"
 
 #: zotonic_mod_payment/priv/templates/admin_payment_config.tpl:3
 #: zotonic_mod_payment/priv/templates/admin_payment_config.tpl:12
-#: zotonic_mod_payment/src/mod_payment.erl:522
+#: zotonic_mod_payment/src/mod_payment.erl:523
 msgid "Payment configuration"
 msgstr "Konfigurace platby"
 
@@ -174,13 +203,17 @@ msgstr "Platba {currency} {amount} byla přijata."
 
 #: zotonic_mod_payment/priv/templates/admin_payments.tpl:3
 #: zotonic_mod_payment/priv/templates/admin_payments.tpl:7
-#: zotonic_mod_payment/src/mod_payment.erl:517
+#: zotonic_mod_payment/src/mod_payment.erl:518
 msgid "Payments"
 msgstr "Platby"
 
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:65
+msgid "Pending"
+msgstr "Čeká na vyřízení"
+
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:74
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:79
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:126
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:154
 msgid "Phone"
 msgstr "Telefon"
 
@@ -188,7 +221,7 @@ msgstr "Telefon"
 msgid "Please confirm your payment"
 msgstr "Potvrďte prosím Vaši platbu"
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:50
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:76
 msgid "Profile"
 msgstr "Profil"
 
@@ -210,7 +243,7 @@ msgid "Redirecting..."
 msgstr "Přesměrování..."
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:32
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:111
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:139
 msgid "Reference"
 msgstr "Referenční číslo"
 
@@ -223,19 +256,23 @@ msgstr "Referenční předpona"
 msgid "Reference: <b>{reference}</b>"
 msgstr "Referenční číslo: <b>{reference}</b>"
 
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:69
+msgid "Refunded"
+msgstr "Vráceno"
+
 #: zotonic_mod_payment/priv/templates/_admin_payment_config_section.tpl:57
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:142
 msgid "Save"
 msgstr "Uložit"
 
-#: zotonic_mod_payment/src/mod_payment.erl:198
-#: zotonic_mod_payment/src/mod_payment.erl:290
+#: zotonic_mod_payment/src/mod_payment.erl:199
+#: zotonic_mod_payment/src/mod_payment.erl:291
 msgid "Something went wrong whilst handling the payment request, please try again later."
 msgstr "Při vyřizování žádosti o platbu nastala chyba, opakujte akci později."
 
-#: zotonic_mod_payment/src/mod_payment.erl:197
-#: zotonic_mod_payment/src/mod_payment.erl:204
-#: zotonic_mod_payment/src/mod_payment.erl:307
+#: zotonic_mod_payment/src/mod_payment.erl:198
+#: zotonic_mod_payment/src/mod_payment.erl:205
+#: zotonic_mod_payment/src/mod_payment.erl:308
 msgid "Sorry"
 msgstr "Omlouváme se"
 
@@ -243,19 +280,20 @@ msgstr "Omlouváme se"
 msgid "Sorry, the payment amount or currency is not valid."
 msgstr "Je nám líto, ale částka platby nebo měna není platná."
 
-#: zotonic_mod_payment/src/mod_payment.erl:210
-#: zotonic_mod_payment/src/mod_payment.erl:222
-#: zotonic_mod_payment/src/mod_payment.erl:234
+#: zotonic_mod_payment/src/mod_payment.erl:211
+#: zotonic_mod_payment/src/mod_payment.erl:223
+#: zotonic_mod_payment/src/mod_payment.erl:235
 msgid "Sorry, you are not allowed to do this."
 msgstr "Je nám líto, ale tohle nemáte dovoleno."
 
 #: zotonic_mod_payment/priv/templates/_dialog_payment_info.tpl:4
 #: zotonic_mod_payment/priv/templates/_email_payment_paid.tpl:20
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:108
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:61
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:136
 msgid "Status"
 msgstr "Stav"
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:74
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:100
 msgid "Sync new &amp; pending"
 msgstr "Synchronizovat nové &amp; čekající platby"
 
@@ -263,11 +301,11 @@ msgstr "Synchronizovat nové &amp; čekající platby"
 msgid "Thank you for your payment!"
 msgstr "Děkujeme za Vaši platbu!"
 
-#: zotonic_mod_payment/src/mod_payment.erl:179
+#: zotonic_mod_payment/src/mod_payment.erl:180
 msgid "The payment amount or currency is not valid."
 msgstr "Částka platby nebo měna není platná."
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:92
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:120
 msgid "Total succeeded payments:"
 msgstr "Celková částka úspěšných plateb:"
 
@@ -279,7 +317,7 @@ msgstr "Neznámá platba"
 msgid "Unknown payment or no detail page available."
 msgstr "Neznámá platba nebo žádná detailní stránka není k dispozici."
 
-#: zotonic_mod_payment/priv/templates/admin_payments.tpl:137
+#: zotonic_mod_payment/priv/templates/admin_payments.tpl:165
 msgid "Y-m-d H:i"
 msgstr "Y-m-d H:i"
 
@@ -292,12 +330,12 @@ msgstr "Rok"
 msgid "You are not allowed to configure payments."
 msgstr "Nejste oprávněni nakonfigurovat platby."
 
-#: zotonic_mod_payment/src/mod_payment.erl:245
-#: zotonic_mod_payment/src/mod_payment.erl:270
+#: zotonic_mod_payment/src/mod_payment.erl:246
+#: zotonic_mod_payment/src/mod_payment.erl:271
 msgid "You do not have permission to change the status"
 msgstr "Nemáte oprávnění ke změně stavu"
 
-#: zotonic_mod_payment/src/mod_payment.erl:262
+#: zotonic_mod_payment/src/mod_payment.erl:263
 msgid "You do not have permission to view payments."
 msgstr "Nemáte oprávnění k zobrazení plateb."
 
