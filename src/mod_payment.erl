@@ -111,6 +111,7 @@ Buckaroo and Sovergn do not discover unknown payments by polling.
 
     observe_admin_menu/3,
     receive_payment/3,
+    receive_payment_transition/3,
     set_payment_status/3,
     set_payment_status/4,
     manage_schema/2
@@ -728,23 +729,29 @@ observe_export_resource_encode(_, _) ->
 
 
 %% @doc Receive a normalized payment from a verified PSP webhook. Never call
-%% this from an unverified request or a browser redirect. See README for fields.
+%% this from an unverified request. Redirects must fetch from the PSP and set
+%% is_existing_only to prevent imports. See README for fields.
 %% Unknown payments are rejected unless accept_unknown_payments is enabled.
 -spec receive_payment(PspModule, Data, Context) -> Result
-    when
-        PspModule :: module(),
-        Data :: map(),
-        Context :: z:context(),
+    when PspModule :: module(), Data :: map(), Context :: z:context(),
         Result :: {ok, map()} | {error, term()}.
 receive_payment(PspModule, Data, Context) ->
+    case receive_payment_transition(PspModule, Data, Context) of
+        {ok, Payment, _, _} -> {ok, Payment};
+        {error, _} = Error -> Error
+    end.
+
+%% @doc Receive a verified update and return the transition decided under the row
+%% lock. PSP side effects must use this result, not a previously read status.
+-spec receive_payment_transition(PspModule, Data, Context) -> Result
+    when PspModule :: module(), Data :: map(), Context :: z:context(),
+        Result :: {ok, map(), atom() | undefined, changed | unchanged} | {error, term()}.
+receive_payment_transition(PspModule, Data, Context) ->
     case m_payment:receive_payment(PspModule, Data, Context) of
-        {ok, Payment, PreviousStatus, changed} ->
+        {ok, Payment, PreviousStatus, changed} = Result ->
             notify_payment_status(Payment, PreviousStatus, Context),
-            {ok, Payment};
-        {ok, Payment, _PreviousStatus, unchanged} ->
-            {ok, Payment};
-        {error, _} = Error ->
-            Error
+            Result;
+        Result -> Result
     end.
 
 %% @doc Called by a PSP, set the status of a payment. This also broadcasts success or failure for the payment.

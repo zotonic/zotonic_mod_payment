@@ -194,20 +194,25 @@ exercise(C0) ->
         <<"amount">> => 12.34}, C)),
     polling(D, C),
     modification_retention(C),
-    succeeded_totals(C).
+    succeeded_totals(C),
+    discounts(C),
+    stripe_refund_ordering(C),
+    legacy_discounts(C),
+    tied_events(C).
 
 concurrency(D, C) ->
     Parent = self(),
     Pids = [spawn_monitor(fun() ->
         logger:set_process_metadata(#{site => payment_receive_test}),
         {ok, W} = z_db_pgsql:start_link(z_context:get(dbargs, C)),
-        try Parent ! {received, mod_payment:receive_payment(mod_payment_stripe, D,
+        try Parent ! {received, mod_payment:receive_payment_transition(mod_payment_stripe, D,
             z_context:set(worker, W, C))}
         after gen_server:stop(W) end
     end) || _ <- lists:seq(1, 8)],
-    Ids = [receive {received, {ok, P}} -> maps:get(<<"id">>, P)
+    Results = [receive {received, {ok, P, _, Change}} -> {maps:get(<<"id">>, P), Change}
            after 10000 -> error(concurrency_timeout) end || _ <- Pids],
-    ?assertEqual(1, length(lists:usort(Ids))),
+    ?assertEqual(1, length(lists:usort([Id || {Id, _} <- Results]))),
+    ?assertEqual(1, length([changed || {_, changed} <- Results])),
     [receive {'DOWN', Ref, process, Pid, normal} -> ok after 10000 -> error(worker_failed) end
      || {Pid, Ref} <- Pids],
     receive #payment_status{} -> ok after 1000 -> error(no_concurrent_notification) end,
@@ -345,3 +350,156 @@ succeeded_totals(C) ->
     ?assertEqual([{<<"EUR">>, 30.3}], Normalize(m_payment:succeeded_totals(Filters, C))),
     ?assertEqual([{<<"EUR">>, 10.1}], Normalize(m_payment:succeeded_totals(Filters#{<<"payment">> => <<"sum-1">>}, C))),
     ?assertEqual([], m_payment:succeeded_totals(#{<<"profile">> => <<"missing">>}, C)).
+
+
+%% The same transaction handles local payments, early imports and late imports.
+discounts(C) ->
+    lists:foreach(fun({Kind, Discount}) ->
+        Id = iolist_to_binary(io_lib:format("discount-~p-~p", [Kind, Discount])),
+        Date = {{2026, 11, 19}, {10, 0, 0}},
+        Open = #{psp_external_id => Id, amount => 50.0, currency => <<"EUR">>,
+            original_amount => 50.0, discount_amount => 0.0, status => new,
+            status_date => Date, event_id => <<Id/binary, "-open">>},
+        case Kind of
+            local ->
+                {ok, _} = z_db:insert(payment, #{<<"payment_nr">> => Id,
+                    <<"psp_module">> => mod_payment_stripe, <<"psp_external_id">> => Id,
+                    <<"amount">> => 50.0, <<"currency">> => <<"EUR">>,
+                    <<"props">> => #{<<"business_note">> => <<"keep">>}}, C);
+            early -> {ok, _} = mod_payment:receive_payment(mod_payment_stripe, Open, C);
+            late -> ok
+        end,
+        Details = #{<<"discounts">> => [#{<<"coupon">> => <<"coupon_test">>}],
+            <<"amount_subtotal">> => 5000, <<"amount_discount">> => trunc(Discount * 100)},
+        Paid = Open#{amount => 50.0 - Discount, discount_amount => Discount,
+            discount_details => Details, status => paid,
+            status_date => {{2026, 11, 19}, {11, 0, 0}}, event_id => <<Id/binary, "-paid">>},
+        {ok, P} = mod_payment:receive_payment(mod_payment_stripe, Paid, C),
+        ?assertEqual(50.0 - Discount, maps:get(<<"amount">>, P)),
+        ?assertEqual(paid, maps:get(<<"status">>, P)),
+        Props = maps:get(<<"props">>, P),
+        ?assertEqual(50.0, maps:get(<<"original_amount">>, Props)),
+        ?assertEqual(Discount, maps:get(<<"discount_amount">>, Props)),
+        ?assertEqual(Details, maps:get(<<"discount_details">>, Props)),
+        case Kind of
+            local -> ?assertEqual(<<"keep">>, maps:get(<<"business_note">>, Props));
+            _ -> ok
+        end,
+        {ok, P} = mod_payment:receive_payment(mod_payment_stripe, Paid, C),
+        %% Both old paid observations and late open events preserve settlement.
+        {ok, P} = mod_payment:receive_payment(mod_payment_stripe,
+            Open#{status => paid, event_id => <<Id/binary, "-old-paid">>}, C),
+        {ok, P} = mod_payment:receive_payment(mod_payment_stripe,
+            Open#{status_date => {{2026, 11, 19}, {12, 0, 0}},
+                event_id => <<Id/binary, "-late-open">>}, C),
+        ?assertEqual({error, payment_mismatch}, mod_payment:receive_payment(mod_payment_stripe,
+            Paid#{original_amount => 60.0, amount => 60.0 - Discount,
+                event_id => <<Id/binary, "-wrong-original">>}, C)),
+        %% Refunds preserve the settled amount and its discount evidence.
+        {ok, Refunded} = mod_payment:receive_payment(mod_payment_stripe,
+            Paid#{status => refunded, status_date => {{2026, 11, 19}, {13, 0, 0}},
+                event_id => <<Id/binary, "-refund">>}, C),
+        ?assertEqual(50.0 - Discount, maps:get(<<"amount">>, Refunded)),
+        ?assertEqual(Props, maps:get(<<"props">>, Refunded))
+    end, [{Kind, Discount} || Kind <- [local, early, late], Discount <- [25.0, 50.0]]),
+    ?assertEqual({error, notfound}, mod_payment:receive_payment(mod_payment_stripe,
+        #{psp_external_id => <<"redirect-unknown">>, amount => 0.0, currency => <<"EUR">>,
+          status => paid, status_date => {{2026, 11, 19}, {10, 0, 0}}, is_existing_only => true}, C)).
+
+%% A refreshed Checkout Session still says paid after its charge is refunded.
+stripe_refund_ordering(C) ->
+    flush_status_notifications(),
+    Session = legacy_session(<<"cs-refund-ordering">>, 2500),
+    {ok, Paid} = mod_payment_stripe:normalize_payment(Session),
+    T0 = maps:get(status_date, Paid),
+    T1 = z_datetime:timestamp_to_datetime(1795082500),
+    T2 = z_datetime:timestamp_to_datetime(1795082600),
+    {ok, P} = mod_payment:receive_payment(mod_payment_stripe,
+        Paid#{status => pending, status_date => T1, event_id => <<"pending-ordering">>}, C),
+    Id = maps:get(<<"id">>, P),
+    flush_status_notifications(),
+    % Even when the session was created before the pending event, redirect settles it.
+    ?assert(T0 < T1),
+    ?assertMatch({ok, {_, paid}}, m_payment_stripe_api:sync_payment_session_status(Session, C)),
+    receive #payment_status{payment_id = Id, status = paid} -> ok after 1000 -> error(no_paid) end,
+    ?assertMatch({ok, {_, paid}}, m_payment_stripe_api:sync_payment_session_status(Session, C)),
+    ?assertEqual(T1, z_db:q1("select status_date from payment where id = $1", [Id], C)),
+    Refund = Paid#{status => refunded, status_date => T2, event_id => <<"delayed-refund">>},
+    {ok, Refunded} = mod_payment:receive_payment(mod_payment_stripe, Refund, C),
+    ?assertEqual(refunded, maps:get(<<"status">>, Refunded)),
+    receive #payment_status{payment_id = Id, status = refunded} -> ok after 1000 -> error(no_refund) end,
+    % Duplicate refund, old paid webhook, redirect and polling snapshot all preserve it.
+    {ok, Refunded} = mod_payment:receive_payment(mod_payment_stripe, Refund, C),
+    {ok, Refunded} = mod_payment:receive_payment(mod_payment_stripe,
+        Paid#{status_date => T1, event_id => <<"late-paid-ordering">>}, C),
+    ?assertMatch({ok, {_, refunded}}, m_payment_stripe_api:sync_payment_session_status(Session, C)),
+    {ok, Refunded} = mod_payment:receive_payment(mod_payment_stripe,
+        Paid#{is_status_snapshot => true}, C),
+    receive #payment_status{} -> error(duplicate_refund_notification) after 0 -> ok end.
+
+legacy_discounts(C) ->
+    lists:foreach(fun({Kind, Discount}) ->
+        Nr = iolist_to_binary(io_lib:format("legacy-~p-~p", [Kind, Discount])),
+        Raw = legacy_session(Nr, Discount),
+        {ok, D} = mod_payment_stripe:normalize_payment(Raw),
+        {ok, Id} = z_db:insert(payment, #{<<"payment_nr">> => Nr,
+            <<"psp_module">> => mod_payment_stripe, <<"psp_external_id">> => Nr,
+            <<"status">> => paid, <<"status_date">> => maps:get(status_date, D),
+            <<"currency">> => <<"EUR">>, <<"amount">> => maps:get(amount, D),
+            <<"is_external">> => Kind =:= imported, <<"psp_data">> => ?DB_PROPS(Raw),
+            <<"props">> => #{<<"business_note">> => <<"keep">>}}, C),
+        Refund = D#{status => refunded, event_id => <<Nr/binary, "-refund">>,
+            status_date => {{2026,11,20},{0,0,0}}},
+        case Kind of
+            local ->
+                ?assertEqual({error, payment_mismatch}, mod_payment:receive_payment(mod_payment_stripe, Refund, C));
+            imported ->
+                ?assertEqual({error, payment_mismatch}, mod_payment:receive_payment(mod_payment_stripe,
+                    Refund#{original_amount => 60.0, discount_amount => maps:get(discount_amount, D) + 10.0}, C)),
+                {ok, P} = mod_payment:receive_payment(mod_payment_stripe, Refund, C),
+                ?assertEqual(refunded, maps:get(<<"status">>, P)),
+                ?assertEqual(maps:get(amount, D), maps:get(<<"amount">>, P)),
+                Props = maps:get(<<"props">>, P),
+                ?assertEqual(50.0, maps:get(<<"original_amount">>, Props)),
+                ?assertEqual(maps:get(discount_details, D), maps:get(<<"discount_details">>, Props)),
+                ?assertEqual(<<"keep">>, maps:get(<<"business_note">>, Props)),
+                ?assertEqual(Raw, maps:get(<<"psp_data">>, P)),
+                {ok, P} = mod_payment:receive_payment(mod_payment_stripe, Refund, C),
+                {ok, P} = m_payment:get(Id, C)
+        end
+    end, [{Kind, Discount} || Kind <- [imported, local], Discount <- [2500, 5000]]).
+
+legacy_session(Id, Discount) ->
+    #{<<"id">> => Id, <<"object">> => <<"checkout.session">>, <<"mode">> => <<"payment">>,
+      <<"status">> => <<"complete">>, <<"payment_status">> =>
+        case Discount of 5000 -> <<"no_payment_required">>; _ -> <<"paid">> end,
+      <<"amount_total">> => 5000 - Discount, <<"currency">> => <<"eur">>,
+      <<"total_details">> => #{<<"amount_discount">> => Discount}, <<"created">> => 1795082400}.
+
+flush_status_notifications() ->
+    receive #payment_status{} -> flush_status_notifications() after 0 -> ok end.
+
+%% The provider can timestamp completion and refund in the same second. The
+%% outcome and settled amount must not depend on their delivery order.
+tied_events(C) ->
+    lists:foreach(fun(Order) ->
+        Nr = atom_to_binary(Order),
+        Raw = legacy_session(Nr, 2500),
+        {ok, D} = mod_payment_stripe:normalize_payment(Raw),
+        Paid = D#{event_id => <<Nr/binary, "-paid">>},
+        Refund = D#{status => refunded, event_id => <<Nr/binary, "-refund">>},
+        Events = case Order of refund_first -> [Refund, Paid]; paid_first -> [Paid, Refund] end,
+        [First, Second] = Events,
+        {ok, _} = mod_payment:receive_payment(mod_payment_stripe, First, C),
+        {ok, P} = mod_payment:receive_payment(mod_payment_stripe, Second, C),
+        ?assertEqual(refunded, maps:get(<<"status">>, P)),
+        flush_status_notifications(),
+        % A later duplicate paid observation also cannot resurrect the charge or
+        % change the settled discount amount, even without a stable event ID.
+        LaterPaid = Paid#{event_id => undefined, amount => 50.0, discount_amount => 0.0,
+            status_date => {{2026,11,21},{0,0,0}}},
+        {ok, P} = mod_payment:receive_payment(mod_payment_stripe, LaterPaid, C),
+        {ok, P} = mod_payment:receive_payment(mod_payment_stripe, First, C),
+        {ok, P} = mod_payment:receive_payment(mod_payment_stripe, Second, C),
+        receive #payment_status{} -> error(duplicate_tied_notification) after 0 -> ok end
+    end, [refund_first, paid_first]).
