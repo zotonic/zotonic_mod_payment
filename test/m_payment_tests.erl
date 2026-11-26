@@ -77,3 +77,15 @@ profile_filter_test() ->
     ?assertEqual(Expected, m_payment:search_filter(Args)),
     ?assertEqual(Expected, m_payment:search_filter(z_search:props_to_map(Args))),
     ?assertEqual({<<>>, []}, m_payment:search_filter(#{<<"profile">> => <<>>})).
+
+provider_status_filter_test() ->
+    Args = #{<<"profile">> => <<"pfl_example">>,
+             <<"psp">> => <<"mod_payment_mollie">>, <<"status">> => <<"paid">>},
+    Expected = {<<" where psp_profile_id = $1 and psp_module = $2 and status = $3">>,
+                [<<"pfl_example">>, <<"mod_payment_mollie">>, <<"paid">>]},
+    ?assertEqual(Expected, m_payment:search_filter(Args)),
+    ?assertEqual(Expected, m_payment:search_filter(z_search:props_to_map(Args))),
+    ?assertEqual({<<>>, []}, m_payment:search_filter(#{<<"psp">> => <<>>, <<"status">> => undefined})),
+    %% Untrusted query values remain parameters, never SQL or newly created atoms.
+    ?assertEqual({<<" where psp_module = $1 and status = $2">>, [<<"' OR true --">>, <<"failed">>]},
+        m_payment:search_filter(#{<<"psp">> => <<"' OR true --">>, <<"status">> => <<"failed">>})).

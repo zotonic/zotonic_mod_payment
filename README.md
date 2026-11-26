@@ -164,13 +164,47 @@ mod_payment:receive_payment(PspModule, #{
 
 It returns `{ok, Payment}` or `{error, Reason}`. Call it only after verifying the
 PSP signature or retrieving the payment with the configured PSP credentials.
-It is not a browser/model endpoint and must not be used to import from redirects.
+It is not a browser/model endpoint. Redirects must retrieve the session with PSP
+credentials and set `is_existing_only => true`; they must never import payments.
 
 Required fields are `psp_external_id`, a normalized status atom, and a UTC
 `status_date`. Import also requires a nonnegative numeric `amount` in major units
 and an uppercase three-letter `currency`; these are not limited to currencies
 supported by the outgoing checkout form. For existing payments, supplied amount
-and currency must match the stored values. Optional fields are `payment_nr`
+and currency must match the stored values. For an authenticated discount, adapters
+may supply `original_amount`, `discount_amount`, and a `discount_details` map.
+The receiver requires `amount + discount_amount = original_amount` and compares
+that original amount with the stored original amount (initially the local amount).
+On accepted updates, `amount` becomes the final payable amount, while the original
+amount and discount evidence remain in the payment's `props`. No schema migration
+is needed. Stale events and late open/pending events cannot overwrite settlement.
+
+Legacy external imports and recurring child payments may have only the net amount.
+For these records, an optional pure PSP callback, `normalize_payment/1`, normalizes
+stored `psp_data` using the same adapter validation as live updates. Recovery requires
+that this stored evidence matches the payment's identity, currency and net amount,
+and that its gross amount matches the incoming update. Missing or inconsistent
+evidence still produces `payment_mismatch` (there is no fallback to the net price); local checkout prices are never
+reinterpreted as net prices. The next accepted update persists the recovered original
+amount and discount details.
+
+Adapters may mark a provider snapshot without a transition timestamp with
+`is_status_snapshot => true`. Such snapshots can settle new/pending payments but
+cannot override terminal statuses or advance their timestamps. Stripe uses this
+for Checkout Session redirects and session-list polling, because a session can
+still report paid after a refund. Timestamped webhook events retain normal ordering.
+Refunds cannot be undone by later paid observations. For tied provider timestamps,
+refunds outrank paid, and paid outranks failure/cancellation and open states; the
+same rule protects both status and discount amounts.
+
+PSPs that trigger side effects on completion can use
+`mod_payment:receive_payment_transition/3`. It returns the previous status and
+`changed`/`unchanged` from the locked receive transaction, while retaining normal
+notifications. Mollie uses this result so overlapping first-payment handlers do
+not both create a subscription from stale local status reads.
+
+Tax, shipping, currency or order-value changes are not silently treated as discounts;
+the undiscounted total must still match. Optional fields are `payment_nr`
 (local correlation), `description`, `contact` (a map with binary contact-field
 keys), `event_id`, and `psp_data`. PSP adapters own currency-unit conversion and
 mapping provider statuses to the existing local status vocabulary.

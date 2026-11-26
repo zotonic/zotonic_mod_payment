@@ -54,7 +54,9 @@ data(Context) ->
         <<"payment">> => z_context:get_q(<<"qpayment">>, Context),
         <<"reference">> => z_context:get_q(<<"qreference">>, Context),
         <<"year">> => z_context:get_q(<<"qyear">>, Context),
-        <<"profile">> => z_context:get_q(<<"qprofile">>, Context)
+        <<"profile">> => z_context:get_q(<<"qprofile">>, Context),
+        <<"psp">> => z_context:get_q(<<"qpsp">>, Context),
+        <<"status">> => z_context:get_q(<<"qstatus">>, Context)
     },
     #search_result{result = Result} = z_search:search(
         <<"payments">>, Args, 1, 100000, Context),

@@ -161,6 +161,11 @@ m_get([ <<"succeeded_totals">>, Args | Rest ], _Msg, Context) when is_map(Args) 
         true -> {ok, {succeeded_totals(Args, Context), Rest}};
         false -> {error, eacces}
     end;
+m_get([ <<"providers">> | Rest ], _Msg, Context) ->
+    case z_acl:is_allowed(use, mod_payment, Context) orelse z_acl:is_admin(Context) of
+        true -> {ok, {providers(Context), Rest}};
+        false -> {error, eacces}
+    end;
 m_get([ <<"profiles">> | Rest ], _Msg, Context) ->
     case z_acl:is_allowed(use, mod_payment, Context) orelse z_acl:is_admin(Context) of
         true -> {ok, {profiles(Context), Rest}};
@@ -317,6 +322,13 @@ list_email(Email, Context) ->
         end,
         L).
 
+%% @doc Providers with stored payments, including providers no longer active.
+-spec providers(z:context()) -> [binary()].
+providers(Context) ->
+    [Psp || {Psp} <- z_db:q("select distinct psp_module from payment
+        where psp_module is not null and psp_module <> ''
+        order by psp_module", Context)].
+
 %% @doc Profiles present on payments, for administration and source selection.
 -spec profiles(Context) -> [map()] when Context :: z:context().
 profiles(Context) ->
@@ -458,17 +470,34 @@ receive_payment_1(PspModule, Data, Context) ->
                 true ->
                     case receive_is_duplicate(Payment, Data, Context) of
                         true -> {ok, Payment, maps:get(<<"status">>, Payment), unchanged};
-                        false -> receive_update(Payment, Data, false, Context)
+                        false -> receive_observation(Payment, Data, Context)
                     end;
                 false -> {error, payment_mismatch}
             end;
         {error, notfound} ->
-            case m_config:get_boolean(mod_payment, accept_unknown_payments, Context) of
+            case not maps:get(is_existing_only, Data, false)
+                 andalso m_config:get_boolean(mod_payment, accept_unknown_payments, Context) of
                 true -> receive_insert(PspModule, Data, Context);
                 false -> {error, notfound}
             end;
         {error, _} = Error -> Error
     end.
+
+%% Snapshots without a provider transition timestamp can settle an open payment,
+%% but cannot supersede a terminal event or advance its ordering timestamp.
+receive_observation(#{<<"status">> := Status} = Payment,
+                    #{is_status_snapshot := true} = Data, Context) ->
+    case lists:member(Status, [new, pending]) of
+        true ->
+            Date = case maps:get(<<"status_date">>, Payment, undefined) of
+                undefined -> maps:get(status_date, Data);
+                PreviousDate -> max(PreviousDate, maps:get(status_date, Data))
+            end,
+            receive_update(Payment, Data#{status_date => Date}, false, Context);
+        false -> {ok, Payment, Status, unchanged}
+    end;
+receive_observation(Payment, Data, Context) ->
+    receive_update(Payment, Data, false, Context).
 
 receive_match({ok, #{ <<"id">> := Id } = Payment}, {ok, #{ <<"id">> := Id }}) ->
     {ok, Payment};
@@ -526,10 +555,10 @@ receive_update(#{ <<"id">> := Id, <<"status">> := Previous } = Payment, Data, Is
         <<"psp_data">> => maps:get(psp_data, Data, #{}),
         <<"status">> => maps:get(status, Data)
     }, Context),
+    ok = receive_amount(Payment, Data, Context),
     Status = maps:get(status, Data),
     % Delayed approval/open events must never reopen a completed payment.
-    Result = case lists:member(Status, [new, pending])
-                  andalso not lists:member(Previous, [new, pending]) of
+    Result = case receive_is_stale(Payment, Data) of
         true -> {ok, unchanged};
         false when Previous =:= Status ->
             % Keep modified unchanged: observing a payment does not extend retention.
@@ -552,6 +581,41 @@ receive_update(#{ <<"id">> := Id, <<"status">> := Previous } = Payment, Data, Is
             end;
         {error, _} = Error -> Error
     end.
+
+%% Called under the receiver's row lock and transaction, after amount matching.
+%% Stale observations must not restore an earlier amount or discount breakdown.
+receive_amount(#{<<"id">> := Id} = Payment,
+               #{original_amount := Original, discount_amount := Discount,
+                 amount := Amount} = Data, Context) ->
+    case receive_is_stale(Payment, Data) of
+        true -> ok;
+        false ->
+            Props = #{<<"original_amount">> => Original,
+                <<"discount_amount">> => Discount,
+                <<"discount_details">> => maps:get(discount_details, Data, #{})},
+            {ok, _} = z_db:update(payment, Id,
+                #{<<"amount">> => Amount, <<"props">> => Props}, Context),
+            ok
+    end;
+receive_amount(_Payment, _Data, _Context) -> ok.
+
+%% Refunds are terminal in the supported PSP vocabulary (there is no refund
+%% reversal event). Second-resolution provider timestamps need deterministic ties:
+%% refund > paid > failure/cancellation > pending > new, regardless of delivery.
+receive_is_stale(#{<<"status">> := Previous} = Payment,
+                 #{status := Status, status_date := Date}) ->
+    CurrentDate = maps:get(<<"status_date">>, Payment, undefined),
+    (Previous =:= refunded andalso Status =/= refunded)
+        orelse (lists:member(Status, [new, pending])
+            andalso not lists:member(Previous, [new, pending]))
+        orelse (CurrentDate =/= undefined andalso Date < CurrentDate)
+        orelse (Date =:= CurrentDate andalso status_rank(Status) < status_rank(Previous)).
+
+status_rank(refunded) -> 4;
+status_rank(paid) -> 3;
+status_rank(Status) when Status =:= failed; Status =:= cancelled; Status =:= error -> 2;
+status_rank(pending) -> 1;
+status_rank(_) -> 0.
 
 receive_contact(Contact) ->
     maps:map(fun(_, V) -> receive_text(V, 200) end,
@@ -693,6 +757,10 @@ is_allowed_extra_prop(<<"is_paid">>) -> false;
 is_allowed_extra_prop(<<"is_failed">>) -> false;
 is_allowed_extra_prop(<<"is_payment_link">>) -> false;
 is_allowed_extra_prop(<<"is_external">>) -> false;
+is_allowed_extra_prop(<<"recurring_payment_id">>) -> false;
+is_allowed_extra_prop(<<"original_amount">>) -> false;
+is_allowed_extra_prop(<<"discount_amount">>) -> false;
+is_allowed_extra_prop(<<"discount_details">>) -> false;
 is_allowed_extra_prop(<<"created">>) -> false;
 is_allowed_extra_prop(<<"modified">>) -> false;
 is_allowed_extra_prop(<<"psp_", _/binary>>) -> false;
@@ -709,7 +777,10 @@ qargs_props(true, Context) ->
         <<"is_paid">>,
         <<"is_failed">>,
         <<"is_payment_link">>,
-        <<"is_external">>
+        <<"is_external">>,
+        <<"original_amount">>,
+        <<"discount_amount">>,
+        <<"discount_details">>
         | z_db:column_names_bin(payment, Context)
     ],
     lists:foldl(
@@ -988,11 +1059,13 @@ normalize_country(undefined) ->
     <<>>;
 normalize_country(Value) ->
     Value1 = z_string:trim(z_convert:to_binary(Value)),
-    Iso = case catch l10n_country2iso:country2iso(Value1) of
+    Iso = try l10n_country2iso:country2iso(Value1) of
         IsoCode when is_binary(IsoCode), IsoCode =/= <<>> ->
             IsoCode;
         _ ->
             Value1
+    catch
+        _:_ -> Value1
     end,
     z_string:truncate(z_string:to_lower(Iso), 8, <<>>).
 
@@ -1203,6 +1276,7 @@ search_filter(#{ <<"q">> := Terms }) when is_list(Terms) ->
         {Key, Value}
         || #{ <<"term">> := Key, <<"value">> := Value } <- Terms,
            Key =:= <<"payment">> orelse Key =:= <<"reference">> orelse Key =:= <<"year">> orelse Key =:= <<"profile">>
+               orelse Key =:= <<"psp">> orelse Key =:= <<"status">>
     ]),
     search_filter(Args);
 search_filter(Args) ->
@@ -1216,7 +1290,9 @@ search_filter(Args) ->
     {RevConditions, RevArgs, _NextParam} = lists:foldl(
         fun add_search_filter/2,
         {[], [], 1},
-        [Payment, Reference, YearRange, Profile]),
+        [Payment, Reference, YearRange, Profile,
+         filter_exact(psp, maps:get(<<"psp">>, Args, undefined)),
+         filter_exact(status, maps:get(<<"status">>, Args, undefined))]),
     Conditions = lists:reverse(RevConditions),
     FilterArgs = lists:reverse(RevArgs),
     case Conditions of
@@ -1226,6 +1302,13 @@ search_filter(Args) ->
             {iolist_to_binary([" where ", lists:join(" and ", Conditions)]), FilterArgs}
     end.
 
+filter_exact(Key, Value) when is_binary(Value), Value =/= <<>> -> {Key, Value};
+filter_exact(_Key, _Value) -> undefined.
+
+add_search_filter({Key, Value}, {Conditions, Args, Param}) when Key =:= psp; Key =:= status ->
+    Column = case Key of psp -> <<"psp_module">>; status -> <<"status">> end,
+    Condition = iolist_to_binary([Column, " = $", integer_to_binary(Param)]),
+    {[Condition | Conditions], [Value | Args], Param + 1};
 add_search_filter({profile, Profile}, {Conditions, Args, Param}) ->
     Condition = iolist_to_binary(["psp_profile_id = $", integer_to_binary(Param)]),
     {[Condition | Conditions], [Profile | Args], Param + 1};

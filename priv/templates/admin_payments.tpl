@@ -44,6 +44,32 @@
                         {% endfor %}
                     </select>
                 </div>
+                {% with m.payment.providers as providers %}
+                    {% if providers|length > 1 or q.qpsp %}
+                        <div class="form-group">
+                            <label class="sr-only" for="payment-psp-filter">{_ Payment Service Provider _}</label>
+                            <select id="payment-psp-filter" class="form-control" name="qpsp">
+                                <option value="">{_ All payment providers _}</option>
+                                {% for provider in providers %}
+                                    <option value="{{ provider|escape }}" {% if q.qpsp == provider %}selected{% endif %}>{{ provider|replace:"mod_payment_":""|replace:"_":" "|capfirst|escape }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    {% endif %}
+                {% endwith %}
+                <div class="form-group">
+                    <label class="sr-only" for="payment-status-filter">{_ Status _}</label>
+                    <select id="payment-status-filter" class="form-control" name="qstatus">
+                        <option value="">{_ All statuses _}</option>
+                        <option value="new" {% if q.qstatus == 'new' %}selected{% endif %}>{_ New _}</option>
+                        <option value="pending" {% if q.qstatus == 'pending' %}selected{% endif %}>{_ Pending _}</option>
+                        <option value="paid" {% if q.qstatus == 'paid' %}selected{% endif %}>{_ Paid _}</option>
+                        <option value="cancelled" {% if q.qstatus == 'cancelled' %}selected{% endif %}>{_ Cancelled _}</option>
+                        <option value="failed" {% if q.qstatus == 'failed' %}selected{% endif %}>{_ Failed _}</option>
+                        <option value="refunded" {% if q.qstatus == 'refunded' %}selected{% endif %}>{_ Refunded _}</option>
+                        <option value="error" {% if q.qstatus == 'error' %}selected{% endif %}>{_ Error _}</option>
+                    </select>
+                </div>
                 {% with m.payment.profiles as profiles %}
                     {% if profiles %}
                         <div class="form-group">
@@ -58,14 +84,14 @@
                     {% endif %}
                 {% endwith %}
                 <button class="btn btn-primary" type="submit">{_ Filter _}</button>
-                {% if q.qpayment or q.qreference or q.qyear or q.qprofile %}
+                {% if q.qpayment or q.qreference or q.qyear or q.qprofile or q.qpsp or q.qstatus %}
                     <a class="btn btn-default" href="{% url payments_admin_overview %}">{_ Clear _}</a>
                 {% endif %}
             </form>
 
             <div class="pull-right">
                 <a class="btn btn-primary"
-                   href="{% url export_payments_csv qpayment=q.qpayment qreference=q.qreference qyear=q.qyear qprofile=q.qprofile %}">
+                   href="{% url export_payments_csv qpayment=q.qpayment qreference=q.qreference qyear=q.qyear qprofile=q.qprofile qpsp=q.qpsp qstatus=q.qstatus %}">
                     {_ Export selection _}
                 </a>
 
@@ -83,6 +109,8 @@
                     reference: q.qreference,
                     year: q.qyear,
                     profile: q.qprofile,
+                    psp: q.qpsp,
+                    status: q.qstatus,
                     page: q.page,
                     pagelen: 20
                 }
